@@ -1,111 +1,169 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { Save, Layers, Tag, X } from "lucide-react";
+import { Save, Layers, Tag, Plus } from "lucide-react";
 import { Dropdown } from "primereact/dropdown";
 import { getMetaById } from "../../api/metaField";
+import { Toast } from "primereact/toast";
+import { uploadDocumentFile } from "../../api/ulpoald";
 
 export default function DocumentForm({
   visible,
   onHide,
   onSubmit,
   documentType,
+  selectedTypeId,
 }: any) {
   const [values, setValues] = useState<any>({});
   const [documentType_id, setDocumentType_id] = useState<number | null>(null);
   const [metaFields, setMetaFields] = useState<any[]>([]);
+  const toast = useRef<Toast>(null);
+
+  useEffect(() => {
+    if (selectedTypeId) {
+      setDocumentType_id(selectedTypeId);
+    }
+  }, [selectedTypeId]);
 
   useEffect(() => {
     if (documentType_id) {
-      getMetaById(String(documentType_id)).then((res) => setMetaFields(res));
+      getMetaById(String(documentType_id)).then((res) => {
+        setMetaFields(res);
+        setValues({});
+      });
+    } else {
+      setMetaFields([]);
+      setValues({});
     }
   }, [documentType_id]);
 
+  const handleSubmit = async () => {
+    // Vérifie que tous les champs required ont une valeur
+    const missing = metaFields.filter((f) => f.required && !values[f.id]);
+
+    if (missing.length > 0) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Champs manquants",
+        detail: "Veuillez remplir tous les champs obligatoires !",
+      });
+      return;
+    }
+
+    try {
+      // 1️⃣ Créer le document (sans les fichiers)
+      const doc = await onSubmit({
+        type_document_id: documentType_id,
+        values: Object.fromEntries(
+          Object.entries(values).filter(([_, v]) => !(v instanceof File)),
+        ),
+      });
+
+      console.log("✅ Document créé:", doc); // 2️⃣ Uploader les fichiers séparément
+
+      for (const [fieldId, value] of Object.entries(values)) {
+        if (value instanceof File) {
+          await uploadDocumentFile(doc.id, fieldId, value);
+        }
+      }
+
+      toast.current?.show({
+        severity: "success",
+        summary: "Succès",
+        detail: "Document enregistré avec succès !",
+      });
+
+      onHide();
+    } catch (error: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: error.message || "Impossible d’enregistrer le document",
+      });
+    }
+  };
+
   return (
-    <Dialog
-      header={
-        <div className="flex items-center gap-2 text-blue-900">
-          <Layers size={20} />
-          <span className="font-bold">Nouveau Document</span>
-        </div>
-      }
-      visible={visible}
-      style={{ width: "550px" }}
-      onHide={onHide}
-      className="custom-dialog"
-      footer={
-        <div className="flex justify-end gap-3 p-2">
-          <Button
-            label="Annuler"
-            onClick={onHide}
-            className="px-4 py-2 text-slate-500 bg-transparent border-none hover:bg-slate-100 rounded-xl font-semibold transition-all"
-          />
-          <Button
-            label="Enregistrer le document"
-            icon={<Save size={18} className="mr-2" />}
-            className="px-6 py-2 bg-blue-600 text-white border-none rounded-xl font-semibold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
-            onClick={() =>
-              onSubmit({ type_document_id: documentType_id, values })
-            }
-          />
-        </div>
-      }
-    >
-      <div className="space-y-6 pt-4">
-        {/* Sélecteur de type */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <label className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-black text-blue-600 mb-2">
-            Classification
-          </label>
-          <Dropdown
-            value={documentType_id}
-            options={documentType}
-            onChange={(e) => setDocumentType_id(e.value)}
-            optionLabel="nom"
-            optionValue="id"
-            placeholder="Sélectionnez le type de document"
-            className="w-full bg-white border-slate-200 rounded-xl shadow-sm"
-            filter
-          />
-        </div>
-
-        {/* Champs dynamiques stylisés */}
-        {metaFields.length > 0 && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">
-              Métadonnées
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
-              {metaFields.map((f: any) => (
-                <div key={f.id} className="flex flex-col gap-1.5">
-                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                    <Tag size={14} className="text-blue-400" /> {f.label}
-                  </label>
-
-                  {f.field_type === "file" ? (
-                    <input
-                      type="file"
-                      className="w-full bg-white border border-slate-200 p-3 rounded-xl text-sm"
-                      onChange={(e) =>
-                        setValues({ ...values, [f.id]: e.target.files?.[0] })
-                      }
-                    />
-                  ) : (
-                    <input
-                      type={f.field_type}
-                      placeholder={`Saisir ${f.label.toLowerCase()}...`}
-                      className="w-full bg-white border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
-                      onChange={(e) =>
-                        setValues({ ...values, [f.id]: e.target.value })
-                      }
-                    />
-                  )}
-                </div>
-              ))}
+    <>
+      <Toast ref={toast} />
+      <Dialog
+        header={
+          <div className="flex items-center gap-3 text-emerald-950">
+            <div className="p-2 bg-emerald-600 rounded-lg text-white">
+              <Plus size={18} />
             </div>
+            <span className="font-black tracking-tight">Nouvelle Archive</span>
           </div>
-        )}
-      </div>
-    </Dialog>
+        }
+        visible={visible}
+        style={{ width: "500px" }}
+        onHide={onHide}
+        footer={
+          <div className="flex justify-end gap-3 p-4 bg-emerald-50/30">
+            <Button
+              label="Annuler"
+              onClick={onHide}
+              className="p-button-text text-emerald-600 font-bold"
+            />
+            <Button
+              label="Enregistrer"
+              icon={<Save size={18} className="mr-2" />}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-200 transition-all font-bold"
+              onClick={handleSubmit}
+            />
+          </div>
+        }
+      >
+        <div className="space-y-6 pt-4">
+          <div className="bg-emerald-50/50 p-5 rounded-3xl border border-emerald-100">
+            <label className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-3 block">
+              Type de dossier
+            </label>
+            <Dropdown
+              value={documentType_id}
+              options={documentType}
+              onChange={(e) => setDocumentType_id(e.value)}
+              optionLabel="nom"
+              optionValue="id"
+              placeholder="Sélectionner..."
+              className="w-full bg-white border-emerald-100 rounded-xl shadow-sm"
+              filter
+            />
+          </div>
+
+          {metaFields.length > 0 && (
+            <div className="space-y-4 animate-in fade-in duration-500">
+              <p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest ml-1">
+                Champs requis
+              </p>
+              <div className="grid grid-cols-1 gap-4">
+                {metaFields.map((f: any) => (
+                  <div key={f.id} className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-emerald-900 ml-1 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>{" "}
+                      {f.label}
+                    </label>
+                    <input
+                      type={f.field_type === "file" ? "file" : f.field_type}
+                      className="w-full bg-white border border-emerald-100 p-3.5 rounded-2xl text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all shadow-sm text-emerald-950"
+                      onChange={(e) =>
+                        setValues({
+                          ...values,
+                          [f.id]:
+                            f.field_type === "file"
+                              ? e.target.files?.[0]
+                              : e.target.value,
+                        })
+                      }
+                      placeholder={`Entrez ${f.label.toLowerCase()}...`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Dialog>
+    </>
   );
 }

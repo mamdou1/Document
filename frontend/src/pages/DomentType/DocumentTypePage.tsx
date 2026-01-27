@@ -7,6 +7,7 @@ import { confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
+
 import {
   Plus,
   Eye,
@@ -28,12 +29,14 @@ import {
   CreateMetaFieldPayload,
   Division,
   TypeDocument,
+  MetaField,
 } from "../../interfaces";
-import { createMetaField } from "../../api/metaField";
+import { createMetaField, updateMetaField } from "../../api/metaField";
 import Pagination from "../../components/layout/Pagination";
 
 export default function DocumentTypePage() {
   const [allDivisions, setAllDivisions] = useState<Division[]>([]);
+  const [allMeta, setAllMeta] = useState<MetaField[]>([]);
   const [types, setTypes] = useState<TypeDocument[]>([]);
   const [selected, setSelected] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
@@ -92,23 +95,31 @@ export default function DocumentTypePage() {
     });
   };
 
-  const handleCreateMeta = async (payload: CreateMetaFieldPayload) => {
+  const handleMetaSubmit = async (fieldsPayload: any[]) => {
     if (!selected?.id) return;
 
-    const res = await createMetaField(selected.id, payload);
+    try {
+      for (const field of fieldsPayload) {
+        if (field.id) {
+          // Si le champ a un ID, c'est une modification -> PUT
+          await updateMetaField(field.id, field);
+        } else {
+          // Si pas d'ID, c'est un nouveau -> POST
+          await createMetaField(selected.id, field);
+        }
+      }
 
-    setTypes((s) =>
-      s.map((t) =>
-        t.id === selected.id
-          ? { ...t, metaFields: [...(t.metaFields || []), res] }
-          : t,
-      ),
-    );
-
-    toast.current?.show({
-      severity: "success",
-      summary: "Champ ajouté",
-    });
+      toast.current?.show({
+        severity: "success",
+        summary: "Mise à jour réussie",
+      });
+      load(); // Recharger les types pour voir les changements
+    } catch (error) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur lors de la mise à jour",
+      });
+    }
   };
 
   const filtered = types.filter((t) =>
@@ -124,53 +135,62 @@ export default function DocumentTypePage() {
     <Layout>
       <Toast ref={toast} />
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
-            <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200">
-              <Database size={24} />
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight flex items-center gap-4">
+            {/* Changement : Gradient Emerald */}
+            <div className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-800 text-white rounded-3xl shadow-xl shadow-emerald-100">
+              <Database size={28} />
             </div>
-            Configuration des Types
+            Types de Documents
           </h1>
-          <p className="text-slate-500 text-sm mt-1 ml-16 font-medium">
-            Définissez les modèles et métadonnées de vos documents
+          <p className="text-slate-500 text-base mt-2 ml-1 font-medium italic">
+            Structurez vos archives et définissez vos métadonnées sur mesure.
           </p>
         </div>
-        <Button
-          label="Nouveau Type"
-          icon={<Plus size={18} className="mr-2" />}
-          onClick={onCreate}
-          className="bg-blue-600 hover:bg-blue-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all"
-        />
+        <div className="flex gap-3">
+          <Button
+            label="Nouveau Type"
+            icon={<Plus size={20} className="mr-2" />}
+            onClick={onCreate}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-8 py-4 rounded-2xl shadow-lg shadow-emerald-100 transition-all hover:-translate-y-1 active:scale-95 font-bold"
+          />
+        </div>
       </div>
 
-      <div className="mb-6 relative max-w-md group">
+      {/* SEARCH BAR */}
+      <div className="mb-8 relative max-w-xl group">
         <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
-          size={18}
+          className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors"
+          size={20}
         />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher un type..."
-          className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
+          placeholder="Rechercher par code ou nom de document..."
+          className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-[1.5rem] shadow-sm outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-700 font-semibold"
         />
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
-        <table className="w-full text-left">
+      {/* TABLE CONTAINER */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/60 overflow-hidden">
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24">
+            <tr className="bg-slate-50/80 border-b border-slate-100">
+              <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 Code
               </th>
-              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Type Document
+              <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                Libellé du Type
               </th>
-              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 Division
               </th>
-              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
+              <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                Métadonnées
+              </th>
+              <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">
                 Actions
               </th>
             </tr>
@@ -179,64 +199,73 @@ export default function DocumentTypePage() {
             {paginated.map((t) => (
               <tr
                 key={t.id}
-                className="group hover:bg-blue-50/40 transition-colors cursor-pointer"
                 onClick={() => {
                   setSelected(t);
                   setDetailsVisible(true);
                 }}
+                className="cursor-pointer group hover:bg-emerald-50/30 transition-all"
               >
-                <td className="p-4 text-xs font-black text-blue-600">
-                  <span className="bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
+                <td className="p-6">
+                  <span className="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-black border border-slate-200 uppercase">
                     {t.code}
                   </span>
                 </td>
-                <td className="p-4 font-bold text-slate-700">{t.nom}</td>
-                <td className="p-4">
-                  <span className="flex items-center gap-2 text-slate-500 text-sm">
-                    <Layers size={14} className="text-slate-400" />{" "}
-                    {t.division?.libelle || "---"}
+                <td className="p-6">
+                  <div className="font-bold text-slate-800 text-lg">
+                    {t.nom}
+                  </div>
+                </td>
+                <td className="p-6 text-slate-600 font-medium">
+                  <div className="flex items-center gap-2">
+                    <Layers size={16} className="text-emerald-500" />
+                    {t.division?.libelle || "Non assigné"}
+                  </div>
+                </td>
+                <td className="p-6">
+                  {/* Changement : Badge Emerald */}
+                  <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[11px] font-black">
+                    {t.metaFields?.length || 0} CHAMPS
                   </span>
                 </td>
-                <td className="p-4">
-                  <div className="flex justify-center gap-1">
+                <td className="p-6">
+                  <div className="flex justify-center gap-2">
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
                         setSelected(t);
                         setDetailsVisible(true);
+                        e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded-xl transition-all"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                     >
-                      <Eye size={18} />
+                      <Eye size={20} />
                     </button>
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
                         onEdit(t);
+                        e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                     >
-                      <Pencil size={18} />
+                      <Pencil size={20} />
                     </button>
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
                         setSelected(t);
                         setMetaVisible(true);
+                        e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                      title="Champs"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                     >
-                      <Settings size={18} />
+                      <Settings size={20} />
                     </button>
                     <button
                       onClick={(e) => {
-                        e.stopPropagation();
                         handleDelete(String(t.id));
+                        e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                      className="p-3 text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-md rounded-xl transition-all"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={20} />
                     </button>
                   </div>
                 </td>
@@ -270,8 +299,8 @@ export default function DocumentTypePage() {
       <DocumentTypeMetaForm
         visible={metaVisible}
         onHide={() => setMetaVisible(false)}
-        onSubmit={handleCreateMeta}
-        type={selected}
+        onSubmit={handleMetaSubmit} // Cette fonction gérera les appels API
+        type={selected} // On passe l'objet complet du Type de Document
       />
     </Layout>
   );

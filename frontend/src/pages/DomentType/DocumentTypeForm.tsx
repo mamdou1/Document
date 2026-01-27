@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
-import { FileText, Save, Hash, Layers, Info } from "lucide-react";
+import { FileText, Save, Hash, Layers } from "lucide-react";
 import { Dropdown } from "primereact/dropdown";
 
 export default function DocumentTypeForm({
@@ -40,47 +40,47 @@ export default function DocumentTypeForm({
   return (
     <Dialog
       header={
-        <div className="flex items-center gap-2 text-blue-900 font-bold">
-          <Info size={20} /> {title}
-        </div>
+        <div className="text-2xl font-black text-slate-800 p-2">{title}</div>
       }
       visible={visible}
-      style={{ width: 600 }}
+      style={{ width: 550 }}
       onHide={onHide}
-      className="custom-dialog"
+      className="rounded-[2.5rem] overflow-hidden shadow-2xl"
       footer={
-        <div className="flex justify-end gap-3 p-2">
+        <div className="flex justify-end gap-3 p-6 bg-slate-50/50">
           <Button
-            label="Annuler"
+            label="Abandonner"
             onClick={onHide}
-            className="p-button-text text-slate-500 font-bold"
+            className="p-button-text text-slate-400 font-bold"
           />
           <Button
-            label={loading ? "Action..." : "Enregistrer"}
-            icon={!loading && <Save size={18} className="mr-2" />}
+            label={loading ? "Traitement..." : "Sauvegarder"}
+            icon={!loading && <Save size={20} className="mr-2" />}
             onClick={handleSubmit}
-            disabled={loading || !nom}
-            className="bg-blue-600 text-white px-8 rounded-xl border-none shadow-lg"
+            disabled={loading || !nom || !code}
+            // Changement : bg-emerald-600 et shadow-emerald-200
+            className="bg-emerald-600 text-white font-bold py-3.5 px-10 rounded-2xl hover:bg-emerald-700 shadow-xl shadow-emerald-200 transition-all active:scale-95 border-none"
           />
         </div>
       }
     >
-      <div className="space-y-6 pt-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex gap-2">
-              <Hash size={12} /> Code
+      <div className="grid grid-cols-1 gap-8 p-4">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Hash size={14} className="text-emerald-500" /> Code Référence
             </label>
             <InputText
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl"
-              placeholder="Ex: FACT-01"
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              // Changement : focus:ring-emerald-500
+              className="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold text-slate-700"
+              placeholder="ex: FACT-SC"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex gap-2">
-              <Layers size={12} /> Division
+          <div className="space-y-3">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Layers size={14} className="text-emerald-500" /> Division
             </label>
             <Dropdown
               value={division_id}
@@ -88,21 +88,23 @@ export default function DocumentTypeForm({
               onChange={(e) => setDivision_id(e.value)}
               optionLabel="libelle"
               optionValue="id"
-              className="w-full bg-slate-50 border-slate-200 rounded-xl"
-              filter
+              // Changement : focus:ring-emerald-500
+              className="w-full bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-semibold"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex gap-2">
-            <FileText size={12} /> Libellé du type
+        <div className="space-y-3">
+          <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <FileText size={14} className="text-emerald-500" /> Nom Complet du
+            Document
           </label>
           <InputText
             value={nom}
             onChange={(e) => setNom(e.target.value)}
-            className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl"
-            placeholder="Nom du type de document..."
+            // Changement : focus:ring-emerald-500
+            className="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-semibold"
+            placeholder="ex: Facture Fournisseur Service"
           />
         </div>
       </div>

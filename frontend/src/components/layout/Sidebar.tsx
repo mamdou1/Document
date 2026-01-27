@@ -26,44 +26,62 @@ import {
   BanknoteArrowUp,
 } from "lucide-react";
 
-import logo from "../../assets/logo 3.png";
+import logo from "../../assets/logoArchi.png";
 import profil from "../../assets/homme.jpg";
 import { Link, useLocation } from "react-router-dom";
 import { createContext, useContext, useState } from "react";
-import { SidebarProps } from "../../interfaces/composant";
+import { SidebarProps, SidebarContextType } from "../../interfaces/composant";
 import { useAuth } from "../../context/AuthContext";
 
-export const SidebarContext = createContext({ expended: true });
+export const SidebarContext = createContext<SidebarContextType>({
+  expended: true,
+  treeOpen: {},
+  toggleTree: () => {},
+});
 
 export default function Sidebar({ children }: SidebarProps) {
   const [expended, setExpended] = useState(true);
   const location = useLocation();
   const { user, can } = useAuth();
 
+  const [treeOpen, setTreeOpen] = useState<{ [key: string]: boolean }>(() => {
+    const saved = localStorage.getItem("sidebar-tree");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const toggleTree = (label: string) => {
+    setTreeOpen((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      localStorage.setItem("sidebar-tree", JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
     <aside className="h-screen sticky top-0">
       <nav
-        className={`h-full flex flex-col bg-blue-900 border-r border-blue-800 shadow-2xl transition-all duration-300 ${
+        className={`h-full flex flex-col bg-emerald-950 border-r border-emerald-900 shadow-2xl transition-all duration-300 ${
           expended ? "w-72" : "w-20"
         }`}
       >
         {/* Header - Logo et Toggle */}
-        <div className="flex items-center justify-between p-4 h-20 bg-blue-950/40">
+        <div className="flex items-center justify-between p-4 h-20 bg-emerald-950">
           <div
             className={`overflow-hidden transition-all duration-300 ${
               expended ? "w-32" : "w-0"
             }`}
           >
+            {/* brightness-0 invert permet de rendre ton logo blanc pur pour le fond sombre */}
             <img
               src={logo}
               alt="Logo"
-              className="w-full h-auto brightness-200"
+              className="w-40 h-20 brightness-0 invert"
             />
           </div>
 
           <button
             onClick={() => setExpended((v) => !v)}
-            className="p-2 rounded-lg bg-blue-800 text-blue-100 hover:bg-blue-700 hover:text-white transition-all shadow-lg"
+            className="p-2 rounded-lg bg-emerald-800 text-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-lg"
           >
             {expended ? <ChevronFirst size={20} /> : <ChevronLast size={20} />}
           </button>
@@ -71,9 +89,8 @@ export default function Sidebar({ children }: SidebarProps) {
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 mt-4 custom-scrollbar">
-          <SidebarContext.Provider value={{ expended }}>
+          <SidebarContext.Provider value={{ expended, treeOpen, toggleTree }}>
             <ul className="space-y-1">
-              {/* Dashboard (public ou global) */}
               <SidebarLink
                 icon={LayoutDashboard}
                 text="Tableau de bord"
@@ -82,12 +99,11 @@ export default function Sidebar({ children }: SidebarProps) {
               />
 
               <div
-                className={`my-4 border-t border-blue-800/50 mx-2 ${
+                className={`my-4 border-t border-emerald-800/50 mx-2 ${
                   !expended && "hidden"
                 }`}
               />
 
-              {/* 🔐 Liquidation */}
               {can("liquidation", "read") && (
                 <SidebarLink
                   icon={CircleDollarSign}
@@ -113,7 +129,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/exercices")}
                     />
                   )}
-
                   {can("programme", "read") && (
                     <SidebarLink
                       icon={Layers}
@@ -122,7 +137,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/programmes")}
                     />
                   )}
-
                   {can("chapitre", "read") && (
                     <SidebarLink
                       icon={ListChecks}
@@ -131,7 +145,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/chapitres")}
                     />
                   )}
-
                   {can("nature", "read") && (
                     <SidebarLink
                       icon={FileText}
@@ -140,7 +153,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/natures")}
                     />
                   )}
-
                   {can("fournisseur", "read") && (
                     <SidebarLink
                       icon={HandCoins}
@@ -149,7 +161,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/fournisseur")}
                     />
                   )}
-
                   {can("serviceBeneficiaire", "read") && (
                     <SidebarLink
                       icon={PanelTopOpenIcon}
@@ -174,7 +185,10 @@ export default function Sidebar({ children }: SidebarProps) {
               )}
 
               {/* ================= GESTION ================= */}
-              {(can("type", "read") || can("pieces", "read")) && (
+              {(can("type", "read") ||
+                can("pieces", "read") ||
+                can("documentType", "read") ||
+                can("document", "read")) && (
                 <SidebarTree label="Gestion" icon={FolderPen}>
                   {can("type", "read") && (
                     <SidebarLink
@@ -184,7 +198,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/type")}
                     />
                   )}
-
                   {can("pieces", "read") && (
                     <SidebarLink
                       icon={FolderPen}
@@ -193,16 +206,15 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/pieces")}
                     />
                   )}
-                  {can("type", "read") && (
+                  {can("documentType", "read") && (
                     <SidebarLink
                       icon={Database}
                       text="DocumentType"
-                      to="/documentType"
-                      active={location.pathname.startsWith("/documentType")}
+                      to="/dossierType"
+                      active={location.pathname.startsWith("/dossierType")}
                     />
                   )}
-
-                  {can("pieces", "read") && (
+                  {can("document", "read") && (
                     <SidebarLink
                       icon={FileText}
                       text="Document"
@@ -226,7 +238,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/service")}
                     />
                   )}
-
                   {can("division", "read") && (
                     <SidebarLink
                       icon={Split}
@@ -235,7 +246,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/division")}
                     />
                   )}
-
                   {can("section", "read") && (
                     <SidebarLink
                       icon={TableOfContents}
@@ -260,7 +270,6 @@ export default function Sidebar({ children }: SidebarProps) {
                       active={location.pathname.startsWith("/agents")}
                     />
                   )}
-
                   {can("droit", "read") && (
                     <SidebarLink
                       icon={ShieldCheck}
@@ -280,7 +289,6 @@ export default function Sidebar({ children }: SidebarProps) {
                 </SidebarTree>
               )}
 
-              {/* ================= RECHERCHE ================= */}
               {can("statistique", "read") && (
                 <SidebarLink
                   icon={Search}
@@ -294,11 +302,11 @@ export default function Sidebar({ children }: SidebarProps) {
         </div>
 
         {/* Footer - Profil Utilisateur */}
-        <div className="p-4 bg-blue-950/60 backdrop-blur-sm border-t border-blue-800">
+        <div className="p-4 bg-emerald-900/40 backdrop-blur-sm border-t border-emerald-800">
           <div className="flex items-center gap-3">
             <img
               src={profil}
-              className="w-10 h-10 rounded-lg object-cover border-2 border-blue-700 shadow-md"
+              className="w-10 h-10 rounded-lg object-cover border-2 border-emerald-600 shadow-md"
               alt="profile"
             />
 
@@ -310,12 +318,12 @@ export default function Sidebar({ children }: SidebarProps) {
               <p className="text-sm font-bold text-white truncate uppercase tracking-wider">
                 {user?.prenom} {user?.nom}
               </p>
-              <p className="text-xs text-blue-300 truncate">{user?.email}</p>
+              <p className="text-xs text-emerald-300 truncate">{user?.email}</p>
             </div>
             {expended && (
               <MoreVertical
                 size={18}
-                className="text-blue-400 cursor-pointer hover:text-white"
+                className="text-emerald-400 cursor-pointer hover:text-white"
               />
             )}
           </div>
@@ -325,66 +333,29 @@ export default function Sidebar({ children }: SidebarProps) {
   );
 }
 
-// function SidebarLink({ icon: Icon, text, to, active }: any) {
-//   const { expended } = useContext(SidebarContext);
-
-//   return (
-//     <Link to={to} className="block group">
-//       <li
-//         className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 relative
-//         ${
-//           active
-//             ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50 scale-[1.02]"
-//             : "text-blue-200 hover:bg-blue-800 hover:text-white"
-//         }`}
-//       >
-//         <Icon
-//           size={22}
-//           className={`flex-shrink-0 ${
-//             active ? "text-white" : "text-blue-400 group-hover:text-blue-200"
-//           }`}
-//         />
-
-//         <span
-//           className={`whitespace-nowrap transition-all duration-300 font-medium ${
-//             expended ? "opacity-100 w-auto" : "opacity-0 w-0"
-//           }`}
-//         >
-//           {text}
-//         </span>
-
-//         {!expended && (
-//           <div className="absolute left-full rounded-md px-3 py-1.5 ml-6 bg-blue-700 text-white text-sm invisible opacity-0 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0 z-50 shadow-xl border border-blue-500">
-//             {text}
-//           </div>
-//         )}
-//       </li>
-//     </Link>
-//   );
-// }
-
 function SidebarLink({ icon: Icon, text, to, active }: any) {
   const { expended } = useContext(SidebarContext);
 
-  const handleClick = () => {
-    // ✅ Marque cette navigation comme action utilisateur
-    sessionStorage.setItem("audit", "true");
-  };
-
   return (
-    <Link to={to} className="block group" onClick={handleClick}>
+    <Link
+      to={to}
+      className="block group"
+      onClick={() => sessionStorage.setItem("audit", "true")}
+    >
       <li
         className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 relative
         ${
           active
-            ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50 scale-[1.02]"
-            : "text-blue-200 hover:bg-blue-800 hover:text-white"
+            ? "bg-emerald-600 text-white shadow-lg shadow-emerald-950/50 scale-[1.02]"
+            : "text-emerald-200 hover:bg-emerald-800/60 hover:text-white"
         }`}
       >
         <Icon
           size={22}
           className={`flex-shrink-0 ${
-            active ? "text-white" : "text-blue-400 group-hover:text-blue-200"
+            active
+              ? "text-white"
+              : "text-emerald-400 group-hover:text-emerald-200"
           }`}
         />
 
@@ -397,7 +368,7 @@ function SidebarLink({ icon: Icon, text, to, active }: any) {
         </span>
 
         {!expended && (
-          <div className="absolute left-full rounded-md px-3 py-1.5 ml-6 bg-blue-700 text-white text-sm invisible opacity-0 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0 z-50 shadow-xl border border-blue-500">
+          <div className="absolute left-full rounded-md px-3 py-1.5 ml-6 bg-emerald-700 text-white text-sm invisible opacity-0 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0 z-50 shadow-xl border border-emerald-500">
             {text}
           </div>
         )}
@@ -407,24 +378,24 @@ function SidebarLink({ icon: Icon, text, to, active }: any) {
 }
 
 function SidebarTree({ label, icon: Icon, children }: any) {
-  const { expended } = useContext(SidebarContext);
-  const [open, setOpen] = useState(false);
+  const { expended, treeOpen, toggleTree } = useContext(SidebarContext);
+  const open = treeOpen[label] || false;
 
   return (
     <li className="list-none">
       <button
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center w-full px-3 py-3 rounded-xl transition-all duration-200 text-blue-200 hover:bg-blue-800/60
+        onClick={() => toggleTree(label)}
+        className={`flex items-center w-full px-3 py-3 rounded-xl transition-all duration-200 text-emerald-200 hover:bg-emerald-800/40
           ${!expended && "justify-center"}
         `}
       >
-        <Icon size={22} className="flex-shrink-0 text-blue-400" />
+        <Icon size={22} className="flex-shrink-0 text-emerald-400" />
         {expended && (
           <>
             <span className="ml-3 font-medium">{label}</span>
             <span
               className={`ml-auto transition-transform duration-300 ${
-                open ? "rotate-180 text-white" : "text-blue-500"
+                open ? "rotate-180 text-white" : "text-emerald-600"
               }`}
             >
               <ChevronDown size={16} />
@@ -434,7 +405,7 @@ function SidebarTree({ label, icon: Icon, children }: any) {
       </button>
 
       {open && expended && (
-        <ul className="ml-6 mt-1 space-y-1 border-l border-blue-700/50 pl-2 animate-in fade-in slide-in-from-left-2 duration-300">
+        <ul className="ml-6 mt-1 space-y-1 border-l border-emerald-800/50 pl-2 animate-in fade-in slide-in-from-left-2 duration-300">
           {children}
         </ul>
       )}

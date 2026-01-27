@@ -86,6 +86,16 @@ module.exports = async () => {
     { resource: "sourceDeFinancement", action: "update" },
     { resource: "sourceDeFinancement", action: "delete" },
 
+    { resource: "document", action: "read" },
+    { resource: "document", action: "create" },
+    { resource: "document", action: "update" },
+    { resource: "document", action: "delete" },
+
+    { resource: "documentType", action: "read" },
+    { resource: "documentType", action: "create" },
+    { resource: "documentType", action: "update" },
+    { resource: "documentType", action: "delete" },
+
     { resource: "historique", action: "read" },
   ];
 

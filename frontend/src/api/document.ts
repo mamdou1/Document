@@ -16,7 +16,7 @@ export const createDocument = async (
 ): Promise<Document> => {
   console.log("📤 createDocument:", payload);
   const response = await api.post("/documents", payload);
-  return response.data.document || response.data;
+  return response.data;
 };
 
 export const updateDocument = async (

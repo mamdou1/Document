@@ -10,9 +10,7 @@ export const uploadDocumentFile = async (
 
   console.log("📤 upload file", { documentId, fieldId });
 
-  const response = await api.post(`/uploads/${documentId}/${fieldId}`, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const response = await api.post(`/uploads/${documentId}/${fieldId}`, form);
 
   return response.data;
 };

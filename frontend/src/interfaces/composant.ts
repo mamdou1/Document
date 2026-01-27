@@ -14,4 +14,10 @@ export interface SidebarItems {
 
 export interface SidebarContextType {
   expended: boolean;
+  treeOpen: { [key: string]: boolean };
+  toggleTree: (label: string) => void;
 }
+
+// export interface SidebarContextType {
+//   expended: boolean;
+// }

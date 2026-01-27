@@ -194,7 +194,7 @@ export default function AppRouter() {
         }
       />
       <Route
-        path="/documentType"
+        path="/dossierType"
         element={
           <PrivateRoute>
             <DocumentTypePage />

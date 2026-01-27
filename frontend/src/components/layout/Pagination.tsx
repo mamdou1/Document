@@ -87,7 +87,7 @@ export default function Pagination({
       <button
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 transition"
+        className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-40 transition"
       >
         Précédent
       </button>
@@ -112,7 +112,7 @@ export default function Pagination({
           onClick={() => onPageChange(page)}
           className={`px-3 py-2 rounded-lg transition ${
             currentPage === page
-              ? "bg-blue-600 text-white"
+              ? "bg-emerald-600 text-white"
               : "bg-white border text-gray-700 hover:bg-blue-100"
           }`}
         >
@@ -138,7 +138,7 @@ export default function Pagination({
       <button
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 transition"
+        className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-40 transition"
       >
         Suivant
       </button>

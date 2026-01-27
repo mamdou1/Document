@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       path: DataTypes.STRING,
       size: DataTypes.INTEGER,
       mimetype: DataTypes.STRING,
+      document_id: { type: DataTypes.INTEGER, allowNull: false },
     },
     { tableName: "document_files", timestamps: true, underscored: true },
   );
@@ -13,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
   DocumentFile.associate = (models) => {
     DocumentFile.belongsTo(models.DocumentValue, {
       foreignKey: "document_value_id",
+    });
+
+    DocumentFile.belongsTo(models.Document, {
+      foreignKey: "document_id",
     });
   };
 

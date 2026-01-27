@@ -1,5 +1,5 @@
 import { Dialog } from "primereact/dialog";
-import { FileText, Tag, Hash, Calendar } from "lucide-react";
+import { FileText, Tag } from "lucide-react";
 import { Button } from "primereact/button";
 
 export default function DocumentDetails({ visible, onHide, doc }: any) {
@@ -8,63 +8,78 @@ export default function DocumentDetails({ visible, onHide, doc }: any) {
   return (
     <Dialog
       header={
-        <div className="flex items-center gap-2 text-blue-900">
-          <FileText size={20} />
-          <span className="font-bold">Consultation Document</span>
+        <div className="flex items-center gap-3 text-emerald-950">
+          <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+            <FileText size={18} />
+          </div>
+          <span className="font-black tracking-tight">
+            Consultation Document
+          </span>
         </div>
       }
       visible={visible}
-      style={{ width: "500px" }}
+      style={{ width: "450px" }}
       onHide={onHide}
+      className="custom-dialog overflow-hidden"
       footer={
-        <div className="flex justify-end p-2">
+        <div className="flex justify-end p-4 bg-emerald-50/50">
           <Button
-            label="Fermer"
+            label="Fermer la vue"
             onClick={onHide}
-            className="px-6 py-2 bg-slate-100 text-slate-700 border-none rounded-xl font-semibold hover:bg-slate-200"
+            className="px-8 py-2.5 bg-white text-emerald-700 border border-emerald-200 rounded-xl font-bold hover:bg-emerald-100 transition-all"
           />
         </div>
       }
     >
-      <div className="space-y-6 pt-2">
-        {/* En-tête du document */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl shadow-lg">
-          <div className="flex justify-between items-start">
+      <div className="space-y-6 pt-4">
+        {/* Banner Référence */}
+        <div className="bg-emerald-950 p-6 rounded-3xl shadow-xl shadow-emerald-900/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 bg-emerald-800/20 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+          <div className="relative z-10 flex justify-between items-end">
             <div>
-              <span className="text-slate-400 text-[10px] uppercase font-black tracking-widest">
-                Référence
-              </span>
-              <h2 className="text-2xl font-black text-white">
+              <p className="text-emerald-400 text-[10px] uppercase font-black tracking-widest mb-1">
+                ID Archive
+              </p>
+              <h2 className="text-3xl font-black text-white">
                 #{String(doc.id).padStart(4, "0")}
               </h2>
             </div>
-            <div className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-lg text-xs font-bold border border-blue-500/30">
-              {doc.typeDocument?.nom}
+            <div className="bg-emerald-500 text-white px-4 py-1.5 rounded-xl text-xs font-black">
+              {doc.typeDocument?.nom || "Non classé"}
             </div>
           </div>
         </div>
 
-        {/* Liste des valeurs métadonnées */}
         <div className="space-y-3">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-            Attributs du document
-          </h3>
-          <div className="grid grid-cols-1 gap-2">
+          <p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest ml-1">
+            Métadonnées indexées
+          </p>
+          <div className="grid grid-cols-1 gap-3">
             {doc.values?.map((v: any) => (
               <div
                 key={v.id}
-                className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-blue-50 transition-colors group"
+                className="flex items-center justify-between p-4 bg-white border border-emerald-50 rounded-2xl shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm text-blue-500 group-hover:scale-110 transition-transform">
-                    <Tag size={16} />
+                  <div className="p-2 bg-emerald-50 rounded-lg text-emerald-500">
+                    <Tag size={14} />
                   </div>
-                  <span className="text-sm font-bold text-slate-600">
-                    {v.metaField.label}
+                  <span className="text-xs font-bold text-emerald-700">
+                    {v.metaField?.label}
                   </span>
                 </div>
-                <span className="text-sm font-black text-blue-900">
-                  {v.value}
+                <span className="text-sm font-black text-emerald-950">
+                  {v.metaField?.field_type === "file" ? (
+                    <a
+                      href={v.value}
+                      target="_blank"
+                      className="text-emerald-600 hover:underline"
+                    >
+                      Ouvrir
+                    </a>
+                  ) : (
+                    v.value || "-"
+                  )}
                 </span>
               </div>
             ))}

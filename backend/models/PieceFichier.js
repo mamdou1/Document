@@ -1,48 +1,3 @@
-// module.exports = (sequelize, DataTypes) => {
-//   const PieceFichier = sequelize.define(
-//     "PieceFichier",
-//     {
-//       id: {
-//         type: DataTypes.INTEGER,
-//         primaryKey: true,
-//         autoIncrement: true,
-//       },
-//       fichier: {
-//         type: DataTypes.STRING,
-//         allowNull: false,
-//       },
-//       type_piece_id: {
-//         type: DataTypes.INTEGER,
-//         allowNull: false,
-//       },
-//       // type_id: {
-//       //   type: DataTypes.INTEGER,
-//       //   allowNull: false,
-//       // },
-//       // piece_id: {
-//       //   type: DataTypes.INTEGER,
-//       //   allowNull: false,
-//       // },
-//       // original_name: {
-//       //   type: DataTypes.STRING,
-//       // },
-//     },
-//     {
-//       tableName: "piece_fichiers",
-//       timestamps: true,
-//       underscored: true,
-//     }
-//   );
-
-//   PieceFichier.associate = (models) => {
-//     // PieceFichier.belongsTo(models.Type, { foreignKey: "type_id" });
-//     // PieceFichier.belongsTo(models.Pieces, { foreignKey: "piece_id" });
-//     PieceFichier.belongsTo(models.TypePieces, { foreignKey: "type_piece_id" });
-//   };
-
-//   return PieceFichier;
-// };
-
 module.exports = (sequelize, DataTypes) => {
   const PiecesFichier = sequelize.define(
     "pieces_fichiers",
@@ -57,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "pieces_fichiers",
       timestamps: true,
       underscored: true,
-    }
+    },
   );
 
   PiecesFichier.associate = (models) => {

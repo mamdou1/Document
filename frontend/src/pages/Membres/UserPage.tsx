@@ -164,7 +164,7 @@ export default function UserPage() {
 
   const paginatedUser = sortedUsers.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   return (
