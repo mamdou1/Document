@@ -222,15 +222,15 @@ export default function UserForm({
   const labelClass =
     "flex items-center gap-2 text-sm font-bold text-slate-700 mb-2";
   const inputClass =
-    "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-blue-900 font-medium";
+    "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none text-emerald-900 font-medium";
   const iconStyle =
-    "text-slate-400 group-focus-within:text-blue-500 transition-colors";
+    "text-slate-400 group-focus-within:text-emerald-500 transition-colors";
 
   return (
     <Dialog
       header={
-        <div className="flex items-center gap-2 text-blue-900 font-bold">
-          <UserPlus size={20} className="text-blue-500" />
+        <div className="flex items-center gap-2 text-emerald-900 font-bold">
+          <UserPlus size={20} className="text-emerald-500" />
           <span>{title}</span>
         </div>
       }
@@ -331,13 +331,13 @@ export default function UserForm({
 
           <div>
             <label className={labelClass}>Photo de profil</label>
-            <div className="flex items-center gap-3 p-4 bg-blue-50/50 border-2 border-dashed border-blue-200 rounded-xl">
-              <Camera className="text-blue-500" size={24} />
+            <div className="flex items-center gap-3 p-4 bg-emerald-50/50 border-2 border-dashed border-emerald-200 rounded-xl">
+              <Camera className="text-emerald-500" size={24} />
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-500 file:text-white cursor-pointer"
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-white cursor-pointer"
               />
             </div>
           </div>
@@ -345,13 +345,13 @@ export default function UserForm({
 
         {/* Colonne Droite: Affectation */}
         <div className="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-          <h3 className="text-xs font-black uppercase text-blue-500 tracking-widest border-b border-blue-100 pb-2">
+          <h3 className="text-xs font-black uppercase text-emerald-500 tracking-widest border-b border-emerald-100 pb-2">
             Affectation
           </h3>
 
           <div>
             <label className={labelClass}>
-              <Building2 size={14} className="text-blue-500" /> {titreUn}
+              <Building2 size={14} className="text-emerald-500" /> {titreUn}
             </label>
             <Dropdown
               value={entitee_un_id}
@@ -411,7 +411,7 @@ export default function UserForm({
               optionValue="id"
               onChange={(e) => setFonctionId(Number(e.value))}
               placeholder="Attribuer une fonction"
-              className="w-full rounded-xl border-blue-500 border-2"
+              className="w-full rounded-xl border-emerald-500 border-2"
               disabled={!entitee_un_id}
               filter
             />
@@ -430,7 +430,7 @@ export default function UserForm({
             type="submit"
             label="Enregistrer l'agent"
             icon={<Save size={18} className="mr-2" />}
-            className="bg-blue-600 text-white font-bold px-10 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all"
+            className="bg-emerald-600 text-white font-bold px-10 py-3 rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all"
           />
         </div>
       </form>

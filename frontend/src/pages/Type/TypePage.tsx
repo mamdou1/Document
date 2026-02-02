@@ -167,7 +167,7 @@ export default function TypePage() {
       {/* Header avec Statistiques simples */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="bg-blue-800 p-3 rounded-2xl text-white shadow-lg shadow-blue-100">
+          <div className="bg-emerald-800 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
             <FolderTree size={28} />
           </div>
           <div>
@@ -182,7 +182,7 @@ export default function TypePage() {
         <Button
           label="Nouveau type"
           icon={<Plus size={20} className="mr-2" />}
-          className="bg-blue-700 hover:bg-blue-800 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all"
+          className="bg-emerald-700 hover:bg-emerald-800 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all"
           onClick={() => {
             setSelected(null);
             setFormVisible(true);
@@ -194,11 +194,11 @@ export default function TypePage() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <div className="relative group max-w-md">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors"
             size={20}
           />
           <input
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-600/10 transition-all outline-none border focus:border-blue-400"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-600/10 transition-all outline-none border focus:border-emerald-400"
             placeholder="Rechercher un type ou un code..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -225,9 +225,9 @@ export default function TypePage() {
                   setSelected(n);
                   setDetailsVisible(true);
                 }}
-                className="cursor-pointer hover:bg-blue-50/30 transition-all group"
+                className="cursor-pointer hover:bg-emerald-50/30 transition-all group"
               >
-                <td className="px-6 py-4 font-mono text-sm font-bold text-blue-700">
+                <td className="px-6 py-4 font-mono text-sm font-bold text-emerald-700">
                   {n.codeType}
                 </td>
                 <td className="px-6 py-4 font-semibold text-slate-700">
@@ -235,7 +235,7 @@ export default function TypePage() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold">
                       {n.pieces?.length || 0}
                     </span>
                     <span className="text-xs text-slate-400 font-medium italic truncate max-w-[200px]">
@@ -262,7 +262,7 @@ export default function TypePage() {
                         setSelected(n);
                         setDetailsVisible(true);
                       }}
-                      className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors"
                     >
                       <Eye size={18} />
                     </button>

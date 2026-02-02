@@ -49,7 +49,7 @@ export default function TypeForm({
     <Dialog
       header={
         <div className="flex items-center gap-2 text-slate-800">
-          <LayoutGrid className="text-blue-600" size={20} />{" "}
+          <LayoutGrid className="text-emerald-600" size={20} />{" "}
           <span>{title}</span>
         </div>
       }
@@ -67,7 +67,7 @@ export default function TypeForm({
           <InputText
             value={codeType}
             onChange={(e) => setCodeType(e.target.value)}
-            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
             placeholder="Ex: DOS-PERSO"
           />
         </div>
@@ -79,7 +79,7 @@ export default function TypeForm({
           <InputText
             value={nom}
             onChange={(e) => setNom(e.target.value)}
-            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
             placeholder="Ex: Frais de déplacement"
           />
         </div>
@@ -95,7 +95,7 @@ export default function TypeForm({
             icon={<Save size={18} className="mr-2" />}
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-blue-700 text-white font-bold px-6 py-3 rounded-xl border-none shadow-lg shadow-blue-200"
+            className="bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl border-none shadow-lg shadow-emerald-200"
           />
         </div>
       </div>

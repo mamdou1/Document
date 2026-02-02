@@ -18,5 +18,10 @@ module.exports = (sequelize, DataTypes) => {
     },
   );
 
+  Salle.associate = (models) => {
+    // Une salle contient plusieurs étagères
+    Salle.hasMany(models.Etagere, { foreignKey: "salle_id", as: "etageres" });
+  };
+
   return Salle;
 };

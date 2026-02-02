@@ -118,6 +118,17 @@ export interface Pieces {
   libelle: string;
   division_id: number;
   division: Division;
+
+  entitee_un_id?: number[];
+  entitee_deux_id?: number[];
+  entitee_trois_id?: number[];
+
+  entites_un?: EntiteeUn[];
+  entites_deux?: EntiteeDeux[];
+  entites_trois?: EntiteeTrois[];
+
+  entitee_cible_id: number;
+
   LiquidationPieces?: {
     disponible: boolean;
   };
@@ -318,25 +329,73 @@ export interface SourceDeFinancement {
 
 //---------------------DOcument et genration de champs----------------------------------
 
+// export interface TypeDocument {
+//   id: number;
+//   code: string;
+//   nom: string;
+//   division_id?: number; // Ajoutez le '?' pour le rendre optionnel
+//   division?: {
+//     id: number;
+//     libelle: string;
+//   } | null;
+
+//   entitee_un_id?: number;
+//   entitee_deux_id?: number;
+//   entitee_trois_id?: number;
+//   entitee_un: EntiteeUn;
+//   entitee_deux: EntiteeDeux;
+//   entitee_trois: EntiteeTrois;
+
+//   structure_libelle: string;
+
+//   metaFields?: MetaField[];
+//   pieces: TypeDocumentPiece[];
+//   createdAt?: string;
+//   updatedAt?: string;
+// }
+
+// export interface CreateTypeDocumentPayload {
+//   code: string;
+//   nom: string;
+//   division_id: number;
+//   entitee_un_id?: number;
+//   entitee_deux_id?: number;
+//   entitee_trois_id?: number;
+// }
+
 export interface TypeDocument {
   id: number;
   code: string;
   nom: string;
-  division_id?: number; // Ajoutez le '?' pour le rendre optionnel
-  division?: {
-    id: number;
-    libelle: string;
-  } | null;
+
+  // IDs (pour les formulaires)
+  division_id?: number | null;
+  entitee_un_id?: number[];
+  entitee_deux_id?: number[];
+  entitee_trois_id?: number[];
+
+  // Objets joints (pour l'affichage) - on les rend optionnels car ils viennent du "include"
+  entites_un?: EntiteeUn[];
+  entites_deux?: EntiteeDeux[];
+  entites_trois?: EntiteeTrois[];
+
+  // Champs calculés par le backend (getAll)
+  structure_libelle?: string;
+  structure_niveau?: string;
+
   metaFields?: MetaField[];
-  pieces: TypeDocumentPiece[];
+  pieces?: TypeDocumentPiece[]; // Rendu optionnel pour éviter les erreurs si non inclus
   createdAt?: string;
   updatedAt?: string;
 }
 
+// Pour la création, on rend tout optionnel sauf code et nom
 export interface CreateTypeDocumentPayload {
   code: string;
   nom: string;
-  division_id: number;
+  entitee_un_id?: number | null;
+  entitee_deux_id?: number | null;
+  entitee_trois_id?: number | null;
 }
 
 export type MetaFieldType =
@@ -405,8 +464,9 @@ export interface Etagere {
   id?: string;
   code_etagere: string;
   libelle: string;
-  box: Box;
-  box_id: number;
+  salle_id: string; // Foreign Key vers Salle
+  salle?: Salle;
+  boxes?: Box[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -415,6 +475,11 @@ export interface Box {
   id?: string;
   code_box: string;
   libelle: string;
+  capacite_max: string;
+  current_count: string;
+  etagere_id: string; // Foreign Key vers Salle
+  etagere?: Etagere;
+  type_document_id: string;
   document: Document;
   document_id: number;
   createdAt?: string;
@@ -430,8 +495,8 @@ export interface TypeDocumentPiece {
 }
 
 export interface CreateTypeDocumentPayload {
-  codeType: string;
-  nom: string;
+  // codeType: string;
+  // nom: string;
 }
 
 export interface AddPieceToTypeDocument {

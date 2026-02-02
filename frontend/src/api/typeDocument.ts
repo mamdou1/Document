@@ -5,19 +5,27 @@ import type {
   AddPiecesToTypeDocumentPayload,
 } from "../interfaces";
 
-export const getTypeDocuments = async (): Promise<{
-  typeDocument: TypeDocument[];
-}> => {
-  const response = await api.get("/types-documents");
-  return response.data;
-};
+// export const getTypeDocuments = async (): Promise<{
+//   typeDocument: TypeDocument[];
+// }> => {
+//   const response = await api.get("/types-documents");
+//   return response.data;
+// };
 
-export const getTypeDocumentById = async (
-  id: string,
-): Promise<TypeDocument> => {
-  const response = await api.get(`/types-documents/${id}`);
-  return response.data.type || response.data;
-};
+// export const getTypeDocumentById = async (
+//   id: string,
+// ): Promise<TypeDocument> => {
+//   const response = await api.get(`/types-documents/${id}`);
+//   return response.data.type || response.data;
+// };
+
+// export const updateTypeDocument = async (
+//   id: string,
+//   payload: Partial<TypeDocument>,
+// ): Promise<TypeDocument> => {
+//   const response = await api.put(`/types-documents/${id}`, payload);
+//   return response.data.type || response.data;
+// };
 
 export const createTypeDocument = async (
   payload: CreateTypeDocumentPayload,
@@ -27,12 +35,29 @@ export const createTypeDocument = async (
   return response.data.type || response.data;
 };
 
+export const getTypeDocuments = async (): Promise<{
+  typeDocument: TypeDocument[];
+}> => {
+  const response = await api.get("/types-documents");
+  // On s'assure de renvoyer la structure attendue par le state React
+  return response.data;
+};
+
+export const getTypeDocumentById = async (
+  id: string,
+): Promise<TypeDocument> => {
+  const response = await api.get(`/types-documents/${id}`);
+  // Gestion du nesting : vérifie si c'est dans .type ou à la racine
+  return response.data.type || response.data;
+};
+
 export const updateTypeDocument = async (
   id: string,
-  payload: Partial<TypeDocument>,
-): Promise<TypeDocument> => {
+  payload: Partial<TypeDocument>, // Utilise Partial pour permettre de n'envoyer que certains champs
+): Promise<any> => {
+  console.log("📤 createTypeDocument:", payload);
   const response = await api.put(`/types-documents/${id}`, payload);
-  return response.data.type || response.data;
+  return response.data;
 };
 
 export const deleteTypeDocument = async (id: string): Promise<void> => {

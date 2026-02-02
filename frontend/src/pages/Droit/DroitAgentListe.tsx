@@ -39,7 +39,7 @@ export default function DroitAgentListe({ agents }: Props) {
         <input
           type="text"
           placeholder="Rechercher une permission..."
-          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -69,10 +69,10 @@ export default function DroitAgentListe({ agents }: Props) {
             {paginated.map((ag, index) => (
               <tr
                 key={ag.id}
-                className="group hover:bg-indigo-50/30 transition-colors"
+                className="group hover:bg-emerald-50/30 transition-colors"
               >
                 <td className="p-3">
-                  <span className="text-xs font-bold text-slate-400 group-hover:text-indigo-500">
+                  <span className="text-xs font-bold text-slate-400 group-hover:text-emerald-500">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </td>
@@ -80,9 +80,9 @@ export default function DroitAgentListe({ agents }: Props) {
                   <div className="flex items-center gap-2">
                     <UserIcon
                       size={14}
-                      className="text-slate-300 group-hover:text-indigo-400"
+                      className="text-slate-300 group-hover:text-emerald-400"
                     />
-                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase">
                       {ag.nom}
                     </span>
                   </div>

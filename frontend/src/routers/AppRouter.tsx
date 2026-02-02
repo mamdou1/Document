@@ -26,6 +26,9 @@ import ConfigurationStructure from "../pages/Organigrame/ConfigurationStructure"
 import EntiteeUnPage from "../pages/Organigrame/EntiteeUn/EntiteeUnPage";
 import EntiteeDeuxPage from "../pages/Organigrame/EntiteeDeux/EntiteeDeuxPage";
 import EntiteeTroisPage from "../pages/Organigrame/EntiteeTrois/EntiteeTroisPage";
+import BoxPage from "../pages/Box/BoxPage";
+import EtagerePage from "../pages/Etagere/EtagerePage";
+import SallePage from "../pages/Salle/SallePage";
 
 // 🔥FIX ICI🔥
 const PrivateRoute: React.FC<{ children: ReactElement }> = ({ children }) => {
@@ -234,6 +237,30 @@ export default function AppRouter() {
         element={
           <PrivateRoute>
             <EntiteeTroisPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/box"
+        element={
+          <PrivateRoute>
+            <BoxPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/etagere"
+        element={
+          <PrivateRoute>
+            <EtagerePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/salle"
+        element={
+          <PrivateRoute>
+            <SallePage />
           </PrivateRoute>
         }
       />

@@ -1,9 +1,24 @@
+import { useState } from "react";
 import { Dialog } from "primereact/dialog";
-import { FileText, Tag } from "lucide-react";
+import { FileText, Tag, Box, ArrowLeft } from "lucide-react";
 import { Button } from "primereact/button";
+import AddToBoxForm from "../Box/AddToBoxForm";
 
-export default function DocumentDetails({ visible, onHide, doc }: any) {
+export default function DocumentDetails({
+  visible,
+  onHide,
+  doc,
+  onRefresh,
+}: any) {
+  const [showArchiveForm, setShowArchiveForm] = useState(false);
+
   if (!doc) return null;
+
+  // Réinitialiser l'état quand on ferme la modale
+  const handleClose = () => {
+    setShowArchiveForm(false);
+    onHide();
+  };
 
   return (
     <Dialog
@@ -19,13 +34,13 @@ export default function DocumentDetails({ visible, onHide, doc }: any) {
       }
       visible={visible}
       style={{ width: "450px" }}
-      onHide={onHide}
+      onHide={handleClose}
       className="custom-dialog overflow-hidden"
       footer={
         <div className="flex justify-end p-4 bg-emerald-50/50">
           <Button
             label="Fermer la vue"
-            onClick={onHide}
+            onClick={handleClose}
             className="px-8 py-2.5 bg-white text-emerald-700 border border-emerald-200 rounded-xl font-bold hover:bg-emerald-100 transition-all"
           />
         </div>
@@ -50,11 +65,42 @@ export default function DocumentDetails({ visible, onHide, doc }: any) {
           </div>
         </div>
 
+        {/* SECTION ARCHIVAGE DYNAMIQUE */}
+        <div className="border-t border-b border-emerald-50 py-4">
+          {!showArchiveForm ? (
+            <button
+              onClick={() => setShowArchiveForm(true)}
+              className="w-full flex items-center justify-center gap-3 p-4 bg-emerald-50 text-emerald-700 rounded-2xl font-black hover:bg-emerald-100 transition-all border-2 border-dashed border-emerald-200"
+            >
+              <Box size={20} />
+              Archiver dans un Box
+            </button>
+          ) : (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              <button
+                onClick={() => setShowArchiveForm(false)}
+                className="flex items-center gap-2 text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline"
+              >
+                <ArrowLeft size={12} /> Annuler l'archivage
+              </button>
+              <AddToBoxForm
+                documentId={doc.id}
+                typeDocumentId={doc.type_document_id}
+                onSuccess={() => {
+                  setShowArchiveForm(false);
+                  if (onRefresh) onRefresh();
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Métadonnées */}
         <div className="space-y-3">
           <p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest ml-1">
             Métadonnées indexées
           </p>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-2">
             {doc.values?.map((v: any) => (
               <div
                 key={v.id}
@@ -73,6 +119,7 @@ export default function DocumentDetails({ visible, onHide, doc }: any) {
                     <a
                       href={v.value}
                       target="_blank"
+                      rel="noreferrer"
                       className="text-emerald-600 hover:underline"
                     >
                       Ouvrir

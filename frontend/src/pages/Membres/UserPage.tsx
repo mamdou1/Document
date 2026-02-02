@@ -175,12 +175,12 @@ export default function UserPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="bg-blue-800 p-3 rounded-2xl text-white shadow-lg shadow-blue-100">
+            <div className="bg-emerald-800 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
               <Users size={24} />
             </div>
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                Gestion des <span className="text-blue-600">Agent</span>
+                Gestion des <span className="text-emerald-600">Agent</span>
               </h1>
             </div>
           </div>
@@ -194,7 +194,7 @@ export default function UserPage() {
 
         {user?.role === "ADMIN" && (
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white border-none px-6 py-3 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95"
             onClick={() => {
               setEditing(null);
               setFormVisible(true);
@@ -210,11 +210,11 @@ export default function UserPage() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[300px] relative group">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
             size={18}
           />
           <InputText
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 transition-all"
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un nom, téléphone..."
             value={query}
@@ -257,7 +257,7 @@ export default function UserPage() {
                 Num matricule
               </th>
               <th
-                className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-emerald-600 transition-colors"
                 onClick={() => {
                   setChampDeTrie("prenom");
                   setOrdreDeTrie(OrdreDeTrie === "asc" ? "desc" : "asc");
@@ -268,7 +268,7 @@ export default function UserPage() {
                 </div>
               </th>
               <th
-                className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-colors"
+                className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-emerald-600 transition-colors"
                 onClick={() => {
                   setChampDeTrie("nom");
                   setOrdreDeTrie(OrdreDeTrie === "asc" ? "desc" : "asc");
@@ -297,7 +297,7 @@ export default function UserPage() {
                   setSelectedUser(u);
                   setDetailsUser(true);
                 }}
-                className="cursor-pointer hover:bg-blue-50/30 transition-all group"
+                className="cursor-pointer hover:bg-emerald-50/30 transition-all group"
               >
                 <td className="px-6 py-4 flex justify-center">
                   <div className="relative">
@@ -308,7 +308,7 @@ export default function UserPage() {
                         className="w-12 h-12 rounded-xl object-cover ring-2 ring-white shadow-sm"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-800">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800">
                         <Users size={20} />
                       </div>
                     )}
@@ -341,7 +341,7 @@ export default function UserPage() {
                         setSelectedUser(u);
                         setDetailsUser(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                       title="Voir détails"
                     >
                       <Eye size={18} />
@@ -385,7 +385,7 @@ export default function UserPage() {
         </table>
 
         {loading && (
-          <div className="p-12 text-center text-blue-500 font-bold animate-pulse">
+          <div className="p-12 text-center text-emerald-500 font-bold animate-pulse">
             Chargement des données...
           </div>
         )}

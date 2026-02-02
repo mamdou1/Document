@@ -24,6 +24,9 @@ import {
   History,
   Database,
   Pyramid,
+  Archive,
+  Warehouse,
+  WavesLadder,
 } from "lucide-react";
 
 import logo from "../../assets/logoArchi.png";
@@ -190,14 +193,14 @@ export default function Sidebar({ children }: SidebarProps) {
                 can("documentType", "read") ||
                 can("document", "read")) && (
                 <SidebarTree label="Gestion" icon={FolderPen}>
-                  {can("type", "read") && (
+                  {/* {can("type", "read") && (
                     <SidebarLink
                       icon={ArrowBigDown}
                       text="Type de dossier"
                       to="/type"
                       active={location.pathname.startsWith("/type")}
                     />
-                  )}
+                  )} */}
                   {can("pieces", "read") && (
                     <SidebarLink
                       icon={FolderPen}
@@ -232,7 +235,7 @@ export default function Sidebar({ children }: SidebarProps) {
                 can("nature", "read") ||
                 can("fournisseur", "read") ||
                 can("serviceBeneficiaire", "read")) && (
-                <SidebarTree label="Paramétrage" icon={Layers}>
+                <SidebarTree label="Archivage" icon={Layers}>
                   {/* {can("exercice", "read") && (
                     <SidebarLink
                       icon={Boxes}
@@ -293,6 +296,30 @@ export default function Sidebar({ children }: SidebarProps) {
                       )}
                     />
                   )} */}
+                  {can("pieces", "read") && (
+                    <SidebarLink
+                      icon={Archive}
+                      text="Box"
+                      to="/box"
+                      active={location.pathname.startsWith("/box")}
+                    />
+                  )}
+                  {can("documentType", "read") && (
+                    <SidebarLink
+                      icon={WavesLadder}
+                      text="Etagère"
+                      to="/etagere"
+                      active={location.pathname.startsWith("/etagere")}
+                    />
+                  )}
+                  {can("document", "read") && (
+                    <SidebarLink
+                      icon={Warehouse}
+                      text="Salle"
+                      to="/salle"
+                      active={location.pathname.startsWith("/salle")}
+                    />
+                  )}
                 </SidebarTree>
               )}
 

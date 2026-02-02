@@ -62,7 +62,7 @@ export default function DroitPermissionListe({
         <input
           type="text"
           placeholder="Rechercher une permission..."
-          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -94,7 +94,7 @@ export default function DroitPermissionListe({
             {paginated.map((perm, index) => (
               <tr
                 key={perm.id}
-                className="group hover:bg-indigo-50/30 transition-colors"
+                className="group hover:bg-emerald-50/30 transition-colors"
               >
                 <td className="p-3 text-xs font-bold text-slate-400">
                   {String(
@@ -102,7 +102,7 @@ export default function DroitPermissionListe({
                   ).padStart(2, "0")}
                 </td>
                 <td className="p-3">
-                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
                     {perm.action.toUpperCase()}
                   </span>
                 </td>

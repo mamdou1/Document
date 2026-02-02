@@ -4,7 +4,6 @@ const {
   MetaField,
   DocumentFile,
   TypeDocument,
-  Division,
   TypeDocumentPieces,
   DocumentFichier,
   DocumentPieces,
@@ -118,22 +117,11 @@ exports.getAll = async (req, res) => {
           model: Pieces,
           as: "pieces",
           attributes: ["id", "libelle", "code_pieces"],
-          //through: { attributes: ["disponible"] },
-          include: [
-            {
-              model: Division,
-              as: "division",
-              attributes: ["id", "libelle"],
-            },
-          ],
         },
         {
           model: TypeDocument,
           as: "typeDocument",
-          include: [
-            { model: MetaField, as: "metaFields" },
-            { model: Division, as: "division", attributes: ["id", "libelle"] },
-          ],
+          include: [{ model: MetaField, as: "metaFields" }],
         },
         {
           model: DocumentValue,

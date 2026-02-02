@@ -77,8 +77,8 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
     <Dialog
       header={
         <div className="flex items-center gap-2 text-slate-800 font-bold">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <Info size={18} className="text-blue-600" />
+          <div className="bg-emerald-100 p-2 rounded-lg">
+            <Info size={18} className="text-emerald-600" />
           </div>
           <span>Détails du Type de Dossier</span>
         </div>
@@ -100,7 +100,7 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
       <div className="pt-2 space-y-6">
         {/* Header */}
         <div className="border-b border-slate-100 pb-4">
-          <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
             / Configuration / Type
           </p>
           <div className="flex justify-between items-center">
@@ -121,7 +121,7 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
             </p>
             <Button
               onClick={() => setFormPiecesVisible(true)}
-              className="flex items-center gap-2 px-3 py-2 text-blue-600 font-bold bg-blue-50 hover:text-white hover:bg-blue-500 rounded-lg transition-all border-none"
+              className="flex items-center gap-2 px-3 py-2 text-emerald-600 font-bold bg-emerald-50 hover:text-white hover:bg-emerald-500 rounded-lg transition-all border-none"
             >
               <PlusCircle size={15} />
               <span className="text-xs">Ajouter</span>
@@ -148,7 +148,7 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
                   {piecesSansDivision.map((item, index) => (
                     <tr
                       key={index}
-                      className="group hover:bg-blue-50/30 transition-colors"
+                      className="group hover:bg-emerald-50/30 transition-colors"
                     >
                       <td className="p-3 text-xs font-bold text-slate-400">
                         {String(index + 1).padStart(2, "0")}
@@ -192,16 +192,16 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
                 >
                   <button
                     onClick={() => toggleDivision(libelle)}
-                    className={`w-full flex items-center justify-between p-4 transition-all ${expandedDivision === libelle ? "bg-blue-50/50" : "hover:bg-slate-50"}`}
+                    className={`w-full flex items-center justify-between p-4 transition-all ${expandedDivision === libelle ? "bg-emerald-50/50" : "hover:bg-slate-50"}`}
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-2 rounded-lg ${expandedDivision === libelle ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-500"}`}
+                        className={`p-2 rounded-lg ${expandedDivision === libelle ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}`}
                       >
                         <Layers size={16} />
                       </div>
                       <span
-                        className={`font-bold text-sm ${expandedDivision === libelle ? "text-blue-700" : "text-slate-700"}`}
+                        className={`font-bold text-sm ${expandedDivision === libelle ? "text-emerald-700" : "text-slate-700"}`}
                       >
                         {libelle}
                       </span>
@@ -210,7 +210,7 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
                       </span>
                     </div>
                     {expandedDivision === libelle ? (
-                      <ChevronDown size={18} className="text-blue-500" />
+                      <ChevronDown size={18} className="text-emerald-500" />
                     ) : (
                       <ChevronRight size={18} className="text-slate-400" />
                     )}
@@ -221,7 +221,7 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
                       {items.map((sec, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center gap-3 ml-8 p-2 text-sm text-slate-600 hover:text-blue-600 transition-colors"
+                          className="flex items-center gap-3 ml-8 p-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors"
                         >
                           <GitMerge size={14} className="text-slate-300" />
                           <span className="font-medium">{sec.libelle}</span>
@@ -245,11 +245,11 @@ export default function TypeDetails({ visible, onHide, type }: Props) {
         </div>
 
         {/* Note informative */}
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/50 border border-blue-100/50">
-          <div className="p-1.5 bg-blue-500 rounded-lg">
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
+          <div className="p-1.5 bg-emerald-500 rounded-lg">
             <Settings2 size={15} className="text-white" />
           </div>
-          <p className="text-[12px] text-blue-700 font-medium leading-tight">
+          <p className="text-[12px] text-emerald-700 font-medium leading-tight">
             Ces pièces seront systématiquement demandées pour le type{" "}
             <b>{type.nom}</b>.
           </p>

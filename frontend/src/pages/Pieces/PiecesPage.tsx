@@ -164,7 +164,7 @@ export default function PiecesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-lg shadow-indigo-100">
+          <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
             <FileStack size={28} />
           </div>
           <div>
@@ -179,7 +179,7 @@ export default function PiecesPage() {
         <Button
           label="Nouvelle pièce"
           icon={<Plus size={20} className="mr-2" />}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all shadow-indigo-200"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all shadow-emerald-200"
           onClick={() => {
             setEditing(null);
             setFormVisible(true);
@@ -191,11 +191,11 @@ export default function PiecesPage() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative group max-w-md w-full">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
             size={20}
           />
           <InputText
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
             placeholder="Rechercher..."
             value={query}
             onChange={(e) => {
@@ -220,7 +220,7 @@ export default function PiecesPage() {
             showClear={!!selectedDivision}
           />
           <div className="hidden lg:block text-sm text-slate-400 font-medium whitespace-nowrap">
-            <span className="text-indigo-600 font-bold">
+            <span className="text-emerald-600 font-bold">
               {filteredData.length}
             </span>{" "}
             résultats
@@ -235,7 +235,7 @@ export default function PiecesPage() {
             <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest">
               <th className="px-6 py-4">Code Référence</th>
               <th className="px-6 py-4">Désignation du type de pièce</th>
-              <th className="px-6 py-4">Division Parente</th>
+              <th className="px-6 py-4">Structure Producteur</th>
               <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -247,10 +247,10 @@ export default function PiecesPage() {
                   setSelected(n);
                   setDetailsVisible(true);
                 }}
-                className="cursor-pointer hover:bg-indigo-50/30 transition-all group"
+                className="cursor-pointer hover:bg-emerald-50/30 transition-all group"
               >
                 <td className="px-6 py-4">
-                  <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg font-mono font-bold text-xs border border-indigo-100">
+                  <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-mono font-bold text-xs border border-emerald-100">
                     {n.code_pieces}
                   </span>
                 </td>
@@ -258,15 +258,50 @@ export default function PiecesPage() {
                   <div className="flex items-center gap-2">
                     <FileText
                       size={16}
-                      className="text-slate-300 group-hover:text-indigo-400 transition-colors"
+                      className="text-slate-300 group-hover:text-emerald-400 transition-colors"
                     />
                     {n.libelle}
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="flex items-center gap-2 text-slate-500 italic font-bold text-sm">
-                    <Layers size={14} /> {n.division?.libelle || "N/A"}
-                  </span>
+                <td className="p-6 text-slate-600 font-medium">
+                  <div className="flex flex-wrap gap-1 max-w-[300px]">
+                    {/* Utilisation de listes nommées pour garantir des clés uniques */}
+                    {(n.entites_un?.length || 0) +
+                      (n.entites_deux?.length || 0) +
+                      (n.entites_trois?.length || 0) >
+                    0 ? (
+                      <>
+                        {n.entites_un?.map((ent: any) => (
+                          <span
+                            key={`n1-${ent.id}`}
+                            className="bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-blue-200"
+                          >
+                            {ent.libelle}
+                          </span>
+                        ))}
+                        {n.entites_deux?.map((ent: any) => (
+                          <span
+                            key={`n2-${ent.id}`}
+                            className="bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200"
+                          >
+                            {ent.libelle}
+                          </span>
+                        ))}
+                        {n.entites_trois?.map((ent: any) => (
+                          <span
+                            key={`n3-${ent.id}`}
+                            className="bg-amber-50 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-200"
+                          >
+                            {ent.libelle}
+                          </span>
+                        ))}
+                      </>
+                    ) : (
+                      <span className="text-slate-400 italic text-xs">
+                        Transversal (Tous)
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
@@ -275,7 +310,7 @@ export default function PiecesPage() {
                         setSelected(n);
                         setDetailsVisible(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                       title="Voir détails"
                     >
                       <Eye size={18} />
@@ -286,7 +321,7 @@ export default function PiecesPage() {
                         setFormVisible(true);
                         e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                       title="Modifier"
                     >
                       <Pencil size={18} />
@@ -308,7 +343,7 @@ export default function PiecesPage() {
         </table>
 
         {loading && (
-          <div className="p-12 text-center animate-pulse text-indigo-400 font-medium">
+          <div className="p-12 text-center animate-pulse text-emerald-400 font-medium">
             Chargement des données en cours...
           </div>
         )}

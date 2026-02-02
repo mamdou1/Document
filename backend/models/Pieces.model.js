@@ -59,17 +59,42 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "piece_id",
       as: "documentFichiers",
     });
-    Pieces.belongsTo(models.EntiteeUn, {
-      foreignKey: "entitee_un_id",
-      as: "entitee_un",
+    //   Pieces.belongsTo(models.EntiteeUn, {
+    //     foreignKey: "entitee_un_id",
+    //     as: "entitee_un",
+    //   });
+    //   Pieces.belongsTo(models.EntiteeDeux, {
+    //     foreignKey: "entitee_deux_id",
+    //     as: "entitee_deux",
+    //   });
+    //   Pieces.belongsTo(models.EntiteeTrois, {
+    //     foreignKey: "entitee_trois_id",
+    //     as: "entitee_trois",
+    //   });
+
+    // Remplace les belongsTo individuels par belongsToMany
+    // Relation avec Niveau 1 (Plusieurs à Plusieurs)
+    Pieces.belongsToMany(models.EntiteeUn, {
+      through: models.TypeDocumentEntiteUn,
+      foreignKey: "type_document_id",
+      otherKey: "entitee_un_id",
+      as: "entites_un",
     });
-    Pieces.belongsTo(models.EntiteeDeux, {
-      foreignKey: "entitee_deux_id",
-      as: "entitee_deux",
+
+    // Relation avec Niveau 2 (Plusieurs à Plusieurs)
+    Pieces.belongsToMany(models.EntiteeDeux, {
+      through: models.TypeDocumentEntiteDeux,
+      foreignKey: "type_document_id",
+      otherKey: "entitee_deux_id",
+      as: "entites_deux",
     });
-    Pieces.belongsTo(models.EntiteeTrois, {
-      foreignKey: "entitee_trois_id",
-      as: "entitee_trois",
+
+    // Relation avec Niveau 3 (Plusieurs à Plusieurs)
+    Pieces.belongsToMany(models.EntiteeTrois, {
+      through: models.TypeDocumentEntiteTrois,
+      foreignKey: "type_document_id",
+      otherKey: "entitee_trois_id",
+      as: "entites_trois",
     });
   };
 

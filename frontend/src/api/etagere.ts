@@ -27,6 +27,6 @@ export const deleteEtagere = async (id: string) => {
 };
 
 export const getBoxesByEtagere = async (etagereId: string) => {
-  const { data } = await api.get(`/etagere/${etagereId}/boxes`);
+  const { data } = await api.get(`/etagere/${etagereId}/box`);
   return data;
 };

@@ -9,6 +9,8 @@ import {
   ListChecks,
   Info,
   Layers,
+  GitMerge,
+  Building2,
 } from "lucide-react";
 import { Button } from "primereact/button";
 
@@ -83,16 +85,58 @@ export default function DocumentTypeDetails({ visible, onHide, type }: any) {
                 </span>
               </div>
 
-              {type.division?.libelle && (
-                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl flex items-center gap-3 border border-white/10 shadow-inner">
-                  <div className="p-1.5 bg-blue-400/20 rounded-lg">
-                    <Layers size={14} className="text-blue-300" />
+              {/* Remplacement de la division par la structure hiérarchique */}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {/* Affichage des Entités Niveau 1 */}
+                {type.entites_un?.map((e: any) => (
+                  <div
+                    key={e.id}
+                    className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2 border border-white/10 shadow-inner"
+                  >
+                    <Building2 size={12} className="text-emerald-300" />
+                    <span className="text-white text-[11px] font-bold uppercase tracking-tight">
+                      {e.libelle}
+                    </span>
                   </div>
-                  <span className="text-white text-sm font-bold">
-                    {type.division.libelle}
-                  </span>
-                </div>
-              )}
+                ))}
+
+                {/* Affichage des Entités Niveau 2 */}
+                {type.entites_deux?.map((e: any) => (
+                  <div
+                    key={e.id}
+                    className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2 border border-white/10 shadow-inner"
+                  >
+                    <Layers size={12} className="text-blue-300" />
+                    <span className="text-white text-[11px] font-bold uppercase tracking-tight">
+                      {e.libelle}
+                    </span>
+                  </div>
+                ))}
+
+                {/* Affichage des Entités Niveau 3 */}
+                {type.entites_trois?.map((e: any) => (
+                  <div
+                    key={e.id}
+                    className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2 border border-white/10 shadow-inner"
+                  >
+                    <GitMerge size={12} className="text-orange-300" />
+                    <span className="text-white text-[11px] font-bold uppercase tracking-tight">
+                      {e.libelle}
+                    </span>
+                  </div>
+                ))}
+
+                {/* Cas transversal */}
+                {!type.entites_un?.length &&
+                  !type.entites_deux?.length &&
+                  !type.entites_trois?.length && (
+                    <div className="bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5">
+                      <span className="text-white/60 text-[11px] font-bold uppercase tracking-widest italic">
+                        Document Transversal
+                      </span>
+                    </div>
+                  )}
+              </div>
             </div>
           </div>
         </div>

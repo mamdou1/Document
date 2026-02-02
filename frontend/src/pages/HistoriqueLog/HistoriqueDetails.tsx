@@ -57,7 +57,7 @@ const getMethodStyle = (method: string) => {
     case "DELETE":
       return "bg-red-500/20 text-red-200 border-red-500/30";
     default:
-      return "bg-blue-500/20 text-blue-200 border-blue-500/30";
+      return "bg-emerald-500/20 text-emerald-200 border-emerald-500/30";
   }
 };
 
@@ -75,17 +75,17 @@ export default function HistoriqueDetails({ visible, onHide, log }: Props) {
   const resourceFr = formatResource(log.resource);
 
   const InfoCard = ({ icon: Icon, label, value, colorClass }: any) => (
-    <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50/50 border border-blue-100 transition-all hover:bg-white hover:shadow-md group">
+    <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 transition-all hover:bg-white hover:shadow-md group">
       <div
         className={`p-2 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform ${colorClass}`}
       >
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-tighter mb-0.5">
+        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-tighter mb-0.5">
           {label}
         </p>
-        <p className="text-blue-900 font-bold text-sm leading-tight break-words">
+        <p className="text-emerald-900 font-bold text-sm leading-tight break-words">
           {value || "---"}
         </p>
       </div>
@@ -96,14 +96,14 @@ export default function HistoriqueDetails({ visible, onHide, log }: Props) {
     <Dialog
       header={
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-600 rounded-lg text-white">
+          <div className="p-2 bg-emerald-600 rounded-lg text-white">
             <Activity size={20} />
           </div>
           <div>
-            <h3 className="text-blue-900 font-bold leading-none">
+            <h3 className="text-emerald-900 font-bold leading-none">
               Journal d'Audit
             </h3>
-            <p className="text-[11px] text-blue-400 font-medium mt-1 uppercase tracking-widest italic">
+            <p className="text-[11px] text-emerald-400 font-medium mt-1 uppercase tracking-widest italic">
               Analyse de l'activité
             </p>
           </div>
@@ -119,14 +119,14 @@ export default function HistoriqueDetails({ visible, onHide, log }: Props) {
           <Button
             label="Fermer"
             onClick={onHide}
-            className="bg-blue-600 text-white font-bold px-8 py-2.5 rounded-xl hover:bg-blue-700 border-none transition-all text-sm shadow-lg shadow-blue-200"
+            className="bg-emerald-600 text-white font-bold px-8 py-2.5 rounded-xl hover:bg-emerald-700 border-none transition-all text-sm shadow-lg shadow-emerald-200"
           />
         </div>
       }
     >
       <div className="space-y-4 pt-2 font-sans">
         {/* Banner : Bleu Royal */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 rounded-3xl text-white shadow-xl shadow-blue-200">
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 p-6 rounded-3xl text-white shadow-xl shadow-emerald-200">
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-4">
               <span
@@ -134,7 +134,7 @@ export default function HistoriqueDetails({ visible, onHide, log }: Props) {
               >
                 {log.method}
               </span>
-              <span className="text-blue-100/60 text-xs font-medium tracking-wider">
+              <span className="text-emerald-100/60 text-xs font-medium tracking-wider">
                 LOG ID: #{log.id}
               </span>
             </div>
@@ -174,13 +174,13 @@ export default function HistoriqueDetails({ visible, onHide, log }: Props) {
             icon={Calendar}
             label="Date et Heure"
             value={new Date(log.createdAt).toLocaleString("fr-FR")}
-            colorClass="text-blue-600"
+            colorClass="text-emerald-600"
           />
           <InfoCard
             icon={Database}
             label="Source de donnée"
             value={log.resource}
-            colorClass="text-indigo-600"
+            colorClass="text-emerald-600"
           />
         </div>
 
@@ -189,17 +189,17 @@ export default function HistoriqueDetails({ visible, onHide, log }: Props) {
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <Terminal size={14} className="text-blue-400" />
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                <Terminal size={14} className="text-emerald-400" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
                   Données transmises
                 </span>
               </div>
-              {/* <span className="text-[9px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase">
+              {/* <span className="text-[9px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-bold uppercase">
                 Raw JSON
               </span> */}
             </div>
 
-            <div className="relative rounded-3xl bg-blue-950 p-1.5 shadow-inner border border-blue-200/20">
+            <div className="relative rounded-3xl bg-emerald-950 p-1.5 shadow-inner border border-emerald-200/20">
               <div className="bg-[#0a192f] rounded-2xl p-5 max-h-[250px] overflow-y-auto custom-scrollbar border border-white/5">
                 <pre className="text-[11px] font-mono text-cyan-400/90 leading-relaxed">
                   {JSON.stringify(log.data, null, 2)}

@@ -34,14 +34,14 @@ export default function UserDetails({ visible, onHide, user }: Props) {
     value: string | undefined;
   }) => (
     <div className="flex items-start gap-3 p-2">
-      <div className="mt-1 bg-blue-50 p-2 rounded-lg text-blue-500">
+      <div className="mt-1 bg-emerald-50 p-2 rounded-lg text-emerald-500">
         <Icon size={16} />
       </div>
       <div>
         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
           {label}
         </span>
-        <p className="text-sm font-semibold text-blue-900">
+        <p className="text-sm font-semibold text-emerald-900">
           {value || "Non renseigné"}
         </p>
       </div>
@@ -58,8 +58,8 @@ export default function UserDetails({ visible, onHide, user }: Props) {
   return (
     <Dialog
       header={
-        <div className="flex items-center gap-2 text-blue-900 font-bold">
-          <UserIcon size={20} className="text-blue-500" />
+        <div className="flex items-center gap-2 text-emerald-900 font-bold">
+          <UserIcon size={20} className="text-emerald-500" />
           <span>Profil du membre</span>
         </div>
       }
@@ -92,14 +92,14 @@ export default function UserDetails({ visible, onHide, user }: Props) {
               alt={user.nom}
               className="w-28 h-22 rounded-2xl border-4 border-white shadow-md object-cover"
             />
-            <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-1.5 rounded-lg shadow-lg">
+            <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-lg shadow-lg">
               <Shield size={16} />
             </div>
           </div>
-          <h2 className="mt-4 text-xl font-bold  text-blue-900 uppercase">
+          <h2 className="mt-4 text-xl font-bold  text-emerald-900 uppercase">
             {user.prenom} {user.nom}
           </h2>
-          <span className="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-bold rounded-full mt-1 uppercase">
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-600 text-xs font-bold rounded-full mt-1 uppercase">
             {typeof user.droit === "string" ? user.droit : user.droit?.libelle}
           </span>
         </div>

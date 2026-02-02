@@ -27,6 +27,6 @@ export const deleteSalle = async (id: string) => {
 };
 
 export const getEtageresBySalle = async (salleId: string) => {
-  const { data } = await api.get(`/salle/${salleId}/etageres`);
+  const { data } = await api.get(`/salle/${salleId}/etagere`);
   return data;
 };

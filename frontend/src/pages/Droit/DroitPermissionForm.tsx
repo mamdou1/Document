@@ -131,7 +131,7 @@ export default function DroitPermissionForm({
           else setSelected(selectedList.filter((id) => id !== perm.id));
         }}
         checked={selectedList.includes(perm.id)}
-        className="border border-blue-400"
+        className="border border-emerald-400"
       />
       <div className="flex items-center gap-2 flex-1">
         <span
@@ -231,7 +231,7 @@ export default function DroitPermissionForm({
             disabled={selectedAvailable.length === 0}
             className={`p-3 rounded-full shadow-md ${
               selectedAvailable.length > 0
-                ? "bg-blue-600 border-none text-white"
+                ? "bg-emerald-600 border-none text-white"
                 : "bg-slate-100 border-none text-slate-400"
             }`}
           />

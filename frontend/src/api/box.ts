@@ -6,6 +6,11 @@ export const createBox = async (payload: any) => {
   return data;
 };
 
+export const updateBox = async (id: string, payload: any) => {
+  const { data } = await api.put(`/box/${id}`, payload);
+  return data;
+};
+
 export const getBoxes = async () => {
   const { data } = await api.get("/box");
   return data;
@@ -22,7 +27,7 @@ export const deleteBox = async (id: string) => {
 };
 
 export const getDocumentsByBox = async (boxId: string) => {
-  const { data } = await api.get(`/box/${boxId}/documents`);
+  const { data } = await api.get(`/box/${boxId}/document`);
   return data;
 };
 

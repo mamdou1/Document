@@ -26,12 +26,8 @@ import {
   deleteTypeDocument,
   addPiecesToTypeDocument,
 } from "../../api/typeDocument";
-import { getAllDivision } from "../../api/division";
 import {
-  CreateMetaFieldPayload,
-  Division,
   TypeDocument,
-  MetaField,
   AddPiecesToTypeDocumentPayload,
   Pieces,
 } from "../../interfaces";
@@ -41,7 +37,6 @@ import TypeDocumentAjoutPieces from "./TypeDocumentAjoutPieces";
 import { getPieces } from "../../api/pieces";
 
 export default function DocumentTypePage() {
-  const [allDivisions, setAllDivisions] = useState<Division[]>([]);
   const [types, setTypes] = useState<TypeDocument[]>([]);
   const [pieces, setPieces] = useState<Pieces[]>([]);
   const [selected, setSelected] = useState<any>(null);
@@ -57,31 +52,15 @@ export default function DocumentTypePage() {
 
   const load = async () => {
     try {
-      const [resTy, resDiv, resP] = await Promise.all([
+      const [resTy, resP] = await Promise.all([
         getTypeDocuments(),
-        getAllDivision(),
         getPieces(),
       ]);
 
       // Adaptation au formatage du backend
       // On vérifie si resTy contient la clé typeDocument (formatée) ou est un tableau direct
       const typesData = resTy.typeDocument || resTy;
-
-      setTypes(
-        Array.isArray(typesData)
-          ? typesData.map((t: any) => ({
-              id: t.id,
-              code: t.code,
-              nom: t.nom,
-              division: t.division,
-              metaFields: t.metaFields || [],
-              pieces: t.pieces || [], // Les pièces sont maintenant là !
-              createdAt: t.createdAt,
-            }))
-          : [],
-      );
-
-      setAllDivisions(Array.isArray(resDiv) ? resDiv : []);
+      setTypes(Array.isArray(typesData) ? typesData : []);
       setPieces(Array.isArray(resP) ? resP : []);
     } catch (err) {
       toast.current?.show({
@@ -109,14 +88,19 @@ export default function DocumentTypePage() {
   };
 
   const handleSubmit = async (payload: any) => {
-    if (editing?.id) {
-      const up = await updateTypeDocument(payload, editing.id);
-      setTypes((s) => s.map((x) => (x.id === up.id ? up : x)));
-      toast.current?.show({ severity: "success", summary: "Mis à jour" });
-    } else {
-      const cr = await createTypeDocument(payload);
-      setTypes((s) => [cr, ...s]);
-      toast.current?.show({ severity: "success", summary: "Créé" });
+    try {
+      if (editing?.id) {
+        await updateTypeDocument(editing.id, payload);
+        toast.current?.show({ severity: "success", summary: "Mis à jour" });
+      } else {
+        await createTypeDocument(payload);
+        toast.current?.show({ severity: "success", summary: "Créé" });
+      }
+      // RECHARGE COMPLÈTE pour récupérer les libellés et jointures
+      await load();
+      setFormVisible(false); // Fermer le formulaire
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -249,7 +233,7 @@ export default function DocumentTypePage() {
                 Libellé du Type
               </th>
               <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                Division
+                Structure
               </th>
               <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 Métadonnées
@@ -280,9 +264,30 @@ export default function DocumentTypePage() {
                   </div>
                 </td>
                 <td className="p-6 text-slate-600 font-medium">
-                  <div className="flex items-center gap-2">
-                    <Layers size={16} className="text-emerald-500" />
-                    {t.division?.libelle || "Non assigné"}
+                  <div className="flex flex-wrap gap-1 max-w-[300px]">
+                    {/* On affiche les entités de tous les niveaux sous forme de badges */}
+                    {[
+                      ...(t.entites_un || []),
+                      ...(t.entites_deux || []),
+                      ...(t.entites_trois || []),
+                    ].length > 0 ? (
+                      [
+                        ...(t.entites_un || []),
+                        ...(t.entites_deux || []),
+                        ...(t.entites_trois || []),
+                      ].map((ent: any) => (
+                        <span
+                          key={ent.id}
+                          className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200"
+                        >
+                          {ent.libelle}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-slate-400 italic text-xs">
+                        Transversal (Tous)
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="p-6">
@@ -317,6 +322,7 @@ export default function DocumentTypePage() {
                     <button
                       onClick={(e) => {
                         onEdit(t);
+                        setFormVisible(true);
                         e.stopPropagation();
                       }}
                       className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
@@ -357,14 +363,6 @@ export default function DocumentTypePage() {
         onPageChange={setCurrentPage}
       />
 
-      <DocumentTypeForm
-        visible={formVisible}
-        onHide={() => setFormVisible(false)}
-        onSubmit={handleSubmit}
-        initial={editing || {}}
-        division={allDivisions}
-      />
-
       <DocumentTypeDetails
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}
@@ -385,6 +383,14 @@ export default function DocumentTypePage() {
         initial={selected}
         title={"Ajouter des pièces au dossier"}
         pieces={pieces}
+      />
+
+      <DocumentTypeForm
+        visible={formVisible}
+        onHide={() => setFormVisible(false)}
+        onSubmit={handleSubmit} // Cette fonction gère déjà la logique API
+        initial={editing} // Contient les objets complets entitee_un, etc.
+        title={editing ? "Modifier le Type" : "Nouveau Type"}
       />
     </Layout>
   );

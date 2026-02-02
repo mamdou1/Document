@@ -4,8 +4,9 @@ import type { Pieces } from "../interfaces";
 export const createPieces = async (
   payload: Partial<Pieces>,
 ): Promise<Pieces> => {
+  console.log("📤 createTypeDocument:", payload);
   const response = await api.post("/pieces/", payload);
-  return response.data.pieces;
+  return response.data.pieces || response.data;
 };
 
 export const getPieces = async (): Promise<{ pieces: Pieces[] }> => {
@@ -18,7 +19,7 @@ export const updatedPieces = async (
   id: string,
 ): Promise<Pieces> => {
   const response = await api.put(`/pieces/${id}`, payload);
-  return response.data.pieces || response.data;
+  return response.data;
 };
 
 export const deletePieceById = async (id: string): Promise<void> => {

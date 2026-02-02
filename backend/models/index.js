@@ -75,6 +75,35 @@ db.EntiteeUn = require("./EntiteeUn.model")(sequelize, DataTypes);
 db.EntiteeDeux = require("./EntiteeDeux.model")(sequelize, DataTypes);
 db.EntiteeTrois = require("./EntiteeTrois.model")(sequelize, DataTypes);
 
+// =====================
+// 🔹 NOUVEAUX MODÈLES Entitee d'associiation de type de document
+// =====================
+db.TypeDocumentEntiteUn = require("./TypeDocumentEntite.model")(
+  sequelize,
+  DataTypes,
+);
+db.TypeDocumentEntiteDeux = require("./TypeDocumentEntiteDeux.model")(
+  sequelize,
+  DataTypes,
+);
+db.TypeDocumentEntiteTrois = require("./TypeDocumentEntiteTrois.model")(
+  sequelize,
+  DataTypes,
+);
+
+// =====================
+// 🔹 NOUVEAUX MODÈLES Entitee d'associiation pièce
+// =====================
+db.PiecesEntiteUn = require("./PiecesEntitee.model")(sequelize, DataTypes);
+db.PiecesEntiteDeux = require("./PiecesEntiteeDeux.model")(
+  sequelize,
+  DataTypes,
+);
+db.PiecesEntiteTrois = require("./PiecesEntiteeTrois.model")(
+  sequelize,
+  DataTypes,
+);
+
 // 🔹 Appel des associations
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
