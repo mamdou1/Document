@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Layout from "../../components/layout/Layoutt";
 import DocumentTypeDetails from "./DocumentTypeDetails";
 import DocumentTypeMetaForm from "./DocumentTypeMetaForm";
@@ -34,6 +34,7 @@ import {
   TypeDocument,
   AddPiecesToTypeDocumentPayload,
   Pieces,
+  User,
 } from "../../interfaces";
 import { createMetaField, updateMetaField } from "../../api/metaField";
 import TypeDocumentAjoutPieces from "./TypeDocumentAjoutPieces";
@@ -43,8 +44,10 @@ import { getAllEntiteeUn } from "../../api/entiteeUn";
 import { getAllEntiteeDeux } from "../../api/entiteeDeux";
 import { getAllEntiteeTrois } from "../../api/entiteeTrois";
 import DocumentTypeAffectAndForm from "./DocumentTypeAffectAndForm";
+import { useAuth } from "../../context/AuthContext";
 
 export default function DocumentTypeEntitee() {
+  const { user } = useAuth();
   const [types, setTypes] = useState<TypeDocument[]>([]);
   const [pieces, setPieces] = useState<Pieces[]>([]);
   const [selected, setSelected] = useState<any>(null);
@@ -60,8 +63,11 @@ export default function DocumentTypeEntitee() {
   const [optionsEntites, setOptionsEntites] = useState<
     { label: string; value: any }[]
   >([]);
+  const [selectedAccordionStructure, setSelectedAccordionStructure] = useState<{
+    label: string;
+    value: string;
+  } | null>(null);
 
-  // États pour l'accordéon
   const [expandedStructure, setExpandedStructure] = useState<string | null>(
     null,
   );
@@ -121,18 +127,133 @@ export default function DocumentTypeEntitee() {
     load();
   }, []);
 
-  // --- LOGIQUE DE GROUPEMENT ---
+  const isUserAdmin = (user: User | null): boolean => {
+    if (!user) return false;
+
+    const droitLibelle =
+      typeof user.droit === "object" ? user.droit?.libelle : user.droit;
+
+    if (!droitLibelle) return false;
+
+    const libelle = droitLibelle.toString().toLowerCase();
+    return (
+      libelle.includes("admin") ||
+      libelle.includes("administrateur") ||
+      libelle === "admin" ||
+      libelle === "Administrateur"
+    );
+  };
+
+  const hasAccessToEntity = (typeDoc: TypeDocument): boolean => {
+    if (isUserAdmin(user)) return true;
+
+    const userEntityIds = {
+      un: new Set<number>(),
+      deux: new Set<number>(),
+      trois: new Set<number>(),
+    };
+
+    if (user?.fonction_details?.entitee_un?.id) {
+      userEntityIds.un.add(user.fonction_details.entitee_un.id);
+    }
+    if (user?.fonction_details?.entitee_deux?.id) {
+      userEntityIds.deux.add(user.fonction_details.entitee_deux.id);
+    }
+    if (user?.fonction_details?.entitee_trois?.id) {
+      userEntityIds.trois.add(user.fonction_details.entitee_trois.id);
+    }
+
+    user?.agent_access?.forEach((access) => {
+      if (access.entitee_un?.id) userEntityIds.un.add(access.entitee_un.id);
+      if (access.entitee_deux?.id)
+        userEntityIds.deux.add(access.entitee_deux.id);
+      if (access.entitee_trois?.id)
+        userEntityIds.trois.add(access.entitee_trois.id);
+    });
+
+    if (typeDoc.entitee_trois_id) {
+      return userEntityIds.trois.has(typeDoc.entitee_trois_id);
+    }
+
+    if (typeDoc.entitee_deux_id && !typeDoc.entitee_trois_id) {
+      return userEntityIds.deux.has(typeDoc.entitee_deux_id);
+    }
+
+    if (
+      typeDoc.entitee_un_id &&
+      !typeDoc.entitee_deux_id &&
+      !typeDoc.entitee_trois_id
+    ) {
+      return userEntityIds.un.has(typeDoc.entitee_un_id);
+    }
+
+    return false;
+  };
+
+  const hasAccessToStructure = (structureName: string): boolean => {
+    const isAdmin = isUserAdmin(user);
+    if (isAdmin) return true;
+
+    if (structureName === "Type de documents non assignés") {
+      return false;
+    }
+
+    const userEntityIds = {
+      un: new Set<number>(),
+      deux: new Set<number>(),
+      trois: new Set<number>(),
+    };
+
+    if (user?.fonction_details?.entitee_un?.id) {
+      userEntityIds.un.add(user.fonction_details.entitee_un.id);
+    }
+
+    user?.agent_access?.forEach((access) => {
+      if (access.entitee_un?.id) userEntityIds.un.add(access.entitee_un.id);
+      if (access.entitee_deux?.id)
+        userEntityIds.deux.add(access.entitee_deux.id);
+      if (access.entitee_trois?.id)
+        userEntityIds.trois.add(access.entitee_trois.id);
+    });
+
+    if (structureName === "Direction Administratif") {
+      return userEntityIds.un.has(2);
+    }
+
+    const foundInOptions = optionsEntites.find((opt) =>
+      opt.label?.includes(structureName),
+    );
+
+    if (foundInOptions) {
+      const value = foundInOptions.value;
+      if (!value?.toString().includes("-")) {
+        return userEntityIds.un.has(Number(value));
+      } else {
+        const [prefix, id] = value.split("-");
+        const numId = Number(id);
+        if (prefix === "E2") return userEntityIds.deux.has(numId);
+        if (prefix === "E3") return userEntityIds.trois.has(numId);
+      }
+    }
+
+    return false;
+  };
+
   const getGroupedData = () => {
-    const filtered = types.filter((t) => {
+    const accessibleTypes = types.filter((t) => hasAccessToEntity(t));
+
+    const filtered = accessibleTypes.filter((t) => {
       const search = query.toLowerCase();
       const matchesSearch =
         t.code.toLowerCase().includes(search) ||
         t.nom.toLowerCase().includes(search);
 
       if (!selectedTypeDoc) return matchesSearch;
+
       const e1Id = String(t.entitee_un_id || (t.entitee_un as any)?.id);
       const e2Id = `E2-${t.entitee_deux_id || (t.entitee_deux as any)?.id}`;
       const e3Id = `E3-${t.entitee_trois_id || (t.entitee_trois as any)?.id}`;
+
       return (
         matchesSearch &&
         (selectedTypeDoc === e1Id ||
@@ -141,31 +262,125 @@ export default function DocumentTypeEntitee() {
       );
     });
 
-    // On groupe par le libellé de la structure la plus basse
     const groups: Record<string, TypeDocument[]> = {};
+
     filtered.forEach((t) => {
       const structureLabel =
         t.entitee_trois?.libelle ||
         t.entitee_deux?.libelle ||
         t.entitee_un?.libelle ||
-        "Documents non assignés";
+        "Type de documents non assignés";
+
+      if (!hasAccessToStructure(structureLabel)) return;
+
       if (!groups[structureLabel]) groups[structureLabel] = [];
       groups[structureLabel].push(t);
     });
+
     return groups;
   };
 
+  const filteredOptions = useMemo(() => {
+    const isAdmin = isUserAdmin(user);
+
+    if (isAdmin) return optionsEntites;
+
+    const accessibleEntityIds = new Set();
+
+    if (user?.fonction_details?.entitee_un?.id) {
+      accessibleEntityIds.add(String(user.fonction_details.entitee_un.id));
+    }
+    if (user?.fonction_details?.entitee_deux?.id) {
+      accessibleEntityIds.add(`E2-${user.fonction_details.entitee_deux.id}`);
+    }
+    if (user?.fonction_details?.entitee_trois?.id) {
+      accessibleEntityIds.add(`E3-${user.fonction_details.entitee_trois.id}`);
+    }
+
+    user?.agent_access?.forEach((access) => {
+      if (access.entitee_un?.id) {
+        accessibleEntityIds.add(String(access.entitee_un.id));
+      }
+      if (access.entitee_deux?.id) {
+        accessibleEntityIds.add(`E2-${access.entitee_deux.id}`);
+      }
+      if (access.entitee_trois?.id) {
+        accessibleEntityIds.add(`E3-${access.entitee_trois.id}`);
+      }
+    });
+
+    return optionsEntites.filter(
+      (opt) => opt.value === null || accessibleEntityIds.has(opt.value),
+    );
+  }, [optionsEntites, user]);
+
   const groupedTypes = getGroupedData();
 
-  // --- HANDLERS (Identiques à ton code original) ---
-  const handleSubmit = async (formData: any) => {
-    /* Ta logique de submit existante */
+  const handleSubmit = async (formData: { code: string; nom: string }) => {
+    try {
+      if (editing?.id) {
+        await updateTypeDocument(editing.id, formData);
+        toast.current?.show({ severity: "success", summary: "Mis à jour" });
+      } else {
+        let payload: any = { ...formData };
+
+        if (selectedTypeDoc) {
+          const cleanId = Number(
+            selectedTypeDoc.replace("E2-", "").replace("E3-", ""),
+          );
+
+          const n1 = rawE1.find(
+            (x) => x.id === cleanId && !selectedTypeDoc.includes("E"),
+          );
+          const n2 = rawE2.find(
+            (x) => x.id === cleanId && selectedTypeDoc.includes("E2"),
+          );
+          const n3 = rawE3.find(
+            (x) => x.id === cleanId && selectedTypeDoc.includes("E3"),
+          );
+
+          if (n1) {
+            payload.entitee_un_id = n1.id;
+          } else if (n2) {
+            payload.entitee_un_id = n2.entitee_un_id;
+            payload.entitee_deux_id = n2.id;
+          } else if (n3) {
+            const parentN2 = rawE2.find((x) => x.id === n3.entitee_deux_id);
+            payload.entitee_un_id = parentN2?.entitee_un_id;
+            payload.entitee_deux_id = n3.entitee_deux_id;
+            payload.entitee_trois_id = n3.id;
+          }
+        }
+
+        await createTypeDocument(payload);
+        toast.current?.show({
+          severity: "success",
+          summary: "Créé avec succès",
+          detail: payload.entitee_un_id
+            ? "Affectation automatique réussie"
+            : "Document générique créé",
+        });
+      }
+
+      await load();
+      setFormVisible(false);
+    } catch (error) {
+      toast.current?.show({ severity: "error", summary: "Erreur" });
+    }
   };
+
   const handleDelete = (id: string) => {
     confirmDialog({
-      message: "Supprimer ce type de document ?",
+      message:
+        "Voulez-vous supprimer ce type de document définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      acceptClassName: "p-button-danger",
+      icon: "pi pi-info-circle",
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+      style: { width: "450px" },
       accept: async () => {
         await deleteTypeDocument(id);
         setTypes((s) => s.filter((x) => String(x.id) !== String(id)));
@@ -223,14 +438,79 @@ export default function DocumentTypeEntitee() {
   };
 
   const handleMultipleAffectation = async (typeIds: string[]) => {
-    /* Ta logique existante */
+    try {
+      if (!selectedTypeDoc) return;
+
+      let structureData: any = {
+        entitee_un_id: null,
+        entitee_deux_id: null,
+        entitee_trois_id: null,
+      };
+
+      const [prefix, rawId] = selectedTypeDoc.split("-");
+      const targetId = Number(rawId);
+
+      if (prefix === "E1") {
+        const n1 = rawE1.find((x) => x.id === targetId);
+        if (n1) structureData.entitee_un_id = n1.id;
+      } else if (prefix === "E2") {
+        const n2 = rawE2.find((x) => x.id === targetId);
+        if (n2) {
+          structureData.entitee_un_id = n2.entitee_un_id;
+          structureData.entitee_deux_id = n2.id;
+        }
+      } else if (prefix === "E3") {
+        const n3 = rawE3.find((x) => x.id === targetId);
+        if (n3) {
+          const parentN2 = rawE2.find((x) => x.id === n3.entitee_deux_id);
+          structureData.entitee_un_id = parentN2?.entitee_un_id;
+          structureData.entitee_deux_id = n3.entitee_deux_id;
+          structureData.entitee_trois_id = n3.id;
+        }
+      }
+
+      await Promise.all(
+        typeIds.map((id) => updateTypeDocument(id, structureData)),
+      );
+
+      toast.current?.show({
+        severity: "success",
+        summary: "Affectation réussie",
+      });
+      await load();
+    } catch (error) {
+      console.error("Erreur affectation:", error);
+    }
+  };
+
+  const handleStructureClick = (structureName: string) => {
+    setExpandedStructure(
+      expandedStructure === structureName ? null : structureName,
+    );
+
+    if (structureName !== "Type de documents non assignés") {
+      const foundOption = filteredOptions.find(
+        (opt) =>
+          opt.label?.includes(structureName) ||
+          opt.label?.includes(`🏢 ${structureName}`) ||
+          opt.label?.includes(`📂 ${structureName}`) ||
+          opt.label?.includes(`📄 ${structureName}`),
+      );
+
+      if (foundOption) {
+        setSelectedAccordionStructure({
+          label: foundOption.label,
+          value: foundOption.value,
+        });
+        setSelectedTypeDoc(foundOption.value);
+      }
+    }
   };
 
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
@@ -251,7 +531,6 @@ export default function DocumentTypeEntitee() {
         />
       </div>
 
-      {/* FILTERS */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4">
         <div className="flex-1 min-w-[300px] relative">
           <Search
@@ -268,7 +547,7 @@ export default function DocumentTypeEntitee() {
         <Dropdown
           value={selectedTypeDoc}
           onChange={(e) => setSelectedTypeDoc(e.value)}
-          options={optionsEntites}
+          options={filteredOptions}
           placeholder="Filtrer par structure"
           className="w-64 bg-slate-50 border-slate-200 rounded-xl"
           showClear
@@ -276,144 +555,200 @@ export default function DocumentTypeEntitee() {
         />
       </div>
 
-      {/* ACCORDION LIST */}
       <div className="space-y-4">
         {Object.entries(groupedTypes).length > 0 ? (
-          Object.entries(groupedTypes).map(([structureName, docs]) => (
-            <div
-              key={structureName}
-              className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm"
-            >
-              <button
-                onClick={() =>
-                  setExpandedStructure(
-                    expandedStructure === structureName ? null : structureName,
-                  )
-                }
-                className={`w-full flex items-center justify-between p-5 transition-all ${
-                  expandedStructure === structureName
-                    ? "bg-emerald-50/50"
-                    : "hover:bg-slate-50"
+          Object.entries(groupedTypes)
+            .filter(([structureName]) => {
+              if (isUserAdmin(user)) return true;
+              return hasAccessToStructure(structureName);
+            })
+            .map(([structureName, docs]) => (
+              <div
+                key={structureName}
+                className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all ${
+                  selectedAccordionStructure?.label?.includes(structureName)
+                    ? "border-emerald-500 ring-2 ring-emerald-200"
+                    : "border-slate-100"
                 }`}
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`p-2 rounded-lg ${expandedStructure === structureName ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}`}
-                  >
-                    <Database size={20} />
-                  </div>
-                  <div className="text-left">
-                    <h3
-                      className={`font-bold ${expandedStructure === structureName ? "text-emerald-800" : "text-emerald-700"}`}
+                <button
+                  onClick={() => handleStructureClick(structureName)}
+                  className={`w-full flex items-center justify-between p-5 transition-all ${
+                    expandedStructure === structureName
+                      ? "bg-emerald-50/50"
+                      : "hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`p-2 rounded-lg ${
+                        expandedStructure === structureName
+                          ? "bg-emerald-500 text-white"
+                          : selectedAccordionStructure?.label.includes(
+                                structureName,
+                              )
+                            ? "bg-emerald-100 text-emerald-600"
+                            : "bg-slate-100 text-slate-500"
+                      }`}
                     >
-                      {structureName}
-                    </h3>
-                    <p className="text-xs text-slate-500 font-medium">
-                      {docs.length} type(s) de document
-                    </p>
-                  </div>
-                </div>
-                {expandedStructure === structureName ? (
-                  <ChevronDown size={20} />
-                ) : (
-                  <ChevronRight size={20} />
-                )}
-              </button>
-
-              {expandedStructure === structureName && (
-                <div className="border-t border-slate-50 overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50/50">
-                      <tr>
-                        <th className="p-4 text-[10px] font-bold text-slate-400 uppercase text-left">
-                          Code
-                        </th>
-                        <th className="p-4 text-[10px] font-bold text-slate-400 uppercase text-left">
-                          Libellé
-                        </th>
-                        <th className="p-4 text-[10px] font-bold text-slate-400 uppercase text-center">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {docs.map((t) => (
-                        <tr
-                          key={t.id}
-                          onClick={() => {
-                            setSelected(t);
-                            setDetailsVisible(true);
-                          }}
-                          className="cursor-pointer hover:bg-slate-50/80 transition-colors"
+                      <Database size={20} />
+                    </div>
+                    <div className="text-left">
+                      <div className="flex items-center gap-2">
+                        <h3
+                          className={`font-bold ${
+                            expandedStructure === structureName
+                              ? "text-emerald-800"
+                              : selectedAccordionStructure?.label.includes(
+                                    structureName,
+                                  )
+                                ? "text-emerald-700"
+                                : "text-slate-700"
+                          }`}
                         >
-                          <td className="p-4">
-                            <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold">
-                              {t.code}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-                              <FileText
-                                size={14}
-                                className="text-emerald-500"
-                              />
-                              {t.nom}
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex justify-center gap-1">
-                              <button
-                                onClick={() => {
-                                  setSelected(t);
-                                  setFormPiecesVisible(true);
-                                }}
-                                className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg"
-                              >
-                                <FilePlus size={16} />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelected(t);
-                                  setAffectationFormVisible(true);
-                                }}
-                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"
-                              >
-                                <SplinePointer size={16} />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditing(t);
-                                  setFormVisible(true);
-                                }}
-                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"
-                              >
-                                <Pencil size={16} />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelected(t);
-                                  setMetaVisible(true);
-                                }}
-                                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                              >
-                                <Settings size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(String(t.id))}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
+                          {structureName}
+                        </h3>
+                        {selectedAccordionStructure?.label.includes(
+                          structureName,
+                        ) && (
+                          <span className="inline-flex items-center px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">
+                            Structure active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">
+                        {docs.length} document(s)
+                      </p>
+                    </div>
+                  </div>
+                  {expandedStructure === structureName ? (
+                    <ChevronDown size={20} className="text-slate-400" />
+                  ) : (
+                    <ChevronRight size={20} className="text-slate-400" />
+                  )}
+                </button>
+
+                {expandedStructure === structureName && (
+                  <div className="border-t border-slate-50 overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50/50">
+                        <tr>
+                          <th className="p-4 text-[10px] font-bold text-slate-400 uppercase text-left">
+                            Code
+                          </th>
+                          <th className="p-4 text-[10px] font-bold text-slate-400 uppercase text-left">
+                            Libellé
+                          </th>
+                          <th className="p-4 text-[10px] font-bold text-slate-400 uppercase text-center">
+                            Actions
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          ))
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {docs.map((t) => (
+                          <tr
+                            key={t.id}
+                            onClick={() => {
+                              setSelected(t);
+                              setDetailsVisible(true);
+                            }}
+                            className="cursor-pointer hover:bg-slate-100/80 transition-colors"
+                          >
+                            <td className="p-4">
+                              <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold">
+                                {t.code}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+                                <FileText
+                                  size={25}
+                                  className="text-emerald-500"
+                                />
+                                {t.nom}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex justify-center gap-1">
+                                <button
+                                  onClick={(e) => {
+                                    setSelected(t);
+                                    setFormPiecesVisible(true);
+                                    e.stopPropagation();
+                                  }}
+                                  className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg "
+                                >
+                                  <FilePlus size={25} />
+                                </button>
+                                {structureName ===
+                                  "Type de documents non assignés" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelected(t);
+                                      if (selectedAccordionStructure) {
+                                        setSelectedTypeDoc(
+                                          selectedAccordionStructure.value,
+                                        );
+                                        setAffectationFormVisible(true);
+                                      } else {
+                                        setAffectationFormVisible(true);
+                                      }
+                                    }}
+                                    className={`p-2 rounded-lg ${
+                                      selectedAccordionStructure
+                                        ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
+                                        : "text-blue-500 hover:bg-blue-50"
+                                    }`}
+                                    title={
+                                      selectedAccordionStructure
+                                        ? `Affecter à ${selectedAccordionStructure.label}`
+                                        : "Affecter à une structure"
+                                    }
+                                  >
+                                    <SplinePointer size={25} />
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={(e) => {
+                                    setEditing(t);
+                                    setFormVisible(true);
+                                    e.stopPropagation();
+                                  }}
+                                  className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                                >
+                                  <Pencil size={25} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    setSelected(t);
+                                    setMetaVisible(true);
+                                    e.stopPropagation();
+                                  }}
+                                  className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+                                >
+                                  <Settings size={25} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(String(t.id));
+                                  }}
+                                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                >
+                                  <Trash2 size={25} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))
         ) : (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-100">
             <div className="inline-flex p-4 bg-slate-50 rounded-full text-slate-300 mb-4">
@@ -426,7 +761,6 @@ export default function DocumentTypeEntitee() {
         )}
       </div>
 
-      {/* MODALS */}
       <DocumentTypeDetails
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}
@@ -456,14 +790,19 @@ export default function DocumentTypeEntitee() {
 
       <DocumentTypeAffectAndForm
         visible={formVisible}
-        onHide={() => setFormVisible(false)}
+        onHide={() => {
+          setFormVisible(false);
+          setEditing(null);
+        }}
         onSubmitSingle={handleSubmit}
         onSubmitMultiple={handleMultipleAffectation}
         types={types}
         initial={editing}
-        isFiltered={!!selectedTypeDoc}
+        isFiltered={!!selectedAccordionStructure || !!selectedTypeDoc}
         structureLabel={
-          optionsEntites.find((o) => o.value === selectedTypeDoc)?.label || ""
+          selectedAccordionStructure?.label ||
+          filteredOptions.find((o) => o.value === selectedTypeDoc)?.label ||
+          ""
         }
       />
     </Layout>

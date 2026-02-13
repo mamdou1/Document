@@ -7,22 +7,13 @@ import {
   EntiteeDeux,
   EntiteeTrois,
 } from "../../../interfaces";
-import {
-  getEntiteeDeuxByEntiteeUn,
-  createEntiteeDeux,
-} from "../../../api/entiteeDeux";
-import EntiteeDeuxForm from "../EntiteeDeux/EntiteeDeuxForm";
-import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
 import { getFunctionsByEntiteeUn } from "../../../api/entiteeUn";
 import {
   Bookmark,
   Hash,
-  Calendar,
   Briefcase,
   PlusCircle,
   Layers,
-  ChevronDown,
-  ChevronRight,
   GitMerge,
   Pencil,
   Trash2,
@@ -39,34 +30,14 @@ export default function EntiteeUnDetails({
 }: any) {
   const [fonctions, setFonctions] = useState<Fonction[]>([]);
   const [editing, setEditing] = useState<Partial<Fonction> | null>(null);
-  const [entiteeDeux, setEntiteeDeux] = useState<EntiteeDeux[]>([]);
-  const [entiteeTroisMap, setEntiteeTroisMap] = useState<
-    Record<number, EntiteeTrois[]>
-  >({});
-  const [expexpandedEntiteeDeux, setExpexpandedEntiteeDeux] = useState<
-    number | null
-  >(null);
-
-  const [selected, setSelected] = useState<EntiteeUn[]>([]);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
-  const [formVisible, setFormVisible] = useState(false);
-  const [allEntitee, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
-  const [selectedEntiteeUn, setSelectedEntiteeUn] = useState<EntiteeUn | null>(
-    null,
-  );
 
-  // 1. Charger les fonctions et les divisions au montage
+  // Charger les fonctions au montage
   const fetchData = async () => {
     if (visible && entiteeUn?.id) {
       try {
-        // Chargement parallèle des fonctions et divisions
-        const [funcData, divData] = await Promise.all([
-          getFunctionsByEntiteeUn(entiteeUn.id),
-          getEntiteeDeuxByEntiteeUn(entiteeUn.id),
-        ]);
-
+        const funcData = await getFunctionsByEntiteeUn(entiteeUn.id);
         setFonctions(funcData);
-        setEntiteeDeux(Array.isArray(divData) ? divData : []);
       } catch (err) {
         console.error("Erreur lors du chargement des données", err);
       }
@@ -75,53 +46,7 @@ export default function EntiteeUnDetails({
 
   useEffect(() => {
     fetchData();
-    // Reset de l'accordéon à la fermeture/ouverture
-    setExpexpandedEntiteeDeux(null);
-    setEntiteeTroisMap({});
   }, [visible, entiteeUn]);
-
-  // 2. Fonction pour ouvrir une division et charger ses sections
-  const toggleEntiteeDeux = async (entiteeDeuxId: number) => {
-    if (expexpandedEntiteeDeux === entiteeDeuxId) {
-      setExpexpandedEntiteeDeux(null);
-      return;
-    }
-
-    setExpexpandedEntiteeDeux(entiteeDeuxId);
-
-    // Charger les sections seulement si on ne les a pas déjà en mémoire
-    if (!entiteeTroisMap[entiteeDeuxId]) {
-      try {
-        const data = await getEntiteeTroisByEntiteeDeux(entiteeDeuxId);
-        setEntiteeTroisMap((prev) => ({
-          ...prev,
-          [entiteeDeuxId]: Array.isArray(data) ? data : [],
-        }));
-        console.log("Les sections : ", data);
-      } catch (err) {
-        console.error("Erreur chargement sections", err);
-      }
-    }
-  };
-
-  const onCreate = async (payload: Partial<EntiteeDeux>) => {
-    try {
-      const saved = await createEntiteeDeux(payload);
-      setAllEntiteeDeux((s) => [saved, ...s]);
-      toast.current?.show({
-        severity: "success",
-        summary: "Succès",
-        detail: "Division créé",
-      });
-      setFormVisible(false);
-    } catch (err: any) {
-      // toast.current?.show({
-      //   severity: "error",
-      //   summary: "Erreur",
-      //   detail: "Échec de création",
-      // });
-    }
-  };
 
   const handleDelete = (id: number) => {
     confirmDialog({
@@ -137,7 +62,7 @@ export default function EntiteeUnDetails({
             summary: "Supprimé",
             detail: "Fonction supprimée avec succès",
           });
-          fetchData(); // Rafraîchir la liste
+          fetchData();
         } catch (err) {
           toast.current?.show({
             severity: "error",
@@ -162,7 +87,7 @@ export default function EntiteeUnDetails({
         </div>
       }
       visible={visible}
-      style={{ width: "700px" }}
+      style={{ width: "600px" }}
       onHide={onHide}
       draggable={false}
       footer={
@@ -179,31 +104,27 @@ export default function EntiteeUnDetails({
         {/* Header EntiteeUn */}
         <div className="border-b border-slate-100 pb-4">
           <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-            Département / {entiteeUn.titre}
+            {entiteeUn.titre}
           </p>
           <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
             {entiteeUn.libelle}
             <span className="text-slate-600 text-sm font-normal">
-              {entiteeUn.code_entiteeUn}
+              {entiteeUn.code}
             </span>
           </h2>
         </div>
 
-        {/* Tableau des Fonctions (Inchangé) */}
+        {/* Tableau des Fonctions */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Fonctions de {entiteeUn.titre}
               </p>
-              {/* <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 ml-2 py-0.5 rounded-full shadow-sm">
-                {fonctions.length} Total
-              </span> */}
             </div>
 
             <Button
               onClick={(e) => {
-                setSelected(entiteeUn);
                 setAjoutFonctionVisible(true);
                 e.stopPropagation();
               }}
@@ -225,11 +146,8 @@ export default function EntiteeUnDetails({
                     <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">
                       Libellé
                     </th>
-                    <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">
-                      Création
-                    </th>
-                    <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">
-                      Action
+                    <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -255,19 +173,11 @@ export default function EntiteeUnDetails({
                           </span>
                         </div>
                       </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium">
-                          <Calendar size={12} />
-                          {f.createdAt
-                            ? new Date(f.createdAt).toLocaleDateString()
-                            : "N/A"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
+                      <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={(e) => {
-                              setEditing(f); // f est l'objet fonction de votre map
+                              setEditing(f);
                               setAjoutFonctionVisible(true);
                               e.stopPropagation();
                             }}
@@ -300,117 +210,13 @@ export default function EntiteeUnDetails({
           )}
         </div>
 
-        {/* --- SECTION ACCORDÉON (Remplacement de l'ancienne div infos complémentaires) --- */}
-        <div className="space-y-3">
-          <div className="justify-between px-1 flex">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
-              {/* Remplace "Divisions et Sections" par les titres dynamiques */}
-              {entiteeUn.entiteeDeux?.titre || "Niveau 2"} et{" "}
-              {entiteeUn.entiteeDeux?.entiteeTrois?.titre || "Niveau 3"}{" "}
-              rattachés
-            </p>
-            <Button
-              onClick={(e) => {
-                setSelectedEntiteeUn(entiteeUn);
-                setFormVisible(true);
-                e.stopPropagation();
-              }}
-              className="flex items-center gap-2 px-3 py-2 text-orange-600 font-bold bg-orange-50 hover:text-white hover:bg-orange-500 rounded-lg transition-all border-none"
-            >
-              <PlusCircle size={15} />
-              <span className="text-xs">
-                {/* Dynamisation du bouton d'ajout */}
-                Ajouter une {entiteeUn.entiteeDeux?.titre || "Division"}
-              </span>
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            {entiteeDeux.length > 0 ? (
-              entiteeDeux.map((div) => (
-                <div
-                  key={div.id}
-                  className="border border-slate-100 rounded-xl overflow-hidden bg-white shadow-sm"
-                >
-                  <button
-                    onClick={() => toggleEntiteeDeux(div.id)}
-                    className={`w-full flex items-center justify-between p-4 transition-all ${
-                      expexpandedEntiteeDeux === div.id
-                        ? "bg-emerald-50/50"
-                        : "hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${
-                          expexpandedEntiteeDeux === div.id
-                            ? "bg-emerald-500 text-white"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                      >
-                        <Layers size={16} />
-                      </div>
-                      <span
-                        className={`font-bold text-sm ${
-                          expexpandedEntiteeDeux === div.id
-                            ? "text-emerald-700"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {div.libelle}
-                      </span>
-                    </div>
-                    {expexpandedEntiteeDeux === div.id ? (
-                      <ChevronDown size={18} className="text-emerald-500" />
-                    ) : (
-                      <ChevronRight size={18} className="text-slate-400" />
-                    )}
-                  </button>
-
-                  {expexpandedEntiteeDeux === div.id && (
-                    <div className="p-3 bg-slate-50/30 border-t border-slate-50 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                      {entiteeTroisMap[div.id]?.length ? (
-                        entiteeTroisMap[div.id].map((sec) => (
-                          <div
-                            key={sec.id}
-                            className="flex items-center gap-3 ml-8 p-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors"
-                          >
-                            <GitMerge size={14} className="text-slate-300" />
-                            <span className="font-medium">{sec.libelle}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-[11px] text-slate-400 italic ml-12 py-2">
-                          {/* Libellé dynamique si vide */}
-                          Aucun(e){" "}
-                          {entiteeUn.entiteeDeux?.entiteeTrois?.titre ||
-                            "Section"}{" "}
-                          dans ce/cette{" "}
-                          {entiteeUn.entiteeDeux?.titre || "Division"}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <p className="text-slate-400 text-sm italic">
-                  Aucun(e) {entiteeUn.entiteeDeux?.titre || "Division"}{" "}
-                  trouvé(e)
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer info (optionnel, repositionné) */}
+        {/* Footer info */}
         <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100">
           <Hash size={15} className="text-slate-400" />
           <p className="text-[11px] text-slate-500 font-medium">
-            Rattaché à :{" "}
+            Code :{" "}
             <span className="font-bold uppercase">
-              {entiteeUn?.libelle || "Direction Générale"}
+              {entiteeUn.code || "N/A"}
             </span>
           </p>
         </div>
@@ -420,26 +226,20 @@ export default function EntiteeUnDetails({
         visible={ajoutFonctionVisible}
         onHide={() => {
           setAjoutFonctionVisible(false);
-          setEditing(null); // Très important : vider l'édition à la fermeture
+          setEditing(null);
         }}
         entiteeUn={entiteeUn}
-        editing={editing} // Passer l'état editing
+        editing={editing}
         onSuccess={() => {
           setAjoutFonctionVisible(false);
           setEditing(null);
-          fetchData(); // Rafraîchir tout
+          fetchData();
           toast?.current?.show({
             severity: "success",
             summary: "Succès",
-            detail: "Fonction ajoutée au entiteeUn",
+            detail: "Fonction ajoutée/modifiée",
           });
         }}
-      />
-      <EntiteeDeuxForm
-        visible={formVisible}
-        onHide={() => setFormVisible(false)}
-        onSubmit={onCreate}
-        entiteeUn={selectedEntiteeUn ? [selectedEntiteeUn] : []} // On passe la liste chargée ici
       />
     </Dialog>
   );

@@ -7,23 +7,36 @@ import { Save, Building2, Layers, GitMerge } from "lucide-react";
 import { getAllEntiteeUn } from "../../api/entiteeUn";
 import { getAllEntiteeDeux } from "../../api/entiteeDeux";
 import { getAllEntiteeTrois } from "../../api/entiteeTrois";
-import { EntiteeDeux, EntiteeTrois, EntiteeUn } from "../../interfaces";
+import {
+  EntiteeDeux,
+  EntiteeTrois,
+  EntiteeUn,
+  AgentEntiteeAccess,
+} from "../../interfaces";
 
 type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (payload: any[]) => Promise<void>;
   agentId: number;
-  initial?: any;
+  initial?: AgentEntiteeAccess[];
   title?: string;
 };
+
+// Interface pour le payload de création multiple
+interface GrantAccessPayload {
+  agent_id: number;
+  entitee_un_id?: number | null;
+  entitee_deux_id?: number | null;
+  entitee_trois_id?: number | null;
+}
 
 export default function UserAcces({
   visible,
   onHide,
   onSubmit,
   agentId,
-  initial = {},
+  initial = [],
   title = "Gestion des accès",
 }: Props) {
   const [formData, setFormData] = useState({
@@ -42,6 +55,8 @@ export default function UserAcces({
 
   // Chargement des options
   useEffect(() => {
+    let isMounted = true; // Pour éviter les mises à jour sur composant démonté
+
     if (visible) {
       const loadData = async () => {
         try {
@@ -50,55 +65,123 @@ export default function UserAcces({
             getAllEntiteeDeux(),
             getAllEntiteeTrois(),
           ]);
-          setOptions({
-            n1: Array.isArray(r1) ? r1 : [],
-            n2: Array.isArray(r2) ? r2 : [],
-            n3: Array.isArray(r3) ? r3 : [],
-          });
+
+          if (isMounted) {
+            setOptions({
+              n1: Array.isArray(r1) ? r1 : [],
+              n2: Array.isArray(r2) ? r2 : [],
+              n3: Array.isArray(r3) ? r3 : [],
+            });
+          }
         } catch (err) {
           console.error("Erreur options:", err);
         }
       };
       loadData();
     }
-  }, [visible]);
 
-  // Initialisation du formulaire (Edit vs Create)
+    return () => {
+      isMounted = false; // Nettoyage
+    };
+  }, [visible]); // ✅ Dépendance UNIQUEMENT sur visible
+
+  // 2. CORRIGER le useEffect d'initialisation du formulaire
   useEffect(() => {
-    if (visible && initial?.id) {
-      setFormData({
-        entites_un_id: initial.entites_un?.map((e: any) => e.id) || [],
-        entites_deux_id: initial.entites_deux?.map((e: any) => e.id) || [],
-        entites_trois_id: initial.entites_trois?.map((e: any) => e.id) || [],
-      });
-    } else {
-      setFormData({
-        entites_un_id: [],
-        entites_deux_id: [],
-        entites_trois_id: [],
-      });
+    if (visible) {
+      if (initial && initial.length > 0) {
+        // Mode édition
+        const unIds = initial
+          .filter(
+            (
+              acc,
+            ): acc is AgentEntiteeAccess & {
+              entitee_un: NonNullable<AgentEntiteeAccess["entitee_un"]>;
+            } => !!acc.entitee_un,
+          )
+          .map((acc) => acc.entitee_un.id)
+          .filter((id, index, self) => self.indexOf(id) === index);
+
+        const deuxIds = initial
+          .filter(
+            (
+              acc,
+            ): acc is AgentEntiteeAccess & {
+              entitee_deux: NonNullable<AgentEntiteeAccess["entitee_deux"]>;
+            } => !!acc.entitee_deux,
+          )
+          .map((acc) => acc.entitee_deux.id)
+          .filter((id, index, self) => self.indexOf(id) === index);
+
+        const troisIds = initial
+          .filter(
+            (
+              acc,
+            ): acc is AgentEntiteeAccess & {
+              entitee_trois: NonNullable<AgentEntiteeAccess["entitee_trois"]>;
+            } => !!acc.entitee_trois,
+          )
+          .map((acc) => acc.entitee_trois.id)
+          .filter((id, index, self) => self.indexOf(id) === index);
+
+        setFormData({
+          entites_un_id: unIds,
+          entites_deux_id: deuxIds,
+          entites_trois_id: troisIds,
+        });
+      } else {
+        // Mode création
+        setFormData({
+          entites_un_id: [],
+          entites_deux_id: [],
+          entites_trois_id: [],
+        });
+      }
     }
   }, [visible, initial]);
 
   const handleSubmit = async () => {
-    const payload: any[] = [];
+    setLoading(true);
 
-    formData.entites_un_id.forEach((id) =>
-      payload.push({ agent_id: agentId, entitee_type: "UN", entitee_id: id }),
-    );
-    formData.entites_deux_id.forEach((id) =>
-      payload.push({ agent_id: agentId, entitee_type: "DEUX", entitee_id: id }),
-    );
-    formData.entites_trois_id.forEach((id) =>
-      payload.push({
-        agent_id: agentId,
-        entitee_type: "TROIS",
-        entitee_id: id,
-      }),
-    );
+    try {
+      const payload: GrantAccessPayload[] = [];
 
-    await onSubmit(payload);
-    onHide();
+      // Ajouter les accès EntiteeUn
+      formData.entites_un_id.forEach((id) => {
+        payload.push({
+          agent_id: agentId,
+          entitee_un_id: id,
+          entitee_deux_id: null,
+          entitee_trois_id: null,
+        });
+      });
+
+      // Ajouter les accès EntiteeDeux
+      formData.entites_deux_id.forEach((id) => {
+        payload.push({
+          agent_id: agentId,
+          entitee_un_id: null,
+          entitee_deux_id: id,
+          entitee_trois_id: null,
+        });
+      });
+
+      // Ajouter les accès EntiteeTrois
+      formData.entites_trois_id.forEach((id) => {
+        payload.push({
+          agent_id: agentId,
+          entitee_un_id: null,
+          entitee_deux_id: null,
+          entitee_trois_id: id,
+        });
+      });
+
+      await onSubmit(payload);
+      onHide();
+    } catch (error) {
+      console.error("Erreur lors de l'envoi:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Styles réutilisables
@@ -109,7 +192,21 @@ export default function UserAcces({
   return (
     <Dialog
       header={
-        <div className="text-xl font-black text-slate-800 px-2">{title}</div>
+        <div className="flex items-center gap-3 px-2 py-1">
+          <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600">
+            <Building2 size={20} />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-slate-800 leading-none">
+              {title}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              {initial.length > 0
+                ? `Modification des accès (${initial.length} existant(s))`
+                : "Configurer les accès aux documents"}
+            </p>
+          </div>
+        </div>
       }
       visible={visible}
       style={{ width: "700px" }}
@@ -120,30 +217,51 @@ export default function UserAcces({
           <Button
             label="Annuler"
             onClick={onHide}
-            className="p-button-text text-slate-400 font-bold"
+            className="p-button-text text-slate-400 font-bold hover:bg-slate-200"
+            disabled={loading}
           />
           <Button
             label={loading ? "Enregistrement..." : "Sauvegarder"}
             icon={!loading && <Save size={18} className="mr-2" />}
             onClick={handleSubmit}
             loading={loading}
-            className="bg-emerald-600 text-emerald-50 border-none px-8 py-3 rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all"
+            disabled={
+              formData.entites_un_id.length === 0 &&
+              formData.entites_deux_id.length === 0 &&
+              formData.entites_trois_id.length === 0
+            }
+            className="bg-emerald-600 text-emerald-50 border-none px-8 py-3 rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all font-bold"
           />
         </div>
       }
     >
       <div className="flex flex-col gap-6 pt-4 px-2">
-        <hr className="border-slate-100" />
+        {/* Message d'info */}
+        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+          <p className="text-xs text-amber-800 flex items-center gap-2">
+            <span className="font-bold">📌 Note :</span>
+            Les accès sélectionnés seront attribués à l'agent. Vous pouvez
+            choisir plusieurs entités de différents niveaux.
+          </p>
+        </div>
 
         {/* Section Affectations Multiples */}
-        <div className="space-y-5 bg-slate-100/40 p-5 rounded-2xl border border-slate-100">
-          <h3 className="text-xs font-black uppercase text-emerald-600 tracking-tighter mb-4">
+        <div className="space-y-5 bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+          <h3 className="text-xs font-black uppercase text-emerald-600 tracking-tighter mb-4 flex items-center gap-2">
+            <Building2 size={14} />
             Périmètres d'application
           </h3>
 
+          {/* Niveau 1 - EntiteeUn */}
           <div className={inputWrapper}>
             <label className={labelStyle}>
-              <Building2 size={14} /> Ministères (Niveau 1)
+              <Building2 size={14} className="text-blue-500" />
+              Ministères / Directions Générales (N1)
+              {formData.entites_un_id.length > 0 && (
+                <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  {formData.entites_un_id.length} sélectionnée(s)
+                </span>
+              )}
             </label>
             <MultiSelect
               value={formData.entites_un_id}
@@ -153,16 +271,24 @@ export default function UserAcces({
               onChange={(e) =>
                 setFormData({ ...formData, entites_un_id: e.value })
               }
-              placeholder="Sélectionner les ministères"
+              placeholder="Sélectionner les ministères/directions"
               display="chip"
               filter
-              className="w-full border border-emerald-200 rounded-xl hover:border-emerald-400"
+              className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
+              maxSelectedLabels={3}
             />
           </div>
 
+          {/* Niveau 2 - EntiteeDeux */}
           <div className={inputWrapper}>
             <label className={labelStyle}>
-              <Layers size={14} /> Directions (Niveau 2)
+              <Layers size={14} className="text-purple-500" />
+              Directions / Services (N2)
+              {formData.entites_deux_id.length > 0 && (
+                <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                  {formData.entites_deux_id.length} sélectionnée(s)
+                </span>
+              )}
             </label>
             <MultiSelect
               value={formData.entites_deux_id}
@@ -172,16 +298,24 @@ export default function UserAcces({
               onChange={(e) =>
                 setFormData({ ...formData, entites_deux_id: e.value })
               }
-              placeholder="Sélectionner les directions"
+              placeholder="Sélectionner les directions/services"
               display="chip"
               filter
-              className="w-full border border-emerald-200 rounded-xl hover:border-emerald-400"
+              className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
+              maxSelectedLabels={3}
             />
           </div>
 
+          {/* Niveau 3 - EntiteeTrois */}
           <div className={inputWrapper}>
             <label className={labelStyle}>
-              <GitMerge size={14} /> Services (Niveau 3)
+              <GitMerge size={14} className="text-emerald-500" />
+              Divisions / Sous-services (N3)
+              {formData.entites_trois_id.length > 0 && (
+                <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                  {formData.entites_trois_id.length} sélectionnée(s)
+                </span>
+              )}
             </label>
             <MultiSelect
               value={formData.entites_trois_id}
@@ -191,12 +325,37 @@ export default function UserAcces({
               onChange={(e) =>
                 setFormData({ ...formData, entites_trois_id: e.value })
               }
-              placeholder="Sélectionner les services"
+              placeholder="Sélectionner les divisions/services"
               display="chip"
               filter
-              className="w-full border border-emerald-200 rounded-xl hover:border-emerald-400"
+              className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
+              maxSelectedLabels={3}
             />
           </div>
+
+          {/* Résumé des sélections */}
+          {(formData.entites_un_id.length > 0 ||
+            formData.entites_deux_id.length > 0 ||
+            formData.entites_trois_id.length > 0) && (
+            <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+              <p className="text-[11px] font-bold text-emerald-700 flex items-center gap-2">
+                <span>📋 Récapitulatif</span>
+              </p>
+              <p className="text-xs text-emerald-600 mt-1">
+                {formData.entites_un_id.length} N1,{" "}
+                {formData.entites_deux_id.length} N2,{" "}
+                {formData.entites_trois_id.length} N3
+                <span className="ml-2 text-emerald-500">•</span>
+                <span className="ml-2 font-bold">
+                  Total:{" "}
+                  {formData.entites_un_id.length +
+                    formData.entites_deux_id.length +
+                    formData.entites_trois_id.length}{" "}
+                  accès
+                </span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Dialog>

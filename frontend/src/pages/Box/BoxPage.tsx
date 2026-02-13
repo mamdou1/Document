@@ -88,10 +88,22 @@ export default function BoxPage() {
   const handleDelete = (id: string) => {
     confirmDialog({
       message:
-        "Voulez-vous supprimer ce box ? Cela peut affecter les documents liés.",
-      header: "Confirmation de suppression",
-      icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger",
+        "Voulez-vous supprimer ce box définitivement ? Cette action est irréversible.",
+      header: "Confirmation",
+      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
+
+      // --- Personnalisation des labels ---
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+
+      // --- Styling des boutons ---
+      // Ajout de classes de mise en page (flexbox) et de style
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+
+      // --- Style du dialogue lui-même (optionnel) ---
+      style: { width: "450px" },
       accept: async () => {
         try {
           await deleteBox(id);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog } from "primereact/dialog";
 import { TabView, TabPanel } from "primereact/tabview";
 import { PlusCircle, FilePlus, Layers, Edit3, Settings2 } from "lucide-react";
-import DocumentTypeFormContent from "./DocumentTypeForm";
+import DocumentTypeForm from "./DocumentTypeForm";
 import DocumentTypeMultipleAffectation from "./DocumentTypeMultipleAffectation";
 
 export default function DocumentTypeAffectAndForm({
@@ -80,7 +80,7 @@ export default function DocumentTypeAffectAndForm({
             leftIcon={<FilePlus size={18} className="mr-2" />}
           >
             <div className="py-6 transition-all duration-300">
-              <DocumentTypeFormContent
+              <DocumentTypeForm
                 onSubmit={onSubmitSingle}
                 initial={initial}
                 isFiltered={isFiltered}

@@ -46,7 +46,6 @@ exports.create = async (req, res) => {
 */
 
 exports.create = async (req, res) => {
-  // 1. Initialiser la transaction
   const t = await sequelize.transaction();
 
   try {
@@ -58,51 +57,64 @@ exports.create = async (req, res) => {
         .json({ message: "Le type de document est requis" });
     }
 
-    // 2. Créer le document
+    // 1. Créer le document
     const doc = await Document.create({ type_document_id }, { transaction: t });
 
-    // 3. Insérer les valeurs des champs Meta (si elles existent)
+    const typeDocumentPieces =
+      await sequelize.models.TypeDocumentPieces.findAll({
+        where: { document_type_id: type_document_id },
+        transaction: t,
+      });
+
+    if (typeDocumentPieces.length > 0) {
+      console.log(
+        "📋 Détail des pièces:",
+        typeDocumentPieces.map((p) => ({
+          id: p.id,
+          piece_id: p.piece_id,
+          document_type_id: p.document_type_id,
+        })),
+      );
+
+      const pieceRows = typeDocumentPieces.map((tp) => ({
+        document_id: doc.id,
+        piece_id: tp.piece_id,
+        disponible: false,
+      }));
+
+      await DocumentPieces.bulkCreate(pieceRows, { transaction: t });
+    } else {
+      // Vérifier si le type de document existe
+      const typeDoc = await sequelize.models.TypeDocument.findByPk(
+        type_document_id,
+        { transaction: t },
+      );
+      console.log(
+        `ℹ️ Type de document ${type_document_id}: ${typeDoc ? typeDoc.nom : "NON TROUVÉ !"}`,
+      );
+    }
+
+    // 3. Meta values
     if (values && Object.keys(values).length > 0) {
       const metaRows = Object.entries(values).map(([meta_field_id, value]) => ({
         document_id: doc.id,
         meta_field_id: parseInt(meta_field_id),
         value: value.toString(),
       }));
-
       await DocumentValue.bulkCreate(metaRows, { transaction: t });
+      console.log(`✅ ${metaRows.length} valeurs meta insérées`);
     }
 
-    // 4. Récupérer les pièces associées au type de document
-    // Note: Vérifiez bien le nom de votre modèle (souvent au singulier dans Sequelize)
-    const typeDocumentPieces = await TypeDocumentPieces.findAll({
-      where: { document_type_id: type_document_id },
-      transaction: t,
-    });
-
-    // 5. Associer ces pièces au document créé (Table DocumentPieces)
-    if (typeDocumentPieces.length > 0) {
-      const pieceRows = typeDocumentPieces.map((tp) => ({
-        document_id: doc.id,
-        piece_id: tp.piece_id,
-        disponible: false, // Par défaut à faux comme dans liquidation
-      }));
-
-      await DocumentPieces.bulkCreate(pieceRows, { transaction: t });
-    }
-
-    // 6. Valider la transaction
     await t.commit();
 
     res.status(201).json({
       message: "Document créé avec succès",
       id: doc.id,
       type_document_id: doc.type_document_id,
+      pieces_count: typeDocumentPieces.length,
     });
   } catch (e) {
-    // 7. Annuler tout en cas d'erreur
     if (t) await t.rollback();
-
-    console.error("❌ Erreur create document:", e);
     res.status(500).json({
       message: "Erreur lors de la création du document",
       error: e.message,
@@ -189,15 +201,68 @@ exports.remove = async (req, res) => {
 
 exports.uploadDocumentFiles = async (req, res) => {
   const t = await sequelize.transaction();
+
   try {
     const { documentId, pieceId, documentTypeId } = req.params;
+    const { upload_mode } = req.body;
+    const files = req.files;
 
-    console.log("PARAMS =", req.params);
+    console.log("📝 UPLOAD DOCUMENT - Params:", {
+      documentId,
+      pieceId,
+      documentTypeId,
+    });
+    console.log("📝 UPLOAD DOCUMENT - Mode:", upload_mode);
+    console.log("📝 UPLOAD DOCUMENT - Fichiers:", files?.length || 0);
 
-    if (!req.files || req.files.length === 0) {
+    if (!files || files.length === 0) {
+      await t.rollback();
       return res.status(400).json({ message: "Aucun fichier uploadé" });
     }
 
+    // ==================== MODE LOT UNIQUE ====================
+    if (upload_mode === "LOT_UNIQUE") {
+      console.log("📦 Traitement en mode LOT_UNIQUE");
+
+      for (const file of files) {
+        const publicPath = file.path
+          .replace(/\\/g, "/")
+          .replace(/^.*uploads\//, "uploads/");
+
+        console.log("📁 Fichier enregistré:", publicPath);
+
+        await DocumentFichier.create(
+          {
+            document_id: documentId,
+            piece_id: null, // LOT_UNIQUE n'est pas lié à une pièce spécifique
+            fichier: publicPath,
+            original_name: file.originalname,
+            mode: "LOT_UNIQUE",
+          },
+          { transaction: t },
+        );
+      }
+
+      await t.commit();
+
+      return res.json({
+        message: "Dossier complet uploadé avec succès",
+        mode: "LOT_UNIQUE",
+        fichiers_count: files.length,
+      });
+    }
+
+    // ==================== MODE INDIVIDUEL (par défaut) ====================
+    if (!pieceId || pieceId === "undefined" || pieceId === "null") {
+      await t.rollback();
+      return res.status(400).json({
+        message: "ID de pièce requis pour le mode INDIVIDUEL",
+      });
+    }
+
+    console.log("📄 Traitement en mode INDIVIDUEL pour pièce:", pieceId);
+
+    // Vérifier que la pièce est autorisée pour ce type de document
     const relation = await TypeDocumentPieces.findOne({
       where: {
         document_type_id: documentTypeId,
@@ -208,36 +273,74 @@ exports.uploadDocumentFiles = async (req, res) => {
 
     if (!relation) {
       await t.rollback();
-      return res
-        .status(403)
-        .json({ message: "Pièce non autorisée pour ce type" });
+      return res.status(403).json({
+        message: "Pièce non autorisée pour ce type de document",
+      });
     }
 
-    const records = req.files.map((file) => {
+    // Vérifier que le document existe et que la pièce est disponible
+    const docPiece = await DocumentPieces.findOne({
+      where: {
+        document_id: documentId,
+        piece_id: pieceId,
+      },
+      transaction: t,
+    });
+
+    if (!docPiece) {
+      console.log(
+        `⚠️ DocumentPieces non trouvé pour document ${documentId}, pièce ${pieceId}`,
+      );
+      // On peut créer l'association si elle n'existe pas
+      await DocumentPieces.create(
+        {
+          document_id: documentId,
+          piece_id: pieceId,
+          disponible: true,
+        },
+        { transaction: t },
+      );
+    }
+
+    // Enregistrer les fichiers
+    const records = [];
+
+    for (const file of files) {
       const publicPath = file.path
         .replace(/\\/g, "/")
         .replace(/^.*uploads\//, "uploads/");
 
-      return {
-        document_id: documentId,
-        piece_id: pieceId,
-        fichier: publicPath,
-        original_name: file.originalname,
-      };
-    });
+      console.log("📁 Fichier enregistré:", publicPath);
 
-    await DocumentFichier.bulkCreate(records, { transaction: t });
+      const docFichier = await DocumentFichier.create(
+        {
+          document_id: documentId,
+          piece_id: pieceId,
+          fichier: publicPath,
+          original_name: file.originalname,
+          mode: "INDIVIDUEL",
+        },
+        { transaction: t },
+      );
+
+      records.push(docFichier);
+    }
 
     await t.commit();
 
     res.json({
       message: "Fichiers ajoutés avec succès",
+      mode: "INDIVIDUEL",
       fichiers: records,
+      count: records.length,
     });
   } catch (err) {
     await t.rollback();
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    console.error("❌ Erreur uploadDocumentFiles:", err);
+    res.status(500).json({
+      message: "Erreur lors de l'upload des fichiers",
+      error: err.message,
+    });
   }
 };
 
@@ -355,5 +458,24 @@ exports.getDocumentPieces = async (req, res) => {
   } catch (error) {
     console.error("🔥 getDocumentPieces error:", error);
     res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+exports.getLotUniqueFiles = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    const files = await DocumentFichier.findAll({
+      where: {
+        document_id: documentId,
+        mode: "LOT_UNIQUE",
+      },
+      order: [["created_at", "DESC"]],
+    });
+
+    return res.json(files);
+  } catch (error) {
+    console.error("❌ getLotUniqueFiles:", error);
+    return res.status(500).json({ message: "Erreur récupération lot unique" });
   }
 };

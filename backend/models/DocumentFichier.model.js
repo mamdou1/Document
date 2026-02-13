@@ -4,9 +4,14 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
       document_id: { type: DataTypes.INTEGER, allowNull: false },
-      piece_id: { type: DataTypes.INTEGER, allowNull: false },
+      piece_id: { type: DataTypes.INTEGER, allowNull: true },
       fichier: { type: DataTypes.STRING, allowNull: false },
       original_name: { type: DataTypes.STRING },
+      mode: {
+        type: DataTypes.ENUM("INDIVIDUEL", "LOT_UNIQUE"),
+        allowNull: false,
+        defaultValue: "INDIVIDUEL",
+      },
     },
     {
       tableName: "document_fichiers",

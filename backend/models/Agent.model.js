@@ -41,7 +41,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "Agent",
       timestamps: true,
       underscored: true,
-    }
+    },
   );
 
   Agent.associate = (models) => {
@@ -58,6 +58,11 @@ module.exports = (sequelize, DataTypes) => {
     Agent.belongsTo(models.Droit, {
       as: "droit",
       foreignKey: "droit_id",
+    });
+
+    Agent.hasMany(models.AgentEntiteeAccess, {
+      foreignKey: "agent_id",
+      as: "agent_access",
     });
 
     // Agent.belongsToMany(models.Permission, {

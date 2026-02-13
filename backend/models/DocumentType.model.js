@@ -2,6 +2,13 @@ module.exports = (sequelize, DataTypes) => {
   const TypeDocument = sequelize.define(
     "TypeDocument",
     {
+      id: {
+        // ✅ AJOUTEZ CETTE LIGNE - Définir une clé primaire
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false,
+      },
       code: DataTypes.STRING,
       nom: DataTypes.STRING,
     },

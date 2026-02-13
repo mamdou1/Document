@@ -13,8 +13,8 @@ import {
   ArrowLeft,
   List,
   CheckSquare,
+  Search,
 } from "lucide-react";
-import { Dropdown } from "primereact/dropdown";
 
 type Props = {
   visible: boolean;
@@ -37,6 +37,7 @@ export default function TypeDocumentAjoutPieces({
 }: Props) {
   // Liste des pièces disponibles (à gauche)
   const [availablePieces, setAvailablePieces] = useState<Pieces[]>([]);
+  const [filteredAvailable, setFilteredAvailable] = useState<Pieces[]>([]);
   // Liste des pièces affectées (à droite)
   const [assignedPieces, setAssignedPieces] = useState<Pieces[]>([]);
 
@@ -44,10 +45,6 @@ export default function TypeDocumentAjoutPieces({
   const [selectedAvailable, setSelectedAvailable] = useState<string[]>([]);
   const [selectedAssigned, setSelectedAssigned] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // --- NOUVEAUX ÉTATS POUR LE FILTRE ---
-  const [selectedDivision, setSelectedDivision] = useState<any>(null);
-  const [divisions, setDivisions] = useState<any[]>([]);
 
   useEffect(() => {
     if (visible && initial) {
@@ -60,31 +57,19 @@ export default function TypeDocumentAjoutPieces({
       setAvailablePieces(available);
       setSelectedAvailable([]);
       setSelectedAssigned([]);
-
-      // --- EXTRACTION DES DIVISIONS UNIQUES ---
-      // On récupère toutes les divisions présentes dans la liste globale des pièces
-      const uniqueDivs = Array.from(
-        new Set(
-          pieces
-            .filter((p) => p.division) // On ignore celles sans division
-            .map((p) => JSON.stringify(p.division)), // Stringify pour gérer l'unicité des objets
-        ),
-      ).map((s: string) => JSON.parse(s));
-
-      // On ajoute une option "Toutes les divisions"
-      setDivisions([
-        { id: null, libelle: "Toutes les divisions" },
-        ...uniqueDivs,
-      ]);
-      setSelectedDivision(null); // Reset du filtre à l'ouverture
     }
   }, [visible, initial, pieces]);
 
-  // --- LOGIQUE DE FILTRAGE ---
-  const filteredAvailable = availablePieces.filter((p) => {
-    if (!selectedDivision) return true; // Si rien de sélectionné, on tout affiche
-    return p.division?.id === selectedDivision;
-  });
+  useEffect(() => {
+    setFilteredAvailable(availablePieces);
+  }, [availablePieces]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setFilteredAvailable(
+      availablePieces.filter((p) => p.libelle.toLowerCase().includes(query)),
+    );
+  };
 
   // Fonction pour déplacer de Gauche vers Droite
   const moveRight = () => {
@@ -183,16 +168,7 @@ export default function TypeDocumentAjoutPieces({
               </div>
 
               {/* DROPDOWN DE FILTRAGE */}
-              <Dropdown
-                value={selectedDivision}
-                options={divisions}
-                onChange={(e) => setSelectedDivision(e.value)}
-                optionLabel="libelle"
-                optionValue="id"
-                placeholder="Filtrer par division"
-                className="w-full border border-blus-200 bg-blue-50/30 rounded-lg text-sm shadow-sm hover:shadow-md hover:shadow-blue-200 shadow-blue-200"
-                showClear={!!selectedDivision}
-              />
+              <Search className="ml-2" size={16} />
             </div>
 
             <div className="flex-1 border-2 border-slate-200 rounded-2xl overflow-y-auto bg-white shadow-inner">
@@ -202,10 +178,8 @@ export default function TypeDocumentAjoutPieces({
                 )
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-slate-400 p-4 text-center">
-                  <span className="text-xs italic">
-                    {selectedDivision
-                      ? "Aucune pièce disponible dans cette division"
-                      : "Toutes les pièces sont déjà affectées"}
+                  <span className="text-sm italic">
+                    Aucune pièce disponible
                   </span>
                 </div>
               )}

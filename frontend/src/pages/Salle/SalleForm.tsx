@@ -17,6 +17,7 @@ import {
 import { Dropdown } from "primereact/dropdown";
 import { Site } from "../../interfaces";
 import { getSites } from "../../api/site";
+import { getTraveByRayon } from "../../api/rayon";
 
 export default function SalleForm({ visible, onHide, onSubmit, initial }: any) {
   const [formData, setFormData] = useState({

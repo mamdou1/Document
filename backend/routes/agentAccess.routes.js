@@ -6,7 +6,14 @@ const {
 } = require("../middlewares/authorizePermission.middleware");
 
 router.post("/", verifyToken, authorizePermission("box", "create"), ctrl.grant);
+router.get(
+  "/:agentId",
+  verifyToken,
+  authorizePermission("box", "read"),
+  ctrl.agentAccesById,
+);
 router.get("/", verifyToken, authorizePermission("box", "read"), ctrl.list);
+
 router.delete(
   "/:id",
   verifyToken,

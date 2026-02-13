@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Type, Save, X, Info } from "lucide-react";
@@ -24,6 +24,7 @@ export default function StructureForm({
   setTitles,
   onSave,
 }: Props) {
+  const [loading, setLoading] = useState(false);
   const handleInputChange = (key: keyof StructureTitles, value: string) => {
     setTitles({ ...titles, [key]: value });
   };
@@ -33,7 +34,7 @@ export default function StructureForm({
       visible={visible}
       onHide={onHide}
       showHeader={false}
-      style={{ width: "500px" }}
+      style={{ width: "700px" }}
       className="rounded-[2.5rem] overflow-hidden shadow-2xl border-none"
       contentClassName="p-0 bg-white"
     >
@@ -122,7 +123,7 @@ export default function StructureForm({
           </div>
 
           {/* ACTIONS */}
-          <div className="pt-4 flex gap-3">
+          {/* <div className="pt-4 flex gap-3">
             <Button
               label="Annuler"
               onClick={onHide}
@@ -140,6 +141,25 @@ export default function StructureForm({
                 <span>Enregistrer</span>
               </div>
             </Button>
+          </div> */}
+          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 mt-4">
+            <Button
+              label="Annuler"
+              icon={<X size={16} className="mr-2" />}
+              onClick={onHide}
+              className="p-button-text text-slate-500 font-bold hover:bg-slate-100 px-4 py-2 rounded-xl transition-all"
+              disabled={loading}
+            />
+            <Button
+              label={loading ? "Enregistrement..." : "Enregistrer le type"}
+              icon={!loading && <Save size={18} className="mr-2" />}
+              onClick={() => {
+                if (onSave) onSave();
+                onHide();
+              }}
+              loading={loading}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-8 py-3 rounded-xl shadow-lg shadow-emerald-200 transition-all font-bold"
+            />
           </div>
         </div>
       </div>

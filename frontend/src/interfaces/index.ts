@@ -2,8 +2,8 @@
 
 import { Agent } from "http";
 
-export type Role = "ADMIN" | "MEMBRE" | "MEMBRE_AUTHORIZE";
 export type Genre = "HOMME" | "FEMME";
+export type ModeChargement = "INDIVIDUEL" | "LOT_UNIQUE";
 
 export interface Permission {
   id: number;
@@ -29,95 +29,11 @@ export interface Droit {
   updatedAt?: string;
 }
 
-export interface Programme {
-  id?: string;
-  code_programme: string;
-  libelle: string;
-  description?: string;
-  exercice?: Exercice | string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Chapitre {
-  id?: number;
-  code_chapitre: string;
-  libelle: string;
-  description?: string;
-  programme: Programme | string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Nature {
-  id?: string;
-  code_nature: string;
-  libelle: string;
-  description?: string;
-  chapitre: Chapitre | string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Liquidation {
-  id?: string;
-  description?: string;
-  numDossier?: string;
-  montant: number;
-  dateLiquidation?: string;
-
-  programme: Programme | string; // même si pas stocké directement
-  chapitre: Chapitre | string;
-  nature: Nature | string;
-  fournisseur?: Fournisseur | string;
-  serviceBeneficiaire?: ServiceBeneficiaire | string;
-  //Pieces: TypePiece[];
-  type: Type | string;
-  pieces?: Pieces[];
-  //pieces: LiquidationPiece[];
-
-  sourceDeFinancement: SourceDeFinancement | string;
-
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface TypePiece {
-  id?: string;
-  piece: Pieces;
-  disponible: boolean;
-  // pdfPath?: string;
-}
-
-export interface Type {
-  id?: string;
-  codeType: string;
-  nom: string;
-  pieces: TypePiece[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface CreateTypePayload {
-  codeType: string;
-  nom: string;
-}
-
-export interface AddPieceToType {
-  piece: string; // id de la pièce
-  disponible?: boolean;
-}
-
-export interface AddPiecesToTypePayload {
-  pieces: AddPieceToType[];
-}
-
 export interface Pieces {
   id: string;
   code_pieces: string;
   libelle: string;
   division_id: number;
-  division: Division;
   LiquidationPieces?: {
     disponible: boolean;
   };
@@ -129,36 +45,10 @@ export interface Pieces {
   updatedAt?: string;
 }
 
-export interface PieceFichier {
-  id: string;
-  type_piece_id: TypePiece | string;
-  fichier: string;
-
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface LiquidationPiece {
   piece: Pieces;
   disponible: boolean;
 }
-
-// export interface User {
-//   id: string;
-//   nom: string;
-//   prenom: string;
-//   email: string;
-//   telephone?: string;
-//   role: Role;
-//   num_matricule: string;
-//   createdAt: string;
-//   updatedAt: string;
-//   droit: Droit | string;
-//   fonction_id: Fonction | string;
-
-//   // ✅ Ajout du champ photoProfil
-//   photoProfil?: string;
-// }
 
 export interface User {
   id: string;
@@ -166,7 +56,6 @@ export interface User {
   prenom: string;
   email: string;
   telephone?: string;
-  role: Role;
   num_matricule: string;
   createdAt: string;
   updatedAt: string;
@@ -192,89 +81,6 @@ export interface InscriptionPayload {
   passwordAdmin: string;
   telephoneAdmin: string;
   adresseAdmin: string;
-}
-
-export interface Piece {
-  _id?: string; // généré par MongoDB
-  nom: string;
-  // estValider: boolean;
-
-  expressionDeBesoin?: string;
-  demandeDeCotion?: string;
-  ficheDeLiquidation?: string;
-  ficheEngagement?: string;
-  bonDeCommande?: string;
-  bonAchat?: string;
-  facturesProForma?: string;
-  contratDepense?: string;
-  piecesFiscale?: string;
-  rapportDeCotisation?: string;
-  lettreDeNotification?: string;
-  bordereauEmission?: string;
-  mandatDePaiement?: string;
-  etatDeRetenu?: string;
-  OEM?: string;
-  bordereauLIvraison?: string;
-  pvDeDepense?: string;
-  facture?: string;
-
-  createdAt?: string; // si tu utilises timestamps dans Mongoose
-  updatedAt?: string;
-}
-
-export interface Fournisseur {
-  id?: string;
-  raisonSocial: string;
-  sigle: string;
-  NIF: string;
-  adresse: string;
-  numero: string;
-  secteurActivite: string;
-
-  createdAt?: string; // si tu utilises timestamps dans Mongoose
-  updatedAt?: string;
-}
-
-export interface ServiceBeneficiaire {
-  id?: string;
-  codeService: string;
-  libelle: string;
-  sigle: string;
-  adresse: string;
-
-  createdAt?: string; // si tu utilises timestamps dans Mongoose
-  updatedAt?: string;
-}
-
-export interface Service {
-  id: number;
-  code_service: string;
-  libelle: string;
-
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Division {
-  id: number;
-  code_division: string;
-  libelle: string;
-  service_id: number;
-  service: Service;
-
-  createdAt?: string; // si tu utilises timestamps dans Mongoose
-  updatedAt?: string;
-}
-
-export interface Section {
-  id: number;
-  code_section: string;
-  libelle: string;
-  division_id: number;
-  division: Division;
-
-  createdAt?: string; // si tu utilises timestamps dans Mongoose
-  updatedAt?: string;
 }
 
 export interface Fonction {
@@ -311,48 +117,7 @@ export interface HistoriqueLog {
   updatedAt: string;
 }
 
-export interface SourceDeFinancement {
-  id?: string;
-  libelle: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 //---------------------DOcument et genration de champs----------------------------------
-
-// export interface TypeDocument {
-//   id: number;
-//   code: string;
-//   nom: string;
-//   division_id?: number; // Ajoutez le '?' pour le rendre optionnel
-//   division?: {
-//     id: number;
-//     libelle: string;
-//   } | null;
-
-//   entitee_un_id?: number;
-//   entitee_deux_id?: number;
-//   entitee_trois_id?: number;
-//   entitee_un: EntiteeUn;
-//   entitee_deux: EntiteeDeux;
-//   entitee_trois: EntiteeTrois;
-
-//   structure_libelle: string;
-
-//   metaFields?: MetaField[];
-//   pieces: TypeDocumentPiece[];
-//   createdAt?: string;
-//   updatedAt?: string;
-// }
-
-// export interface CreateTypeDocumentPayload {
-//   code: string;
-//   nom: string;
-//   division_id: number;
-//   entitee_un_id?: number;
-//   entitee_deux_id?: number;
-//   entitee_trois_id?: number;
-// }
 
 export interface TypeDocument {
   id: number;
@@ -543,6 +308,7 @@ export interface PieceFichier {
   id: string;
   document_type_piece_id: TypeDocumentPiece | string;
   fichier: string;
+  mode: ModeChargement;
 
   createdAt?: string;
   updatedAt?: string;
@@ -587,16 +353,33 @@ export interface EntiteeTrois {
   updatedAt?: string;
 }
 
+// interfaces.ts
 export interface AgentEntiteeAccess {
   id: number;
   agent_id: number;
-  entitee_type: "UN" | "DEUX" | "TROIS";
-  entitee_id: number;
+  entitee_un_id?: number | null;
+  entitee_deux_id?: number | null;
+  entitee_trois_id?: number | null;
   created_at?: string;
   updated_at?: string;
 
-  // AJOUTE CES LIGNES : Ce sont les objets inclus par Sequelize
+  // Associations
   entitee_un?: EntiteeUn;
   entitee_deux?: EntiteeDeux;
   entitee_trois?: EntiteeTrois;
+  agent?: Agent;
+}
+
+export interface GrantAccessPayload {
+  agent_id: number;
+  entitee_un_id?: number | null;
+  entitee_deux_id?: number | null;
+  entitee_trois_id?: number | null;
+}
+
+export interface UpdateAccessPayload {
+  agent_id?: number;
+  entitee_un_id?: number | null;
+  entitee_deux_id?: number | null;
+  entitee_trois_id?: number | null;
 }

@@ -10,44 +10,103 @@ const {
   EntiteeDeux,
   EntiteeTrois,
   Permission,
+  AgentEntiteeAccess,
 } = require("../models");
 
 // Helper pour l'inclusion profonde de la hiérarchie de fonction
-
-// Dans ton contrôleur backend
 const fonctionInclude = {
   model: Fonction,
   as: "fonction_details",
   attributes: ["id", "libelle"],
   include: [
-    // AJOUT DES ENTITÉS ICI :
     {
       model: EntiteeUn,
       as: "entitee_un",
-      attributes: ["id", "libelle"],
+      attributes: ["id", "libelle", "code", "titre"],
     },
     {
       model: EntiteeDeux,
       as: "entitee_deux",
-      attributes: ["id", "libelle"],
+      attributes: ["id", "libelle", "code", "titre"],
       include: [
-        { model: EntiteeUn, as: "entitee_un", attributes: ["libelle"] },
+        {
+          model: EntiteeUn,
+          as: "entitee_un",
+          attributes: ["id", "libelle", "code"],
+        },
       ],
     },
     {
       model: EntiteeTrois,
       as: "entitee_trois",
-      attributes: ["id", "libelle"],
+      attributes: ["id", "libelle", "code", "titre"],
       include: [
         {
           model: EntiteeDeux,
           as: "entitee_deux",
-          attributes: ["libelle"],
+          attributes: ["id", "libelle", "code"],
           include: [
-            { model: EntiteeUn, as: "entitee_un", attributes: ["libelle"] },
+            {
+              model: EntiteeUn,
+              as: "entitee_un",
+              attributes: ["id", "libelle", "code"],
+            },
           ],
         },
       ],
+    },
+  ],
+};
+
+/**
+ * ✅ Inclusion des accès agent_entitee_access
+ */
+const agentAccessInclude = {
+  model: AgentEntiteeAccess,
+  as: "agent_access",
+  attributes: ["id", "created_at", "updated_at"],
+  include: [
+    // ✅ Entitee Un (N1)
+    {
+      model: EntiteeUn,
+      as: "entitee_un",
+      attributes: ["id", "libelle", "code", "titre"],
+      required: false,
+    },
+    // ✅ Entitee Deux (N2) avec son parent Entitee Un
+    {
+      model: EntiteeDeux,
+      as: "entitee_deux",
+      attributes: ["id", "libelle", "code", "titre"],
+      include: [
+        {
+          model: EntiteeUn,
+          as: "entitee_un",
+          attributes: ["id", "libelle", "code"],
+        },
+      ],
+      required: false,
+    },
+    // ✅ Entitee Trois (N3) avec toute sa hiérarchie
+    {
+      model: EntiteeTrois,
+      as: "entitee_trois",
+      attributes: ["id", "libelle", "code", "titre"],
+      include: [
+        {
+          model: EntiteeDeux,
+          as: "entitee_deux",
+          attributes: ["id", "libelle", "code"],
+          include: [
+            {
+              model: EntiteeUn,
+              as: "entitee_un",
+              attributes: ["id", "libelle", "code"],
+            },
+          ],
+        },
+      ],
+      required: false,
     },
   ],
 };
@@ -123,8 +182,11 @@ exports.getUsers = async (req, res) => {
       include: [
         { model: Droit, as: "droit", attributes: ["libelle"] },
         fonctionInclude, // Populate Service/Division/Section
+        agentAccessInclude, // Populate accès avec hiérarchie complète
       ],
     });
+
+    console.log(`✅ ${users.length} utilisateurs chargés avec leurs accès`);
     res.status(200).json(users);
   } catch (err) {
     res
@@ -144,6 +206,7 @@ exports.getUsersById = async (req, res) => {
         { model: Agent, as: "createur", attributes: ["nom", "prenom"] },
         { model: Droit, as: "droit", attributes: ["id", "libelle"] },
         fonctionInclude,
+        agentAccessInclude, // Populate accès avec hiérarchie complète
       ],
     });
 
@@ -274,6 +337,7 @@ exports.getMe = async (req, res) => {
       attributes: { exclude: ["password"] },
       include: [
         fonctionInclude,
+        agentAccessInclude, // Populate accès avec hiérarchie complète
         {
           model: Droit,
           as: "droit",

@@ -74,3 +74,21 @@ export const addPiecesToTypeDocument = async (
   );
   return response.data;
 };
+
+export const removePiecesFromTypeDocument = async (
+  document_typeId: string,
+  pieceId: string,
+): Promise<{ message: string }> => {
+  const response = await api.delete(
+    `/types-documents/${document_typeId}/pieces`,
+    { data: { pieceId } },
+  );
+  return response.data;
+};
+
+export const getPiecesOfTypeDocument = async (
+  document_typeId: string,
+): Promise<any[]> => {
+  const response = await api.get(`/types-documents/${document_typeId}/pieces`);
+  return response.data;
+};

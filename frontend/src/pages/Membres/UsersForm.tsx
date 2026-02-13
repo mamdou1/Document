@@ -24,7 +24,6 @@ import type {
   Fonction,
   Droit,
   User,
-  Role,
 } from "../../interfaces";
 import { getAllEntiteeUn } from "../../api/entiteeUn";
 import { getEntiteeDeuxByEntiteeUn } from "../../api/entiteeDeux";
@@ -58,7 +57,6 @@ export default function UserForm({
   const [email, setEmail] = useState("");
   const [telephone, setTelephone] = useState("");
   const [numMatricule, setNumMatricule] = useState("");
-  const [role, setRole] = useState<Role>("MEMBRE");
 
   // const [droitId, setDroitId] = useState<number | undefined>(
   //   initial.droit_id ??
@@ -101,7 +99,6 @@ export default function UserForm({
       setEmail(initial.email || "");
       setTelephone(initial.telephone || "");
       setNumMatricule(initial.num_matricule || "");
-      setRole(initial.role || "MEMBRE");
       setPhotoFile(null);
 
       // Gestion ID Droit
@@ -195,7 +192,6 @@ export default function UserForm({
       email,
       telephone,
       num_matricule: numMatricule,
-      role,
       droit: typeof droit === "object" ? (droit as any).id : droit,
       fonction: fonctionId, // C'est cet ID qui lie l'utilisateur aux entités via la table Fonction
     };

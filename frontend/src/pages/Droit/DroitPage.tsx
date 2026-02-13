@@ -103,11 +103,23 @@ export default function DroitPage() {
 
   const handleDelete = async (id: string) => {
     confirmDialog({
-      message: "Êtes-vous sûr de vouloir supprimer ce droit ?",
-      header: "Confirmation de suppression",
-      icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger bg-red-600 border-none rounded-xl",
-      rejectClassName: "p-button-text text-slate-600 rounded-xl",
+      message:
+        "Voulez-vous supprimer ce profil définitivement ? Cette action est irréversible.",
+      header: "Confirmation",
+      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
+
+      // --- Personnalisation des labels ---
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+
+      // --- Styling des boutons ---
+      // Ajout de classes de mise en page (flexbox) et de style
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+
+      // --- Style du dialogue lui-même (optionnel) ---
+      style: { width: "450px" },
       accept: async () => {
         try {
           await deleteDroitById(id);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Layout from "../../components/layout/Layoutt";
 import UserForm from "./UsersForm";
-import type { User, Role } from "../../interfaces";
+import type { User } from "../../interfaces";
 import UserDetails from "./UserDetails";
 import { getUsers, createUser, updateUser, deleteUser } from "../../api/users";
 import { Toast } from "primereact/toast";
@@ -15,12 +15,9 @@ import {
   Users,
   UserPlus,
   Search,
-  Filter,
-  MoreHorizontal,
   Eye,
   Edit3,
   Trash2,
-  ShieldCheck,
   XCircle,
   ArrowUpDown,
   FolderLock,
@@ -29,11 +26,7 @@ import { getDroits } from "../../api/droit";
 //import { getAllServices } from "../../api/service";
 import { Droit, Fonction, AgentEntiteeAccess } from "../../interfaces";
 import UserAcces from "./UserAcces";
-import {
-  grantAccess,
-  updateAccess,
-  revokeAccess,
-} from "../../api/agentEntiteeAccess";
+import { grantAccess } from "../../api/agentEntiteeAccess";
 
 export default function UserPage() {
   const [allUser, setAllUser] = useState<User[]>([]);
@@ -47,7 +40,6 @@ export default function UserPage() {
   const toast = useRef<Toast>(null);
   const { user } = useAuth();
   const [query, setQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<Role | "">("");
   const [champDeTrie, setChampDeTrie] = useState<keyof User>("prenom");
   const [OrdreDeTrie, setOrdreDeTrie] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -117,10 +109,23 @@ export default function UserPage() {
 
   const handleDelete = async (id: string) => {
     confirmDialog({
-      message: "Voulez-vous vraiment supprimer ce membre ?",
-      header: "Confirmation de suppression",
-      icon: "pi pi-info-circle",
-      acceptClassName: "p-button-danger",
+      message:
+        "Voulez-vous supprimer cet agent définitivement ? Cette action est irréversible.",
+      header: "Confirmation",
+      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
+
+      // --- Personnalisation des labels ---
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+
+      // --- Styling des boutons ---
+      // Ajout de classes de mise en page (flexbox) et de style
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+
+      // --- Style du dialogue lui-même (optionnel) ---
+      style: { width: "450px" },
       accept: async () => {
         try {
           await deleteUser(id);
@@ -143,20 +148,43 @@ export default function UserPage() {
 
   const handleGrantAccess = async (payload: any[]) => {
     try {
-      for (const p of payload) {
-        await grantAccess(p);
+      // ✅ Vérifier que le payload n'est pas vide
+      if (!payload || payload.length === 0) {
+        toast.current?.show({
+          severity: "warn",
+          summary: "Attention",
+          detail: "Aucun accès sélectionné",
+        });
+        return;
       }
+
+      console.log("📦 Payload envoyé:", payload); // DEBUG
+
+      // ✅ Appel direct à grantAccess avec le tableau
+      await grantAccess(payload);
+
+      // ✅ Rafraîchir les données
+      await affichage();
 
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: "Accès mis à jour",
+        detail: `${payload.length} accès ajoutés avec succès`,
       });
-    } catch (e) {
+
+      // ✅ Fermer le modal
+      setAccesUser(false);
+    } catch (e: any) {
+      console.error("❌ Erreur grantAccess:", e);
+
+      // ✅ Afficher le message d'erreur du backend
+      const errorMessage =
+        e.response?.data?.message || "Impossible d'appliquer les accès";
+
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Impossible d'appliquer les accès",
+        detail: errorMessage,
       });
     }
   };
@@ -227,18 +255,16 @@ export default function UserPage() {
           </div>
         </div>
 
-        {user?.role === "ADMIN" && (
-          <Button
-            className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95"
-            onClick={() => {
-              setEditing(null);
-              setFormVisible(true);
-            }}
-          >
-            <UserPlus size={20} className="mr-2" />
-            <span className="font-bold">Nouveau membre</span>
-          </Button>
-        )}
+        <Button
+          className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95"
+          onClick={() => {
+            setEditing(null);
+            setFormVisible(true);
+          }}
+        >
+          <UserPlus size={20} className="mr-2" />
+          <span className="font-bold">Nouveau membre</span>
+        </Button>
       </div>
 
       {/* Filter Bar */}
@@ -352,11 +378,6 @@ export default function UserPage() {
                         <Users size={20} />
                       </div>
                     )}
-                    <div
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                        u.role === "ADMIN" ? "bg-amber-400" : "bg-emerald-400"
-                      }`}
-                    ></div>
                   </div>
                 </td>
                 <td className="px-6 py-4 font-bold text-slate-700">
@@ -489,9 +510,9 @@ export default function UserPage() {
         visible={accesUser}
         onHide={() => setAccesUser(false)}
         onSubmit={handleGrantAccess}
-        // CORRECTION DU TYPE : Conversion explicite en number
         agentId={Number(selectedUser?.id)}
-        initial={selectedUser}
+        // ✅ SOLUTION: Créer une référence stable ou utiliser un useMemo
+        initial={selectedUser?.agent_access || []}
         title="Gestion des accès"
       />
 

@@ -43,4 +43,18 @@ router.post(
   ctrl.addPiecesToTypeDocument,
 );
 
+router.get(
+  "/:id/pieces",
+  verifyToken,
+  authorizePermission("documentType", "read"),
+  ctrl.getPiecesOfTypeDocument,
+);
+
+router.delete(
+  "/:id/pieces",
+  verifyToken,
+  authorizePermission("documentType", "delete"),
+  ctrl.removePieceFromTypeDocument,
+);
+
 module.exports = router;

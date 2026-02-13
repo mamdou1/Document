@@ -207,9 +207,23 @@ export default function DocumentTypePage() {
 
   const handleDelete = (id: string) => {
     confirmDialog({
-      message: "Supprimer ce type de document ?",
+      message:
+        "Voulez-vous supprimer ce type de document définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      acceptClassName: "p-button-danger",
+      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
+
+      // --- Personnalisation des labels ---
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+
+      // --- Styling des boutons ---
+      // Ajout de classes de mise en page (flexbox) et de style
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+
+      // --- Style du dialogue lui-même (optionnel) ---
+      style: { width: "450px" },
       accept: async () => {
         await deleteTypeDocument(id);
         setTypes((s) => s.filter((x) => String(x.id) !== String(id)));

@@ -4,47 +4,30 @@ const { verifyToken } = require("../middlewares/auth.middleware");
 const {
   authorizePermission,
 } = require("../middlewares/authorizePermission.middleware");
-
-router.post(
-  "/",
-  verifyToken,
-  authorizePermission("document", "create"),
-  ctrl.create,
-);
-router.get(
-  "/",
-  verifyToken,
-  authorizePermission("document", "read"),
-  ctrl.getAll,
-);
-router.get(
-  "/:id",
-  verifyToken,
-  authorizePermission("document", "read"),
-  ctrl.getById,
-);
-router.put(
-  "/:id",
-  verifyToken,
-  authorizePermission("document", "update"),
-  ctrl.update,
-);
-router.delete(
-  "/:id",
-  verifyToken,
-  authorizePermission("document", "delete"),
-  ctrl.remove,
-);
-
 const upload = require("../middlewares/ulpoadDocument.middleware");
 
-router.patch(
-  "/:documentId/pieces/:pieceId/disponible",
+// =============================================
+// 1. ROUTES SPÉCIFIQUES (avec mots-clés) - EN PREMIER !
+// =============================================
+
+// ✅ LOT UNIQUE - GET (TRÈS SPÉCIFIQUE)
+router.get(
+  "/:documentId/lot-unique/files",
   verifyToken,
-  authorizePermission("document", "update"),
-  ctrl.updateDocumentPieceDisponibilite,
+  authorizePermission("document", "read"),
+  ctrl.getLotUniqueFiles,
 );
 
+// ✅ LOT UNIQUE - POST
+router.post(
+  "/:documentId/document-type/:documentTypeId/lot-unique/files",
+  verifyToken,
+  authorizePermission("document", "create"),
+  upload.array("files", 10),
+  ctrl.uploadDocumentFiles,
+);
+
+// ✅ PIÈCE INDIVIDUELLE - POST
 router.post(
   "/:documentId/document-type/:documentTypeId/piece/:pieceId/files",
   verifyToken,
@@ -53,6 +36,7 @@ router.post(
   ctrl.uploadDocumentFiles,
 );
 
+// ✅ PIÈCE INDIVIDUELLE - GET
 router.get(
   "/:documentId/piece/:pieceId/files",
   verifyToken,
@@ -60,25 +44,60 @@ router.get(
   ctrl.getDocumentFiles,
 );
 
+// ✅ DISPONIBILITÉ PIÈCE
+router.patch(
+  "/:documentId/pieces/:pieceId/disponible",
+  verifyToken,
+  authorizePermission("document", "update"),
+  ctrl.updateDocumentPieceDisponibilite,
+);
+
+// ✅ LISTE DES PIÈCES D'UN DOCUMENT
 router.get(
-  "/documents/:documentId/pieces",
+  "/:documentId/pieces",
   verifyToken,
   authorizePermission("document", "read"),
   ctrl.getDocumentPieces,
 );
 
-// router.post(
-//   "/:documentId/files",
-//   verifyToken,
-//   authorizePermission("document", "create"),
-//   upload.array("files", 10),
-//   ctrl.uploadDocumentFiles,
-// );
-// router.get(
-//   "/:documentId/files",
-//   verifyToken,
-//   authorizePermission("document", "read"),
-//   ctrl.getDocumentFiles,
-// );
+// =============================================
+// 2. ROUTES GÉNÉRIQUES (AVEC /:id) - EN DERNIER !
+// =============================================
+
+// ✅ CRUD - À METTRE ABSOLUMENT APRÈS les routes spécifiques
+router.get(
+  "/:id",
+  verifyToken,
+  authorizePermission("document", "read"),
+  ctrl.getById,
+);
+
+router.put(
+  "/:id",
+  verifyToken,
+  authorizePermission("document", "update"),
+  ctrl.update,
+);
+
+router.delete(
+  "/:id",
+  verifyToken,
+  authorizePermission("document", "delete"),
+  ctrl.remove,
+);
+
+router.post(
+  "/",
+  verifyToken,
+  authorizePermission("document", "create"),
+  ctrl.create,
+);
+
+router.get(
+  "/",
+  verifyToken,
+  authorizePermission("document", "read"),
+  ctrl.getAll,
+);
 
 module.exports = router;

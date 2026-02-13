@@ -5,9 +5,6 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Save, GitMerge, Layers, Info, Hash } from "lucide-react";
 
-// Importez vos nouveaux services et interfaces
-import { getAllDivision } from "../../../api/division";
-import { createSection } from "../../../api/section"; // ou secteur.ts selon votre nom de fichier
 import { EntiteeDeux, EntiteeTrois } from "../../../interfaces";
 
 type Props = {

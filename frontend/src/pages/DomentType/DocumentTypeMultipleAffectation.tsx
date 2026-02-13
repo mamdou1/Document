@@ -127,6 +127,7 @@ export default function DocumentTypeMultipleAffectation({
           else setList(list.filter((id) => id !== String(t.id)));
         }}
         checked={list.includes(String(t.id))}
+        className="border border-blue-100 border-3xl"
       />
       <label
         htmlFor={String(t.id)}

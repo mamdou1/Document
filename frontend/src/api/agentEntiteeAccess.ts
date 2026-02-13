@@ -1,34 +1,89 @@
-import api from "../api/axios"; // ton instance Axios
+import api from "../api/axios";
+import { GrantAccessPayload, UpdateAccessPayload } from "../interfaces";
 
-// Créer un accès
-export const grantAccess = async (payload: any[]) => {
-  const { data } = await api.post("/agent-access", payload);
-  return data;
+// ➡️ Créer un accès
+export const grantAccess = async (payload: GrantAccessPayload[]) => {
+  try {
+    const { data } = await api.post("/agent-access", payload);
+    return data;
+  } catch (error: any) {
+    console.error("❌ Erreur grantAccess:", error);
+    throw error;
+  }
 };
 
 // ➡️ Mettre à jour un accès
 export const updateAccess = async (
   id: number,
-  agent_id: number,
-  entitee_type: "UN" | "DEUX" | "TROIS",
-  entitee_id: number,
+  payload: UpdateAccessPayload,
 ) => {
-  const { data } = await api.put(`/agent-entitee-access/${id}`, {
-    agent_id,
-    entitee_type,
-    entitee_id,
-  });
-  return data;
+  try {
+    const { data } = await api.put(`/agent-access/${id}`, payload);
+    return data;
+  } catch (error: any) {
+    console.error("❌ Erreur updateAccess:", error);
+    throw error;
+  }
 };
 
-// Révoquer un accès
+// ➡️ Récupérer les accès d’un agent par son ID
+export const getAgentAccessById = async (agentId: number) => {
+  try {
+    const { data } = await api.get(`/agent-access/${agentId}`);
+    return data;
+  } catch (error: any) {
+    console.error("❌ Erreur getAgentAccessById:", error);
+    throw error;
+  }
+};
+
+// ➡️ Révoquer un accès
 export const revokeAccess = async (id: number) => {
-  const { data } = await api.delete(`/agent-access/${id}`);
-  return data;
+  try {
+    // 🔍 DEBUG
+    console.log(`🗑️ Révocation de l'accès ID: ${id}`);
+
+    const { data } = await api.delete(`/agent-access/${id}`);
+
+    console.log(`✅ Accès ${id} révoqué avec succès`, data);
+    return data;
+  } catch (error: any) {
+    console.error(`❌ Erreur revokeAccess (ID: ${id}):`, {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method,
+    });
+    throw error;
+  }
 };
 
-// Lister tous les accès
+// ➡️ Lister tous les accès
 export const listAccess = async () => {
-  const { data } = await api.get("/agent-access");
-  return data;
+  try {
+    const { data } = await api.get("/agent-access");
+    return data;
+  } catch (error: any) {
+    console.error("❌ Erreur listAccess:", error);
+    throw error;
+  }
+};
+
+// Utilitaires
+export const isValidAccessPayload = (payload: GrantAccessPayload): boolean => {
+  return !!(
+    payload.entitee_un_id ||
+    payload.entitee_deux_id ||
+    payload.entitee_trois_id
+  );
+};
+
+export const getAccessEntityLabel = (access: any): string => {
+  return (
+    access.entitee_un?.libelle ||
+    access.entitee_deux?.libelle ||
+    access.entitee_trois?.libelle ||
+    "Entité inconnue"
+  );
 };

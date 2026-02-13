@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { Fonction, Section, EntiteeTrois } from "../../../interfaces";
+import { Fonction, EntiteeTrois } from "../../../interfaces";
 import { getFunctionsByEntiteeTrois } from "../../../api/entiteeTrois";
 import {
   GitMerge,

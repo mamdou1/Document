@@ -90,10 +90,23 @@ export default function SallePage() {
 
   const handleDelete = async (id: string) => {
     confirmDialog({
-      message: "Supprimer cette salle et ses références ?",
+      message:
+        "Voulez-vous supprimer cette salle définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger",
+      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
+
+      // --- Personnalisation des labels ---
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+
+      // --- Styling des boutons ---
+      // Ajout de classes de mise en page (flexbox) et de style
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+
+      // --- Style du dialogue lui-même (optionnel) ---
+      style: { width: "450px" },
       accept: async () => {
         try {
           await deleteSalle(id);

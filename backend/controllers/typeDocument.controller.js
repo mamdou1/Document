@@ -12,11 +12,8 @@ const buildAccessWhere = require("../utils/buildAccessWhere.utils");
 exports.create = async (req, res) => {
   try {
     req.body;
-
     const payload = req.body;
-
     const data = await TypeDocument.create(payload);
-
     res.status(201).json(data);
   } catch (e) {
     res.status(500).json({ message: e.message });
@@ -70,48 +67,50 @@ exports.getAll = async (req, res) => {
         {
           model: EntiteeUn,
           as: "entitee_un",
-          attributes: ["id", "libelle"],
+          attributes: ["id", "libelle", "code", "titre"], // ✅ Ajoutez code et titre
         },
         {
           model: EntiteeDeux,
           as: "entitee_deux",
-          attributes: ["id", "libelle"],
+          attributes: ["id", "libelle", "code", "titre"],
         },
         {
           model: EntiteeTrois,
           as: "entitee_trois",
-          attributes: ["id", "libelle"],
+          attributes: ["id", "libelle", "code", "titre"],
         },
         {
           model: Pieces,
-          as: "pieces", // L'alias défini dans votre association belongsToMany
+          as: "pieces",
           attributes: ["id", "libelle", "code_pieces"],
-          through: { attributes: [] }, // On ne veut pas les colonnes de la table pivot ici
+          through: { attributes: [] },
         },
       ],
       order: [["createdAt", "DESC"]],
     });
 
-    // Formatage identique à votre ancien modèle
-    // Dans ton controller TypeDocument.getAll
     const formatted = data.map((td) => {
-      // Logique pour trouver l'entité la plus précise rattachée
       const entiteeConcernee =
-        td.entitee_trois || td.entitee_deux || td.entitee_un || td.division; // Fallback sur division si les autres sont nulles
+        td.entitee_trois || td.entitee_deux || td.entitee_un;
 
       return {
         id: td.id,
         code: td.code,
         nom: td.nom,
-        // On ajoute ce champ pour simplifier le travail du frontend
+        // ✅ AJOUTEZ CES LIGNES - les IDs directs !
+        entitee_un_id: td.entitee_un?.id || null,
+        entitee_deux_id: td.entitee_deux?.id || null,
+        entitee_trois_id: td.entitee_trois?.id || null,
+
         structure_libelle: entiteeConcernee
           ? entiteeConcernee.libelle
           : "Non assigné",
-        // On garde les objets complets au cas où
+
+        // ✅ Gardez les objets complets
         entitee_un: td.entitee_un,
         entitee_deux: td.entitee_deux,
         entitee_trois: td.entitee_trois,
-        division: td.division,
+
         metaFields: td.metaFields || [],
         pieces: (td.pieces || []).map((p) => ({
           id: p.id,
@@ -123,7 +122,7 @@ exports.getAll = async (req, res) => {
       };
     });
 
-    res.json({ typeDocument: formatted }); // On renvoie un objet avec la clé typeDocument
+    res.json({ typeDocument: formatted });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: e.message });
@@ -183,6 +182,47 @@ exports.addPiecesToTypeDocument = async (req, res) => {
     res.json({ message: "Pièces ajoutées avec succès" });
   } catch (err) {
     await t.rollback();
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.removePieceFromTypeDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { pieceId } = req.body;
+
+    const typeDocument = await TypeDocument.findByPk(id);
+    if (!typeDocument)
+      return res.status(404).json({ message: "Type de document introuvable" });
+
+    await typeDocument.removePiece(pieceId);
+
+    res.json({ message: "Pièce supprimée avec succès" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getPiecesOfTypeDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const typeDocument = await TypeDocument.findByPk(id, {
+      include: [
+        {
+          model: Pieces,
+          as: "pieces",
+          attributes: ["id", "libelle", "code_pieces"],
+        },
+      ],
+    });
+
+    if (!typeDocument) {
+      return res.status(404).json({ message: "Type de document introuvable" });
+    }
+
+    res.json(typeDocument.pieces);
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };

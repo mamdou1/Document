@@ -40,31 +40,40 @@
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const slugify = require("../utils/slugify");
-const { Document, Pieces } = require("../models");
+const { Document } = require("../models"); // ✅ Importez Document, pas Liquidation
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
-      const { documentId, pieceId } = req.params;
+      const { documentId } = req.params;
+      const { upload_mode } = req.body;
 
       const document = await Document.findByPk(documentId);
-      const piece = await Pieces.findByPk(pieceId);
 
-      if (!document || !piece) {
-        return cb(new Error("Document ou pièce introuvable"));
+      if (!document) {
+        return cb(new Error("Document introuvable"));
       }
 
-      const folder = slugify(piece.libelle);
-      const dir = path.join(
+      // Chemin de base pour le document
+      let uploadDir = path.join(
+        process.cwd(),
         "uploads",
         "documents",
         `DOC-${documentId}`,
-        folder,
       );
 
-      fs.mkdirSync(dir, { recursive: true });
-      cb(null, dir);
+      // MODE LOT UNIQUE
+      if (upload_mode === "LOT_UNIQUE") {
+        uploadDir = path.join(uploadDir, "LOT_UNIQUE");
+      } else {
+        // MODE INDIVIDUEL - dossier par défaut
+        uploadDir = path.join(uploadDir, "PIECES");
+      }
+
+      // Création récursive du dossier
+      fs.mkdirSync(uploadDir, { recursive: true });
+
+      cb(null, uploadDir);
     } catch (err) {
       cb(err);
     }
@@ -81,5 +90,7 @@ const storage = multer.diskStorage({
 
 module.exports = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
 });

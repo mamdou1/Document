@@ -4,22 +4,11 @@ import AuthSwitcher from "../pages/Auth/AuthSwitcher";
 import Pieces from "../pages/Pieces/PiecesPage";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Membre from "../pages/Membres/UserPage";
-import Type from "../pages/Type/TypePage";
 import ExercicePage from "../pages/Exercice/ExercicePage";
-import ProgrammePage from "../pages/Programme/ProgrammePage";
-import ChapitrePage from "../pages/Chapitre/ChapitrePage";
-import NaturePage from "../pages/Nature/NaturePage";
-import LiquidationPage from "../pages/Liquidation/LiquidationPage";
-import FournisseurPage from "../pages/Fournisseur/FournisseurPage";
-import ServiceBeneficiarePage from "../pages/Service Beneficiare/ServiceBeneficiarePage";
 import RecherchePage from "../pages/Recherche/Recherche";
 import DroitPage from "../pages/Droit/DroitPage";
-import ServicePage from "../pages/Service/ServicePage";
-import SectionPage from "../pages/Section/SectionPage";
-import DivisionPage from "../pages/Division/DivisionPage";
 import { useAuth } from "../context/AuthContext";
 import HistoriquePage from "../pages/HistoriqueLog/HistoriquePage";
-import SourceDeFinancementPage from "../pages/Source De Financement/SourceDeFinancementPage";
 import DocumentTypePage from "../pages/DomentType/DocumentTypePage";
 import DocumentPage from "../pages/Document/DocumentPage";
 import ConfigurationStructure from "../pages/Organigrame/ConfigurationStructure";
@@ -76,66 +65,10 @@ export default function AppRouter() {
         }
       />
       <Route
-        path="/programmes"
-        element={
-          <PrivateRoute>
-            <ProgrammePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/chapitres"
-        element={
-          <PrivateRoute>
-            <ChapitrePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/natures"
-        element={
-          <PrivateRoute>
-            <NaturePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/liquidations"
-        element={
-          <PrivateRoute>
-            <LiquidationPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/type"
-        element={
-          <PrivateRoute>
-            <Type />
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/pieces"
         element={
           <PrivateRoute>
             <Pieces />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/fournisseur"
-        element={
-          <PrivateRoute>
-            <FournisseurPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/serviceBeneficiaire"
-        element={
-          <PrivateRoute>
-            <ServiceBeneficiarePage />
           </PrivateRoute>
         }
       />
@@ -156,42 +89,10 @@ export default function AppRouter() {
         }
       />
       <Route
-        path="/service"
-        element={
-          <PrivateRoute>
-            <ServicePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/section"
-        element={
-          <PrivateRoute>
-            <SectionPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/division"
-        element={
-          <PrivateRoute>
-            <DivisionPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/historique"
         element={
           <PrivateRoute>
             <HistoriquePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/sourceDeFinancement"
-        element={
-          <PrivateRoute>
-            <SourceDeFinancementPage />
           </PrivateRoute>
         }
       />

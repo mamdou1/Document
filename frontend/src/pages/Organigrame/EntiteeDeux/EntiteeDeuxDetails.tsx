@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import {
-  Fonction,
-  EntiteeUn,
-  EntiteeDeux,
-  EntiteeTrois,
-} from "../../../interfaces";
+import { Fonction, EntiteeUn, EntiteeDeux } from "../../../interfaces";
 import { getFunctionsByEntiteeDeux } from "../../../api/entiteeDeux";
-import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
 import {
   Layers,
-  GitMerge,
   Calendar,
   Briefcase,
   PlusCircle,
@@ -32,28 +25,18 @@ export default function EntiteeDeuxDetails({
 }: any) {
   const [fonctions, setFonctions] = useState<Fonction[]>([]);
   const [editing, setEditing] = useState<Partial<Fonction> | null>(null);
-  const [selected, setSelected] = useState<EntiteeDeux | null>(null);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
-  const [entiteeTrois, setEntiteeTrois] = useState<EntiteeTrois[]>([]);
 
   // Récupération du libellé du service parent
   const entiteeUnLibelle = entiteeUn?.find(
     (s: EntiteeUn) => s.id === entiteeDeux?.entitee_un_id,
   )?.libelle;
 
-  const entiteeUnTitre = entiteeUn?.find(
-    (s: EntiteeUn) => s.id === entiteeDeux?.entitee_un_id,
-  )?.libelle;
-
   const fetchFonctions = async () => {
     if (visible && entiteeDeux?.id) {
       try {
-        const [data, sec] = await Promise.all([
-          getFunctionsByEntiteeDeux(entiteeDeux.id),
-          getEntiteeTroisByEntiteeDeux(entiteeDeux.id),
-        ]);
+        const data = await getFunctionsByEntiteeDeux(entiteeDeux.id);
         setFonctions(data);
-        setEntiteeTrois(Array.isArray(sec) ? sec : []);
       } catch (err) {
         console.error("Erreur lors du chargement des fonctions", err);
       }
@@ -63,10 +46,6 @@ export default function EntiteeDeuxDetails({
   useEffect(() => {
     fetchFonctions();
   }, [visible, entiteeDeux]);
-
-  const entiteeTroisLibelle = entiteeTrois.find(
-    (s: EntiteeTrois) => s.entitee_deux_id === entiteeDeux?.id,
-  )?.libelle;
 
   const handleDelete = (id: number) => {
     confirmDialog({
@@ -82,7 +61,7 @@ export default function EntiteeDeuxDetails({
             summary: "Supprimé",
             detail: "Fonction supprimée avec succès",
           });
-          fetchFonctions(); // Rafraîchir la liste
+          fetchFonctions();
         } catch (err) {
           toast.current?.show({
             severity: "error",
@@ -103,11 +82,11 @@ export default function EntiteeDeuxDetails({
           <div className="bg-emerald-100 p-2 rounded-lg">
             <Layers size={18} className="text-emerald-600" />
           </div>
-          <span>Détails </span>
+          <span>Détails</span>
         </div>
       }
       visible={visible}
-      style={{ width: "700px" }}
+      style={{ width: "600px" }}
       onHide={onHide}
       draggable={false}
       footer={
@@ -124,8 +103,9 @@ export default function EntiteeDeuxDetails({
         {/* Header Entitee deux */}
         <div className="border-b border-slate-100 pb-4 space-y-2">
           <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-            Département / {entiteeDeux.titre}
+            {entiteeDeux.titre}
           </p>
+
           {/* Infos complémentaires */}
           <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
             <div className="p-2 bg-emerald-500 rounded-lg shadow-sm shadow-emerald-200">
@@ -133,13 +113,14 @@ export default function EntiteeDeuxDetails({
             </div>
             <div>
               <p className="text-[10px] font-black text-emerald-600/50 uppercase tracking-widest">
-                {entiteeUnTitre} de rattachement
+                Structure parente
               </p>
               <p className="text-sm text-emerald-800 font-bold uppercase">
                 {entiteeUnLibelle || "Non spécifié"}
               </p>
             </div>
           </div>
+
           <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
             {entiteeDeux.libelle}
             <span className="text-slate-600 text-sm font-normal">
@@ -153,16 +134,15 @@ export default function EntiteeDeuxDetails({
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Fonctions de {entiteeDeux.titre}
+                Fonctions rattachées
               </p>
               <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 ml-2 py-0.5 rounded-full shadow-sm">
-                {fonctions.length} Total
+                {fonctions.length}
               </span>
             </div>
 
             <Button
               onClick={(e) => {
-                setSelected(entiteeDeux);
                 setAjoutFonctionVisible(true);
                 e.stopPropagation();
               }}
@@ -182,13 +162,13 @@ export default function EntiteeDeuxDetails({
                       #
                     </th>
                     <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                      Libellé de la Fonction
+                      Libellé
                     </th>
                     <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">
-                      Date Création
+                      Date
                     </th>
-                    <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                      Action
+                    <th className="p-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -222,11 +202,11 @@ export default function EntiteeDeuxDetails({
                             : "N/A"}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={(e) => {
-                              setEditing(f); // f est l'objet fonction de votre map
+                              setEditing(f);
                               setAjoutFonctionVisible(true);
                               e.stopPropagation();
                             }}
@@ -261,38 +241,24 @@ export default function EntiteeDeuxDetails({
             </div>
           )}
         </div>
-
-        {/* Liste des Section */}
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
-          <div className="p-2 bg-emerald-500 rounded-lg shadow-sm shadow-emerald-200">
-            <GitMerge size={16} className="text-white" />
-          </div>
-          <div>
-            <p className="text-[10px] font-black text-emerald-600/50 uppercase tracking-widest">
-              Section de rattachement
-            </p>
-            <p className="text-sm text-emerald-800 font-bold uppercase">
-              {entiteeTroisLibelle || "Non spécifié"}
-            </p>
-          </div>
-        </div>
       </div>
 
       <EntiteeDeuxAjoutFonction
         visible={ajoutFonctionVisible}
         onHide={() => {
           setAjoutFonctionVisible(false);
-          setEditing(null); // Très important : vider l'édition à la fermeture
+          setEditing(null);
         }}
         entiteeDeux={entiteeDeux}
-        editing={editing} // Passer l'état editing
+        editing={editing}
         onSuccess={() => {
           setAjoutFonctionVisible(false);
+          setEditing(null);
           fetchFonctions();
           toast?.current?.show({
             severity: "success",
             summary: "Succès",
-            detail: "Fonction ajoutée avec succès à la entiteeDeux",
+            detail: "Fonction ajoutée/modifiée",
           });
         }}
       />
