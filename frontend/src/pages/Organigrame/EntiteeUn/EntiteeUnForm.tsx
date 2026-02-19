@@ -9,6 +9,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<EntiteeUn>) => Promise<void>;
+  refresh: () => void;
   initial?: Partial<EntiteeUn>;
   title?: string;
 };
@@ -17,6 +18,7 @@ export default function EntiteeUnForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   initial = {},
   title = "Nouveau",
 }: Props) {
@@ -39,6 +41,7 @@ export default function EntiteeUnForm({
       console.log("Soumission réussie");
       setLibelle("");
       //onHide(); // Décidez si vous voulez fermer automatiquement ou non
+      refresh();
     } catch (error) {
       console.error("Erreur lors de la soumission:", error); // <-- Ajoutez ce log
     } finally {

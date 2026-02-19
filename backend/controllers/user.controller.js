@@ -116,9 +116,9 @@ const agentAccessInclude = {
  */
 exports.createUser = async (req, res) => {
   try {
-    if (req.user.role !== "ADMIN") {
-      return res.status(403).json({ message: "Accès refusé" });
-    }
+    // if (req.user.role !== "ADMIN") {
+    //   return res.status(403).json({ message: "Accès refusé" });
+    // }
 
     const {
       nom,
@@ -126,7 +126,7 @@ exports.createUser = async (req, res) => {
       email,
       telephone,
       num_matricule,
-      role,
+      // role,
       droit,
       fonction,
     } = req.body;
@@ -145,6 +145,10 @@ exports.createUser = async (req, res) => {
       nom.slice(0, 2).toLowerCase() +
       prenom.slice(0, 2).toLowerCase() +
       telephone.replace(/\D/g, "").slice(0, 4);
+
+    const usernames =
+      nom.toLowerCase() + telephone.replace(/\D/g, "").slice(0, 2);
+
     const hashedPassword = await bcrypt.hash(passwordGenerated, 10);
     const photoProfil = req.file ? req.file.filename : "";
 
@@ -154,8 +158,9 @@ exports.createUser = async (req, res) => {
       email,
       telephone,
       num_matricule,
-      role,
+      // role,
       password: hashedPassword,
+      username: usernames,
       enregistrer_par_id: req.user.id,
       photo_profil: photoProfil,
       droit_id: droit, // Mapping front 'droit' -> back 'droit_id'
@@ -163,7 +168,7 @@ exports.createUser = async (req, res) => {
     });
 
     // Email de bienvenue
-    const message = `Bonjour ${prenom} ${nom},\n\nIdentifiant : ${telephone}\nMot de passe : ${passwordGenerated}\n`;
+    const message = `Bonjour ${prenom} ${nom},\n\nIdentifiant : ${usernames}\nMot de passe : ${passwordGenerated}\n`;
     await sendEmail(email, "Bienvenue sur la plateforme", message);
 
     res.status(201).json({ message: "Utilisateur créé", user: newUser });

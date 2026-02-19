@@ -12,7 +12,11 @@ import {
   deleteEntiteeDeuxById,
 } from "../../../api/entiteeDeux";
 import { getAllEntiteeUn } from "../../../api/entiteeUn";
-import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
+import {
+  createEntiteeTrois,
+  getEntiteeTroisByEntiteeDeux,
+  updateEntiteeTroisById,
+} from "../../../api/entiteeTrois";
 import { getFunctionsByEntiteeDeux } from "../../../api/entiteeDeux";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
@@ -33,8 +37,11 @@ import {
   Briefcase,
   Calendar,
 } from "lucide-react";
+import EntiteeTroisForm from "../EntiteeTrois/EntiteeTroisForm";
+import EntiteeTroisAjoutFonction from "../EntiteeTrois/EntiteeTroisAjoutFonction";
 
 export default function EntiteeDeuxPage() {
+  const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
   const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
   const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
   const [selected, setSelected] = useState<EntiteeDeux | null>(null);
@@ -57,6 +64,14 @@ export default function EntiteeDeuxPage() {
   const [expandedSections, setExpandedSections] = useState<
     Record<number, boolean>
   >({});
+  const [ajoutFonctionTroisVisible, setAjoutFonctionTroisVisible] =
+    useState(false);
+  const [formTroisVisible, setFormTroisVisible] = useState(false);
+  const [editingTrois, setEditingTrois] =
+    useState<Partial<EntiteeTrois> | null>(null);
+  const [selectedEntiteeTrois, setSelectedEntiteeTrois] =
+    useState<EntiteeTrois | null>(null);
+  const [isEditingTrois, setIsEditingTrois] = useState(false);
 
   const fetchEntiteeDeux = async () => {
     setLoading(true);
@@ -195,6 +210,48 @@ export default function EntiteeDeuxPage() {
     }
   };
 
+  const onCreateTrois = async (payload: Partial<EntiteeTrois>) => {
+    try {
+      const saved = await createEntiteeTrois(payload);
+      setAllEntiteeTrois((s) => [saved, ...s]);
+      toast.current?.show({
+        severity: "success",
+        summary: "Succès",
+        detail: `${allEntiteeTrois[0]?.titre} créé`,
+      });
+      //setFormVisible(false);
+    } catch (err: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: "Échec de création",
+      });
+    }
+  };
+
+  const onEditTrois = async (payload: Partial<EntiteeTrois>) => {
+    if (!editingTrois?.id) return;
+    try {
+      const updated = await updateEntiteeTroisById(editingTrois.id, payload);
+      setAllEntiteeTrois((s) =>
+        s.map((it) => (it.id === updated.id ? updated : it)),
+      );
+      toast.current?.show({
+        severity: "success",
+        summary: "Mis à jour",
+        detail: "Programme modifié",
+      });
+      setEditingTrois(null);
+      setFormTroisVisible(false);
+    } catch (err: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: "Échec de mise à jour",
+      });
+    }
+  };
+
   const filtered = allEntiteeDeux.filter((s) => {
     const isPopulated = s.code !== null && s.libelle !== null;
     if (!isPopulated) return false;
@@ -276,9 +333,9 @@ export default function EntiteeDeuxPage() {
                     isExpanded ? "bg-emerald-50/50" : "hover:bg-slate-50"
                   }`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-2 rounded-lg flex-shrink-0 ${
                         isExpanded
                           ? "bg-emerald-500 text-white"
                           : "bg-slate-100 text-slate-500"
@@ -286,24 +343,27 @@ export default function EntiteeDeuxPage() {
                     >
                       <Layers size={20} />
                     </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3
-                          className={`font-bold ${
+                          className={`text-base font-bold truncate ${
                             isExpanded ? "text-emerald-800" : "text-slate-700"
                           }`}
+                          title={entitee.libelle}
                         >
                           {entitee.libelle}
                         </h3>
                         {entitee.code && (
-                          <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-mono">
+                          <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-mono flex-shrink-0">
                             {entitee.code}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                         <Building2 size={12} />
-                        <span>{parentUn?.libelle || "Non rattaché"}</span>
+                        <span className="truncate">
+                          {parentUn?.libelle || "Non rattaché"}
+                        </span>
                         <span className="text-slate-300">•</span>
                         <span>{entiteeSections.length} section(s)</span>
                         <span className="text-slate-300">•</span>
@@ -311,7 +371,8 @@ export default function EntiteeDeuxPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {/* BOUTON EYE - Ouvre les détails */}
                     <button
                       onClick={(e) => {
@@ -365,9 +426,12 @@ export default function EntiteeDeuxPage() {
 
                     {/* FLECHE DÉPLI/REPLI */}
                     {isExpanded ? (
-                      <ChevronDown size={20} className="text-emerald-500" />
+                      <ChevronDown
+                        size={20}
+                        className="text-emerald-500 ml-1"
+                      />
                     ) : (
-                      <ChevronRight size={20} className="text-slate-400" />
+                      <ChevronRight size={20} className="text-slate-400 ml-1" />
                     )}
                   </div>
                 </div>
@@ -376,12 +440,30 @@ export default function EntiteeDeuxPage() {
                 {isExpanded && (
                   <div className="border-t border-slate-100 p-5 space-y-6 bg-slate-50/30">
                     {/* SECTION SECTIONS (EntiteeTrois) */}
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        <GitMerge size={14} className="text-emerald-500" />
-                        Sections rattachées ({entiteeSections.length})
-                      </h4>
-
+                    <div className=" space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                          <GitMerge size={14} className="text-emerald-500" />
+                          Sections rattachées ({entiteeSections.length})
+                        </h4>
+                        {/* Bouton Nouvelle section */}
+                        <Button
+                          onClick={(e) => {
+                            setEditingTrois({ entitee_deux_id: entitee.id });
+                            setIsEditingTrois(false);
+                            setFormTroisVisible(true);
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2.5 text-orange-600 font-bold bg-orange-50 hover:bg-orange-600 hover:text-white rounded-xl transition-all border-none shadow-sm hover:shadow-md"
+                          tooltip={`Ajouter une nouvelle ${entitee.titre || "section"}`}
+                          tooltipOptions={{ position: "top" }}
+                        >
+                          <PlusCircle size={16} />
+                          <span className="text-xs hidden sm:inline">
+                            Nouveau
+                          </span>
+                        </Button>
+                      </div>
                       {entiteeSections.length > 0 ? (
                         <div className="space-y-2">
                           {entiteeSections.map((section) => (
@@ -392,49 +474,142 @@ export default function EntiteeDeuxPage() {
                               {/* HEADER SECTION */}
                               <div
                                 onClick={() => toggleSection(section.id)}
-                                className={`w-full flex items-center justify-between p-3 cursor-pointer transition-all ${
+                                className={`w-full flex items-center p-4 cursor-pointer transition-all ${
                                   expandedSections[section.id]
                                     ? "bg-emerald-50/50"
                                     : "hover:bg-slate-50"
                                 }`}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
                                   <div
-                                    className={`p-1.5 rounded-lg ${
+                                    className={`p-2 rounded-lg flex-shrink-0 ${
                                       expandedSections[section.id]
                                         ? "bg-emerald-500 text-white"
                                         : "bg-slate-100 text-slate-500"
                                     }`}
                                   >
-                                    <GitMerge size={14} />
+                                    <GitMerge size={16} />
                                   </div>
-                                  <span
-                                    className={`text-sm font-bold ${
-                                      expandedSections[section.id]
-                                        ? "text-emerald-700"
-                                        : "text-slate-700"
-                                    }`}
+                                  <div className="flex flex-col min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span
+                                        className={`text-sm font-bold truncate ${
+                                          expandedSections[section.id]
+                                            ? "text-emerald-700"
+                                            : "text-slate-700"
+                                        }`}
+                                        title={section.libelle}
+                                      >
+                                        {section.libelle}
+                                      </span>
+                                      {section.code && (
+                                        <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-1 rounded flex-shrink-0">
+                                          {section.code}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                      {entitee.titre} • {entitee.libelle}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 flex-shrink-0">
+                                  {/* Bouton Ajouter fonction */}
+                                  <Button
+                                    onClick={(e) => {
+                                      // Ici on passe l'entité parente, pas la division
+                                      setIsEditingTrois(true);
+                                      setEditingTrois(section); // ou un état spécifique pour la création
+                                      setFormTroisVisible(true);
+                                      e.stopPropagation();
+                                    }}
+                                    className="flex items-center gap-2 p-2 text-blue-600 font-bold bg-blue-50 hover:bg-blue-600 hover:text-white rounded-full transition-all border-none shadow-sm hover:shadow-md"
+                                    tooltip={`Modifier cet(te) ${entitee.titre || "division"}`}
+                                    tooltipOptions={{ position: "top" }}
                                   >
-                                    {section.libelle}
-                                  </span>
-                                  {section.code && (
-                                    <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                                      {section.code}
+                                    <Pencil size={16} />
+                                  </Button>
+                                  <Button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAjoutFonctionTroisVisible(true);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-emerald-600 font-bold bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border-none shadow-sm hover:shadow-md min-w-[120px] justify-center"
+                                    tooltip="Ajouter une fonction"
+                                  >
+                                    <PlusCircle size={16} />
+                                    <span className="text-xs hidden sm:inline">
+                                      Fonction
                                     </span>
+                                  </Button>
+
+                                  {/* Flèche d'expansion */}
+                                  {expandedSections[section.id] ? (
+                                    <ChevronDown
+                                      size={18}
+                                      className="text-emerald-500 ml-1"
+                                    />
+                                  ) : (
+                                    <ChevronRight
+                                      size={18}
+                                      className="text-slate-400 ml-1"
+                                    />
                                   )}
                                 </div>
-                                {expandedSections[section.id] ? (
-                                  <ChevronDown
-                                    size={16}
-                                    className="text-emerald-500"
-                                  />
-                                ) : (
-                                  <ChevronRight
-                                    size={16}
-                                    className="text-slate-400"
-                                  />
-                                )}
                               </div>
+
+                              {/* CONTENU SECTION (Fonctions) */}
+                              {expandedSections[section.id] && (
+                                <div className="border-t border-slate-100 p-4 bg-slate-50/30 ml-12">
+                                  {fonctions[entitee.id]
+                                    ?.filter(
+                                      (f) => f.entitee_trois_id === section.id,
+                                    )
+                                    .map((f, idx) => (
+                                      <div
+                                        key={f.id}
+                                        className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 hover:border-emerald-200 transition-all mb-2 last:mb-0"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <Briefcase
+                                            size={14}
+                                            className="text-slate-400"
+                                          />
+                                          <span className="text-sm font-medium text-slate-600">
+                                            {f.libelle}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <span className="text-xs text-slate-400">
+                                            {f.createdAt
+                                              ? new Date(
+                                                  f.createdAt,
+                                                ).toLocaleDateString()
+                                              : ""}
+                                          </span>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              // handleDeleteFonction(f.id);
+                                            }}
+                                            className="text-red-400 hover:text-red-600 transition-colors"
+                                          >
+                                            <Trash2 size={14} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+
+                                  {fonctions[entitee.id]?.filter(
+                                    (f) => f.entitee_trois_id === section.id,
+                                  ).length === 0 && (
+                                    <p className="text-xs text-slate-400 italic text-center py-2">
+                                      Aucune fonction dans cette section
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -479,6 +654,7 @@ export default function EntiteeDeuxPage() {
           setEditing(null);
         }}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={fetchEntiteeDeux}
         initial={editing || undefined}
         title={
           editing
@@ -512,6 +688,41 @@ export default function EntiteeDeuxPage() {
         entiteeDeux={selected}
         entiteeUn={allEntiteeUn}
         toast={toast}
+      />
+
+      <EntiteeTroisForm
+        visible={formTroisVisible}
+        onHide={() => {
+          setFormTroisVisible(false);
+          setEditingTrois(null);
+          setIsEditingTrois(false);
+        }}
+        onSubmit={isEditingTrois ? onEditTrois : onCreateTrois}
+        refresh={fetchEntiteeDeux}
+        initial={editingTrois || undefined}
+        title={
+          isEditingTrois
+            ? "Modifier la structutre"
+            : "Créer un nouvelle structure"
+        }
+        entiteeDeux={allEntiteeDeux}
+      />
+      <EntiteeTroisAjoutFonction
+        visible={ajoutFonctionTroisVisible}
+        onHide={() => setAjoutFonctionTroisVisible(false)}
+        entiteeTrois={selectedEntiteeTrois}
+        onSuccess={() => {
+          if (selectedEntiteeTrois) {
+            // Recharger les détails de l'entité parente
+            loadEntiteeDetails(selectedEntiteeTrois.entitee_deux_id);
+          }
+          // ✅ Afficher le toast de succès
+          toast.current?.show({
+            severity: "success",
+            summary: "Succès",
+            detail: "Fonction ajoutée avec succès",
+          });
+        }}
       />
     </Layout>
   );

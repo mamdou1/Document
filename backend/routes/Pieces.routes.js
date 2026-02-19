@@ -22,7 +22,7 @@ router.post(
 router.get(
   "/",
   verifyToken,
-  authorizePermission("pieces", "read"),
+  //authorizePermission("pieces", "read"),
   //authorizeRoles("ADMIN", "MEMBRE_AUTHORIZE"),
   getPieces,
 );

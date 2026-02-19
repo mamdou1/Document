@@ -36,6 +36,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<User>, photoFile?: File) => Promise<void>;
+  refresh: () => void;
   initial?: Partial<User>;
   title?: string;
   droits: Droit[];
@@ -47,6 +48,7 @@ export default function UserForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   initial = {},
   title = "Fiche Agent",
   droits,
@@ -205,6 +207,7 @@ export default function UserForm({
       // On envoie le payload propre au onSubmit
       await onSubmit(payload, photoFile || undefined);
       console.log("✅ Agent créé avec succès !");
+      refresh();
     } catch (error: any) {
       console.error("❌ ÉCHEC de la création :");
       if (error.response) {

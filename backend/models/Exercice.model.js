@@ -12,14 +12,14 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "exercice",
       timestamps: true,
       underscored: true,
-    }
+    },
   );
 
-  Exercice.associate = (models) => {
-    Exercice.hasMany(models.Programme, {
-      foreignKey: "exercice_id",
-    });
-  };
+  // Exercice.associate = (models) => {
+  //   Exercice.hasMany(models.Programme, {
+  //     foreignKey: "exercice_id",
+  //   });
+  // };
 
   return Exercice;
 };

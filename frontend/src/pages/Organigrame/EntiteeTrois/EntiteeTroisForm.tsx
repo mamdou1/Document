@@ -11,6 +11,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<EntiteeTrois>) => Promise<void>;
+  refresh: () => void;
   initial?: Partial<EntiteeTrois>;
   title?: string;
   entiteeDeux: EntiteeDeux[]; // Liste des services venant du parent
@@ -20,6 +21,7 @@ export default function EntiteeTroisForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   title = "Nouveau",
   initial = {},
   entiteeDeux = [], // Valeur par défaut pour éviter les erreurs .map
@@ -51,6 +53,7 @@ export default function EntiteeTroisForm({
       });
       setLibelle("");
       ////onHide();
+      refresh();
     } finally {
       setLoading(false);
     }

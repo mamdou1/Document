@@ -281,7 +281,7 @@ export default function DocumentDisponiblePieces({
                     className="border-2 border-black p-3 font-black text-center uppercase"
                     colSpan={2}
                   >
-                    DEMANDE DE COTATION <br />
+                    Suivie et contôle des pièces <br />
                     <span className="text-[10px] font-normal normal-case italic">
                       (Seuils réglementaires applicables)
                     </span>
@@ -294,7 +294,7 @@ export default function DocumentDisponiblePieces({
                     className="border-2 border-black p-3 font-black text-center uppercase"
                     colSpan={1}
                   >
-                    SOURCE DE PRODUCTION <br />
+                    LISTE DES PIECES <br />
                   </td>
                   <td className="border-2 border-black p-3 font-black text-center uppercase">
                     Observation

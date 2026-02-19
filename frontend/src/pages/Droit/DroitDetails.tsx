@@ -4,7 +4,7 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { TabView, TabPanel } from "primereact/tabview";
 
-import { getDroitPermission } from "../../api/permission";
+import { getPermissionsByDroitId } from "../../api/permission"; // <-- Changé ici
 import { getAgentsByDroit } from "../../api/droit";
 import type { Permission, Droit, User } from "../../interfaces";
 
@@ -29,11 +29,13 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [permRes, agentRes] = await Promise.all([
-          getDroitPermission(Number(droit.id)),
+        // Remplacer getDroitPermission par getPermissionsByDroitId
+        const [permissionsData, agentRes] = await Promise.all([
+          getPermissionsByDroitId(Number(droit.id)), // <-- Changé ici
           getAgentsByDroit(Number(droit.id)),
         ]);
-        setPermissions(permRes.data);
+
+        setPermissions(permissionsData); // getPermissionsByDroitId retourne directement les permissions
         setAgents(Array.isArray(agentRes) ? agentRes : []);
       } catch (err) {
         console.error("Erreur chargement détails droit", err);
@@ -87,7 +89,6 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
           </span>
         </div>
 
-        {/* Navigation par Onglets */}
         {/* Navigation par Onglets Stylisée */}
         <TabView
           pt={{

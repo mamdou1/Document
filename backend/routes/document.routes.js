@@ -44,6 +44,14 @@ router.get(
   ctrl.getDocumentFiles,
 );
 
+router.post(
+  "/:documentId/pieces/:pieceId/upload-file",
+  verifyToken,
+  authorizePermission("document", "create"),
+  upload.array("files", 10),
+  ctrl.uploadPieceFile, // Vous devez créer cette fonction dans le contrôleur
+);
+
 // ✅ DISPONIBILITÉ PIÈCE
 router.patch(
   "/:documentId/pieces/:pieceId/disponible",

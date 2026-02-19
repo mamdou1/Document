@@ -19,9 +19,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      username: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
 
       // genre: DataTypes.ENUM("HOMME", "FEMME"),
-      role: DataTypes.ENUM("ADMIN", "MEMBRE_AUTHORIZE", "MEMBRE"),
+      // role: DataTypes.ENUM("ADMIN", "MEMBRE_AUTHORIZE", "MEMBRE"),
       code_verification: DataTypes.STRING,
       reset_code_expiry: DataTypes.DATE,
       is_verified_for_reset: {
@@ -38,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "Agent",
+      tableName: "agent",
       timestamps: true,
       underscored: true,
     },

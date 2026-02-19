@@ -8,7 +8,13 @@ import { Dropdown } from "primereact/dropdown";
 import { Hash, Type, MapPin, Save, Grid3X3, BoxIcon } from "lucide-react";
 import { InputNumber } from "primereact/inputnumber";
 
-export default function RayonForm({ visible, onHide, onSubmit, initial }: any) {
+export default function RayonForm({
+  visible,
+  onHide,
+  onSubmit,
+  refresh,
+  initial,
+}: any) {
   const [formData, setFormData] = useState({
     code: "",
     salle_id: "",
@@ -57,6 +63,7 @@ export default function RayonForm({ visible, onHide, onSubmit, initial }: any) {
     e.preventDefault();
     // On passe formData au parent (RayonPage) qui gère l'appel API via handleAction
     onSubmit(formData);
+    refresh();
   };
 
   return (

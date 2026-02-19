@@ -11,31 +11,57 @@ export default function DocumentForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   documentType,
   selectedTypeId,
+  editingDoc,
 }: any) {
   const [values, setValues] = useState<any>({});
   const [documentType_id, setDocumentType_id] = useState<number | null>(null);
   const [metaFields, setMetaFields] = useState<any[]>([]);
   const toast = useRef<Toast>(null);
 
+  // Charger les données du document à éditer
   useEffect(() => {
-    if (selectedTypeId) {
+    if (visible && editingDoc) {
+      console.log("📝 Mode édition - Document:", editingDoc);
+
+      // 1. Définir le type de document
+      setDocumentType_id(editingDoc.type_document_id);
+
+      // 2. Charger les valeurs existantes
+      const initialValues: Record<string, any> = {}; // ✅ Typage explicite
+      if (editingDoc.values) {
+        editingDoc.values.forEach((v: any) => {
+          initialValues[v.meta_field_id] = v.value; // ✅ Plus d'erreur
+        });
+      }
+      setValues(initialValues);
+    }
+  }, [visible, editingDoc]);
+
+  // Effet pour initialiser le type sélectionné depuis les props
+  useEffect(() => {
+    if (selectedTypeId && !editingDoc) {
+      // ✅ Seulement en mode création
       setDocumentType_id(selectedTypeId);
     }
-  }, [selectedTypeId]);
+  }, [selectedTypeId, editingDoc]);
 
+  // Effet pour charger les méta-données quand le type change
   useEffect(() => {
     if (documentType_id) {
       getMetaById(String(documentType_id)).then((res) => {
         setMetaFields(res);
-        setValues({});
+        if (!editingDoc) {
+          setValues({}); // Reset seulement en création
+        }
       });
     } else {
       setMetaFields([]);
       setValues({});
     }
-  }, [documentType_id]);
+  }, [documentType_id, editingDoc]);
 
   const handleSubmit = async () => {
     // Vérifie que tous les champs required ont une valeur
@@ -51,30 +77,49 @@ export default function DocumentForm({
     }
 
     try {
-      // 1️⃣ Créer le document (sans les fichiers)
-      const doc = await onSubmit({
+      // ✅ Définir le type du payload
+      interface DocumentPayload {
+        type_document_id: number | null;
+        values: Record<string, any>;
+        id?: number | string; // Optionnel pour l'édition
+      }
+
+      // 1️⃣ Créer ou modifier le document
+      const payload: DocumentPayload = {
         type_document_id: documentType_id,
         values: Object.fromEntries(
           Object.entries(values).filter(([_, v]) => !(v instanceof File)),
         ),
-      });
+      };
 
-      console.log("✅ Document créé:", doc); // 2️⃣ Uploader les fichiers séparément
+      // Si on est en mode édition, ajouter l'ID
+      if (editingDoc?.id) {
+        payload.id = editingDoc.id; // ✅ Plus d'erreur
+      }
 
+      const result = await onSubmit(payload);
+      console.log("✅ Document sauvegardé:", result);
+
+      // 2️⃣ Uploader les fichiers séparément (uniquement pour les nouveaux fichiers)
       for (const [fieldId, value] of Object.entries(values)) {
         if (value instanceof File) {
-          await uploadDocumentFile(doc.id, fieldId, value);
+          const docId = editingDoc?.id || result.id;
+          await uploadDocumentFile(String(docId), fieldId, value);
         }
       }
 
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: "Document enregistré avec succès !",
+        detail: editingDoc
+          ? "Document modifié avec succès !"
+          : "Document créé avec succès !",
       });
 
       onHide();
+      refresh();
     } catch (error: any) {
+      console.error("❌ Erreur:", error);
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
@@ -92,7 +137,9 @@ export default function DocumentForm({
             <div className="p-2 bg-emerald-600 rounded-lg text-white">
               <Plus size={18} />
             </div>
-            <span className="font-black tracking-tight">Nouvelle Archive</span>
+            <span className="font-black tracking-tight">
+              {editingDoc ? "Modifier l'archive" : "Nouvelle Archive"}
+            </span>
           </div>
         }
         visible={visible}
@@ -106,7 +153,7 @@ export default function DocumentForm({
               className="p-button-text text-emerald-600 font-bold"
             />
             <Button
-              label="Enregistrer"
+              label={editingDoc ? "Modifier" : "Enregistrer"}
               icon={<Save size={18} className="mr-2" />}
               className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-200 transition-all font-bold"
               onClick={handleSubmit}
@@ -128,6 +175,7 @@ export default function DocumentForm({
               placeholder="Sélectionner..."
               className="w-full bg-white border-emerald-100 rounded-xl shadow-sm"
               filter
+              disabled={!!editingDoc} // Désactiver en mode édition
             />
           </div>
 
@@ -141,10 +189,14 @@ export default function DocumentForm({
                   <div key={f.id} className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-emerald-900 ml-1 flex items-center gap-2">
                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>{" "}
-                      {f.label}
+                      {f.label}{" "}
+                      {f.required && <span className="text-red-500">*</span>}
                     </label>
                     <input
                       type={f.field_type === "file" ? "file" : f.field_type}
+                      value={
+                        f.field_type !== "file" ? values[f.id] || "" : undefined
+                      }
                       className="w-full bg-white border border-emerald-100 p-3.5 rounded-2xl text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all shadow-sm text-emerald-950"
                       onChange={(e) =>
                         setValues({

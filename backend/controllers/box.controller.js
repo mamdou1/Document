@@ -1,4 +1,12 @@
-const { Box, Document, Trave } = require("../models");
+const {
+  Box,
+  Document,
+  Trave,
+  TypeDocument,
+  EntiteeUn,
+  EntiteeDeux,
+  EntiteeTrois,
+} = require("../models");
 
 // --- Méthodes de gestion de Box ---
 
@@ -6,7 +14,7 @@ exports.create = async (req, res) => {
   try {
     const data = await Box.create({
       ...req.body,
-      current_count: 0, // Initialisation sécurisée
+      current_count: 0,
     });
     res.status(201).json(data);
   } catch (error) {
@@ -23,12 +31,29 @@ exports.findAll = async (req, res) => {
       include: [
         {
           model: Trave,
-          as: "trave", // Vérifie que cet alias correspond à celui dans Rayon.associate
+          as: "trave",
+        },
+        {
+          model: TypeDocument,
+          as: "typeDocument", // ✅ AJOUTÉ
+        },
+        {
+          model: EntiteeUn,
+          as: "entitee_un", // ✅ AJOUTÉ
+        },
+        {
+          model: EntiteeDeux,
+          as: "entitee_deux", // ✅ AJOUTÉ
+        },
+        {
+          model: EntiteeTrois,
+          as: "entitee_trois", // ✅ AJOUTÉ
         },
       ],
     });
     res.json(data);
   } catch (error) {
+    console.error("❌ Erreur findAll boxes:", error);
     res.status(500).json({
       message: "Erreur lors de la récupération des box",
       error: error.message,
@@ -42,13 +67,34 @@ exports.findById = async (req, res) => {
       include: [
         {
           model: Document,
-          as: "documents", // <--- L'alias défini dans Box.associate
+          as: "documents",
+        },
+        {
+          model: Trave,
+          as: "trave",
+        },
+        {
+          model: TypeDocument,
+          as: "typeDocument", // ✅ AJOUTÉ
+        },
+        {
+          model: EntiteeUn,
+          as: "entitee_un", // ✅ AJOUTÉ
+        },
+        {
+          model: EntiteeDeux,
+          as: "entitee_deux", // ✅ AJOUTÉ
+        },
+        {
+          model: EntiteeTrois,
+          as: "entitee_trois", // ✅ AJOUTÉ
         },
       ],
     });
     if (!data) return res.status(404).json({ message: "Box non trouvé" });
     res.json(data);
   } catch (error) {
+    console.error("❌ Erreur findById:", error);
     res.status(500).json({
       message: "Erreur lors de la récupération du box",
       error: error.message,
@@ -67,8 +113,21 @@ exports.update = async (req, res) => {
       return res
         .status(404)
         .json({ message: "Box non trouvé ou aucune modification" });
-    res.json({ success: true, message: "Box mis à jour" });
+
+    // Récupérer le box mis à jour avec toutes ses associations
+    const updatedBox = await Box.findByPk(req.params.id, {
+      include: [
+        { model: Trave, as: "trave" },
+        { model: TypeDocument, as: "typeDocument" },
+        { model: EntiteeUn, as: "entitee_un" },
+        { model: EntiteeDeux, as: "entitee_deux" },
+        { model: EntiteeTrois, as: "entitee_trois" },
+      ],
+    });
+
+    res.json({ success: true, message: "Box mis à jour", data: updatedBox });
   } catch (error) {
+    console.error("❌ Erreur update:", error);
     res
       .status(500)
       .json({ message: "Erreur lors de la mise à jour", error: error.message });
@@ -89,6 +148,7 @@ exports.delete = async (req, res) => {
     await Box.destroy({ where: { id: req.params.id } });
     res.json({ success: true, message: "Box supprimé" });
   } catch (error) {
+    console.error("❌ Erreur delete:", error);
     res
       .status(500)
       .json({ message: "Erreur lors de la suppression", error: error.message });
@@ -130,92 +190,13 @@ exports.addDocumentToBox = async (req, res) => {
 
     res.json({ success: true, current_count: box.current_count });
   } catch (error) {
+    console.error("❌ Erreur addDocument:", error);
     res.status(500).json({
       message: "Erreur lors de l'ajout du document",
       error: error.message,
     });
   }
 };
-
-// exports.addDocumentToBox = async (req, res) => {
-//   try {
-//     const { boxId, documentId } = req.params;
-//     console.log(
-//       "➡️ Requête reçue pour ajouter document",
-//       documentId,
-//       "dans box",
-//       boxId,
-//     );
-
-//     const box = await Box.findByPk(boxId);
-//     console.log("📦 Box trouvé :", box ? box.toJSON() : "❌ introuvable");
-
-//     const doc = await Document.findByPk(documentId);
-//     console.log("📄 Document trouvé :", doc ? doc.toJSON() : "❌ introuvable");
-
-//     if (!box || !doc) {
-//       console.warn("⚠️ Box ou Document introuvable");
-//       return res.status(404).json({ message: "Box ou Document introuvable" });
-//     }
-
-//     // Vérification Capacité
-//     if (box.current_count >= box.capacite_max) {
-//       console.warn(
-//         "⚠️ Capacité maximale atteinte :",
-//         box.current_count,
-//         "/",
-//         box.capacite_max,
-//       );
-//       return res
-//         .status(400)
-//         .json({ message: "Capacité maximale atteinte pour ce box" });
-//     }
-
-//     // Vérification Type
-//     console.log(
-//       "🔍 Vérification type : box.type_document_id =",
-//       box.type_document_id,
-//       "doc.type_document_id =",
-//       doc.type_document_id,
-//     );
-//     if (box.type_document_id && box.type_document_id !== doc.type_document_id) {
-//       console.warn("⚠️ Type de document incompatible");
-//       return res
-//         .status(400)
-//         .json({ message: "Le type de document ne correspond pas à ce box" });
-//     }
-
-//     // Mise à jour
-//     if (!box.type_document_id) {
-//       console.log(
-//         "ℹ️ Affectation du type_document_id du box :",
-//         doc.type_document_id,
-//       );
-//       box.type_document_id = doc.type_document_id;
-//     }
-//     box.current_count += 1;
-//     doc.box_id = box.id;
-
-//     console.log(
-//       "💾 Sauvegarde des modifications : box.current_count =",
-//       box.current_count,
-//       "doc.box_id =",
-//       doc.box_id,
-//     );
-
-//     await box.save();
-//     await doc.save();
-
-//     console.log("✅ Document ajouté avec succès");
-//     res.json({ success: true, current_count: box.current_count });
-//   } catch (error) {
-//     console.error("❌ Erreur addDocumentToBox:", error);
-//     res.status(500).json({
-//       message: "Erreur lors de l'ajout du document",
-//       error: error.message,
-//     });
-//   }
-// };
 
 exports.retireDocumentToBox = async (req, res) => {
   try {
@@ -237,6 +218,7 @@ exports.retireDocumentToBox = async (req, res) => {
 
     res.json({ success: true, message: "Document retiré avec succès" });
   } catch (error) {
+    console.error("❌ Erreur retireDocument:", error);
     res.status(500).json({
       message: "Erreur lors du retrait du document",
       error: error.message,
@@ -246,9 +228,18 @@ exports.retireDocumentToBox = async (req, res) => {
 
 exports.getAllDocumentByBox = async (req, res) => {
   try {
-    const data = await Document.findAll({ where: { box_id: req.params.id } });
+    const data = await Document.findAll({
+      where: { box_id: req.params.id },
+      include: [
+        {
+          model: TypeDocument,
+          as: "typeDocument",
+        },
+      ],
+    });
     res.json(data);
   } catch (error) {
+    console.error("❌ Erreur getAllDocumentByBox:", error);
     res.status(500).json({
       message: "Erreur lors de la récupération des documents",
       error: error.message,

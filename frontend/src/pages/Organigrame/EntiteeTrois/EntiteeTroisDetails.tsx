@@ -45,10 +45,15 @@ export default function EntiteeTroisDetails({
 
   const handleDelete = (id: number) => {
     confirmDialog({
-      message: "Voulez-vous vraiment supprimer cette fonction ?",
-      header: "Confirmation de suppression",
-      icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger",
+      message: `Voulez-vous supprimer cette fonction définitivement ? Cette action est irréversible.`,
+      header: "Confirmation",
+      icon: "pi pi-info-circle",
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+      style: { width: "450px" },
       accept: async () => {
         try {
           await deleteFonctionById(id);

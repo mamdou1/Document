@@ -9,6 +9,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<Pieces>) => Promise<void>;
+  refresh: () => void;
   initial?: Partial<Pieces>;
   title?: string;
 };
@@ -17,11 +18,12 @@ export default function PiecesForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   initial = {},
   title,
 }: Props) {
   const [formData, setFormData] = useState({
-    code_piece: "",
+    code_pieces: "",
     libelle: "",
   });
 
@@ -31,23 +33,24 @@ export default function PiecesForm({
   useEffect(() => {
     if (visible && initial?.id) {
       setFormData({
-        code_piece: initial.code_pieces || "",
+        code_pieces: initial.code_pieces || "",
         libelle: initial.libelle || "",
       });
     } else {
       setFormData({
-        code_piece: "",
+        code_pieces: "",
         libelle: "",
       });
     }
   }, [visible, initial]);
 
   const handleSubmit = async () => {
-    if (!formData.libelle || !formData.code_piece) return;
+    if (!formData.libelle || !formData.code_pieces) return;
     setLoading(true);
     try {
       await onSubmit(formData);
       onHide();
+      refresh();
     } finally {
       setLoading(false);
     }
@@ -85,11 +88,11 @@ export default function PiecesForm({
                 <Hash size={14} className="text-emerald-500" /> Code
               </label>
               <InputText
-                value={formData.code_piece}
+                value={formData.code_pieces}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    code_piece: e.target.value.toUpperCase(),
+                    code_pieces: e.target.value.toUpperCase(),
                   })
                 }
                 placeholder="Ex: DOC-01"
@@ -126,7 +129,7 @@ export default function PiecesForm({
             label={loading ? "Traitement..." : "Enregistrer la pièce"}
             icon={!loading && <Save size={18} className="mr-2" />}
             onClick={handleSubmit}
-            disabled={loading || !formData.code_piece || !formData.libelle}
+            disabled={loading || !formData.code_pieces || !formData.libelle}
             className="bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl border-none shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95"
           />
         </div>

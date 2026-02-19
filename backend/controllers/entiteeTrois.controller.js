@@ -167,7 +167,7 @@ exports.updateEntiteeTrois = async (req, res) => {
     await ent.update(payload);
 
     const updated = await EntiteeTrois.findByPk(id, {
-      include: [{ model: EntiteeDeux }],
+      include: [{ model: EntiteeDeux, as: "entitee_deux" }],
     });
     res.status(200).json(updated);
   } catch (err) {

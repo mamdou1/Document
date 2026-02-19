@@ -31,41 +31,24 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/exercices", require("./routes/exercice.routes"));
-app.use("/api/programmes", require("./routes/programme.routes"));
-app.use("/api/chapitres", require("./routes/chapitre.routes"));
-app.use("/api/natures", require("./routes/nature.routes"));
-app.use("/api/liquidations", require("./routes/liquidation.routes"));
 app.use("/api/statistiques", require("./routes/statistiques.routes"));
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/user", require("./routes/user.routes"));
-app.use("/api/type", require("./routes/type.routes"));
 app.use("/api/pieces", require("./routes/Pieces.routes"));
-app.use("/api/fournisseur", require("./routes/fornisseur.routes"));
-app.use(
-  "/api/serviceBeneficiaire",
-  require("./routes/serciveBeneciaire.routes"),
-);
+
 //app.use("/api", require("./routes/agentPermission.routes"));
 app.use("/api/permissions", require("./routes/permission.routes"));
 app.use("/api/droits", require("./routes/droit.routes"));
 app.use("/api/droitPermission", require("./routes/droitPermission.routes"));
 
-app.use("/api/services", require("./routes/service.routes"));
-app.use("/api/divisions", require("./routes/division.routes"));
-app.use("/api/sections", require("./routes/section.routes"));
 app.use("/api/fonctions", require("./routes/fonction.routes"));
 
 app.use("/api/historique", require("./routes/historique.routes"));
-app.use(
-  "/api/sourceDeFinancement",
-  require("./routes/sourceDeFinancement.routes"),
-);
 
 // Document et generer les champs
 app.use("/api/types-documents", require("./routes/typeDocument.routes"));
 app.use("/api/meta-fields", require("./routes/metafield.routes"));
 app.use("/api/documents", require("./routes/document.routes"));
-app.use("/api/uploads", require("./routes/upload.routes"));
 
 // Archivage
 app.use("/api/site", require("./routes/site.routes"));
@@ -80,6 +63,8 @@ app.use("/api/entiteeDeux", require("./routes/entiteeDeux.routes"));
 app.use("/api/entiteeTrois", require("./routes/entiteeTrois.routes"));
 
 app.use("/api/agent-access", require("./routes/agentAccess.routes"));
+app.use("/api", require("./routes/pieceMetaField.routes")); // Routes pour les métadonnées des pièces
+app.use("/api", require("./routes/pieceValue.routes"));
 
 // 404
 app.use((req, res) => {

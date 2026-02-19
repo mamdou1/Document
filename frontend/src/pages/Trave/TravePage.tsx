@@ -276,6 +276,7 @@ export default function TravePage() {
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={handleAction}
+        refresh={fetchTraves}
         initial={editing || {}}
       />
 

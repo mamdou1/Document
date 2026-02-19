@@ -11,7 +11,7 @@ export interface UIPermissionGroup {
 }
 
 export const groupPermissionsByResource = (
-  permissions: Permission[]
+  permissions: Permission[],
 ): UIPermissionGroup[] => {
   const map = new Map<string, UIPermission[]>();
 
@@ -41,4 +41,5 @@ export const actionBadgeColor: Record<PermissionAction, string> = {
   read: "bg-blue-100 text-blue-700",
   update: "bg-orange-100 text-orange-700",
   delete: "bg-red-100 text-red-700",
+  access: "bg-yellow-100 text-yellow-700",
 };

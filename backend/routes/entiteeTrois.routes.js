@@ -16,7 +16,7 @@ router.post(
 router.get(
   "/",
   verifyToken,
-  authorizePermission("entiteeTrois", "read"),
+  //authorizePermission("entiteeTrois", "read"),
   entiteeTroisController.getAllEntiteeTrois,
 );
 

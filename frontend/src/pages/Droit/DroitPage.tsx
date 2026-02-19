@@ -316,6 +316,7 @@ export default function DroitPage() {
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
+        //refresh={load}
         initial={editing || undefined}
         title={
           editing

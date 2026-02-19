@@ -274,6 +274,7 @@ import { FileText, Save, Hash, Info, X } from "lucide-react";
 export default function DocumentTypeForm({
   onHide,
   onSubmit,
+  refresh,
   initial = {},
   currentStructureLabel = "",
   isFiltered = false,
@@ -294,6 +295,7 @@ export default function DocumentTypeForm({
     try {
       await onSubmit({ code, nom });
       // On peut appeler onHide() ici si on veut fermer la modale après succès
+      refresh();
     } catch (error) {
       console.error(error);
     } finally {

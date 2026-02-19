@@ -302,6 +302,7 @@ export default function EntiteeTroisPage() {
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={fetchEntiteeTrois}
         initial={editing || undefined}
         title={editing ? "Modifier le division" : "Créer un nouveau division"}
         entiteeDeux={allEntiteeDeux}
@@ -310,6 +311,7 @@ export default function EntiteeTroisPage() {
         visible={ajoutFonctionVisible}
         onHide={() => setAjoutFonctionVisible(false)}
         entiteeTrois={selected}
+        refresh={fetchEntiteeTrois}
       />
       <EntiteeTroisDetails
         visible={detailsVisible}

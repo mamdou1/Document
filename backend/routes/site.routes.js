@@ -11,7 +11,12 @@ router.post(
   authorizePermission("site", "create"),
   ctrl.create,
 );
-router.get("/", verifyToken, authorizePermission("site", "read"), ctrl.findAll);
+router.get(
+  "/",
+  verifyToken,
+  //authorizePermission("site", "read"),
+  ctrl.findAll,
+);
 router.get(
   "/:id",
   verifyToken,

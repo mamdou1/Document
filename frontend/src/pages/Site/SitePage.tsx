@@ -31,7 +31,7 @@ export default function SitePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const fetchSalles = async () => {
+  const fetchSites = async () => {
     setLoading(true);
     try {
       const data = await getSites();
@@ -48,7 +48,7 @@ export default function SitePage() {
   };
 
   useEffect(() => {
-    fetchSalles();
+    fetchSites();
   }, []);
 
   const handleAction = async (payload: any) => {
@@ -73,6 +73,7 @@ export default function SitePage() {
         });
       }
       setFormVisible(false);
+      fetchSites();
     } catch (err) {
       toast.current?.show({
         severity: "error",

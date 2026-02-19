@@ -79,6 +79,7 @@ export default function SallePage() {
         });
       }
       setFormVisible(false);
+      fetchSalles();
     } catch (err) {
       toast.current?.show({
         severity: "error",

@@ -14,7 +14,7 @@ router.post(
 router.get(
   "/",
   verifyToken,
-  authorizePermission("rayon", "read"),
+  //authorizePermission("rayon", "read"),
   ctrl.getRayons,
 );
 router.get(

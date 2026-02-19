@@ -344,7 +344,13 @@ import {
   deleteEntiteeUnById,
   getFunctionsByEntiteeUn,
 } from "../../../api/entiteeUn";
-import { getEntiteeDeuxByEntiteeUn } from "../../../api/entiteeDeux";
+import {
+  createEntiteeDeux,
+  getAllEntiteeDeux,
+  getEntiteeDeuxByEntiteeUn,
+  getFunctionsByEntiteeDeux,
+  updateEntiteeDeuxById,
+} from "../../../api/entiteeDeux";
 import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
 import { deleteFonctionById } from "../../../api/fonction";
 import { Toast } from "primereact/toast";
@@ -364,14 +370,21 @@ import {
   Layers,
   GitMerge,
   Bookmark,
+  PlusIcon,
 } from "lucide-react";
+import EntiteeDeuxAjoutFonction from "../EntiteeDeux/EntiteeDeuxAjoutFonction";
+import EntiteeDeuxForm from "../EntiteeDeux/EntiteeDeuxForm";
 
 export default function EntiteeUnPage() {
   const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
+  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
   const [selected, setSelected] = useState<EntiteeUn | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
+  const [ajoutFonctionDeuxVisible, setAjoutFonctionDeuxVisible] =
+    useState(false);
+  const [formDeuxVisible, setFormDeuxVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Partial<EntiteeUn> | null>(null);
   const toast = useRef<Toast>(null);
@@ -390,12 +403,29 @@ export default function EntiteeUnPage() {
   const [expandedEntiteeDeux, setExpandedEntiteeDeux] = useState<number | null>(
     null,
   );
+  const [fonctions, setFonctions] = useState<Record<number, any[]>>({});
+  const [entiteeTrois, setEntiteeTrois] = useState<
+    Record<number, EntiteeTrois[]>
+  >({});
+  const [editingDeux, setEditingDeux] = useState<Partial<EntiteeDeux> | null>(
+    null,
+  );
+  const [selectedEntiteeDeux, setSelectedEntiteeDeux] =
+    useState<EntiteeDeux | null>(null);
+
+  const [isEditingDeux, setIsEditingDeux] = useState(false);
 
   const fetchEntiteeUn = async () => {
     setLoading(true);
     try {
-      const data = await getAllEntiteeUn();
-      setAllEntiteeUn(Array.isArray(data) ? data : data.entiteeUn || []);
+      const [entUn, entDeux] = await Promise.all([
+        getAllEntiteeUn(),
+        getAllEntiteeDeux(),
+      ]);
+      setAllEntiteeUn(Array.isArray(entUn) ? entUn : entUn.entiteeUn || []);
+      setAllEntiteeDeux(
+        Array.isArray(entDeux) ? entDeux : entDeux.entiteeDeux || [],
+      );
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
@@ -528,6 +558,64 @@ export default function EntiteeUnPage() {
         summary: "Erreur",
         detail: "Opération échouée",
       });
+    }
+  };
+
+  const onCreateDeux = async (payload: Partial<EntiteeDeux>) => {
+    try {
+      const saved = await createEntiteeDeux(payload);
+      setAllEntiteeDeux((s) => [saved, ...s]);
+      toast.current?.show({
+        severity: "success",
+        summary: "Succès",
+        detail: "Élément créé",
+      });
+    } catch (err: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: "Échec de création",
+      });
+    }
+  };
+
+  const onEditDeux = async (payload: Partial<EntiteeDeux>) => {
+    console.log("✏️ onEditDeux - editingDeux:", editingDeux); // AJOUTEZ CE LOG
+    console.log("✏️ onEditDeux - payload:", payload);
+
+    if (!editingDeux?.id) {
+      console.error("❌ Pas d'ID pour la modification");
+      return;
+    }
+
+    try {
+      console.log("📤 Envoi requête PUT avec id:", editingDeux.id);
+      const updated = await updateEntiteeDeuxById(editingDeux.id, payload);
+      console.log("✅ Réponse:", updated);
+      // ...
+    } catch (err: any) {
+      console.error("❌ Erreur complète:", err);
+      console.error("❌ Réponse serveur:", err.response?.data);
+    }
+  };
+
+  const loadEntiteeDeuxDetails = async (entiteeId: number) => {
+    try {
+      // Charger les sections (EntiteeTrois)
+      const secData = await getEntiteeTroisByEntiteeDeux(entiteeId);
+      setEntiteeTrois((prev) => ({
+        ...prev,
+        [entiteeId]: Array.isArray(secData) ? secData : [],
+      }));
+
+      // Charger les fonctions
+      const funcData = await getFunctionsByEntiteeDeux(entiteeId);
+      setFonctions((prev) => ({
+        ...prev,
+        [entiteeId]: funcData || [],
+      }));
+    } catch (err) {
+      console.error("Erreur chargement détails entiteeDeux", err);
     }
   };
 
@@ -702,14 +790,35 @@ export default function EntiteeUnPage() {
                 {/* CONTENU DÉPLIÉ (UNIQUEMENT les Divisions) */}
                 {isExpanded && (
                   <div className="border-t border-slate-100 p-5 space-y-6 bg-slate-50/30">
-                    {/* SECTION DIVISIONS (EntiteeDeux) - PLUS DE FONCTIONS ICI */}
+                    {/* SECTION DIVISIONS (EntiteeDeux) */}
                     <div className="space-y-3">
-                      <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        <Layers size={14} className="text-emerald-500" />
-                        {entitee.titre || "Divisions"} rattachées (
-                        {entiteeDivisions.length})
-                      </h4>
+                      {/* En-tête avec titre et bouton général */}
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                          <Layers size={14} className="text-emerald-500" />
+                          {entitee.titre || "Divisions"} rattachées (
+                          {entiteeDivisions.length})
+                        </h4>
 
+                        {/* BOUTON NOUVEAU GÉNÉRAL (en dehors de la map) */}
+                        <Button
+                          onClick={(e) => {
+                            // Ici on passe l'entité parente, pas la division
+                            setIsEditingDeux(false);
+                            setEditingDeux({ entitee_un_id: entitee.id }); // ou un état spécifique pour la création
+                            setFormDeuxVisible(true);
+                            e.stopPropagation();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2.5 text-orange-600 font-bold bg-orange-50 hover:bg-orange-600 hover:text-white rounded-xl transition-all border-none shadow-sm hover:shadow-md"
+                          tooltip={`Ajouter une nouvelle ${entitee.titre || "division"}`}
+                          tooltipOptions={{ position: "top" }}
+                        >
+                          <PlusIcon size={16} />
+                          <span className="text-xs font-bold">Nouveau</span>
+                        </Button>
+                      </div>
+
+                      {/* Liste des divisions existantes */}
                       {entiteeDivisions.length > 0 ? (
                         <div className="space-y-2">
                           {entiteeDivisions.map((div) => (
@@ -728,9 +837,10 @@ export default function EntiteeUnPage() {
                                     : "hover:bg-slate-50"
                                 }`}
                               >
-                                <div className="flex items-center gap-3">
+                                {/* Partie gauche - Info division */}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
                                   <div
-                                    className={`p-1.5 rounded-lg ${
+                                    className={`p-1.5 rounded-lg flex-shrink-0 ${
                                       expandedEntiteeDeux === div.id
                                         ? "bg-emerald-500 text-white"
                                         : "bg-slate-100 text-slate-500"
@@ -738,32 +848,73 @@ export default function EntiteeUnPage() {
                                   >
                                     <Layers size={14} />
                                   </div>
-                                  <span
-                                    className={`text-sm font-bold ${
-                                      expandedEntiteeDeux === div.id
-                                        ? "text-emerald-700"
-                                        : "text-slate-700"
-                                    }`}
-                                  >
-                                    {div.libelle}
-                                  </span>
-                                  {div.code && (
-                                    <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                                      {div.code}
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className={`text-sm font-bold truncate max-w-[400px] ${
+                                        expandedEntiteeDeux === div.id
+                                          ? "text-emerald-700"
+                                          : "text-slate-700"
+                                      }`}
+                                      title={div.libelle}
+                                    >
+                                      {div.libelle}
                                     </span>
+                                    {div.code && (
+                                      <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded flex-shrink-0">
+                                        {div.code}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Partie centrale - Boutons d'action spécifiques à la division */}
+                                <div className="flex items-center gap-2 mx-2">
+                                  {/* Bouton Ajouter fonction (spécifique à cette division) */}
+                                  <Button
+                                    onClick={(e) => {
+                                      // Ici on passe l'entité parente, pas la division
+                                      setIsEditingDeux(true);
+                                      setEditingDeux(div); // ou un état spécifique pour la création
+                                      setFormDeuxVisible(true);
+                                      e.stopPropagation();
+                                    }}
+                                    className="flex items-center gap-2 p-2 text-blue-600 font-bold bg-blue-50 hover:bg-blue-600 hover:text-white rounded-full transition-all border-none shadow-sm hover:shadow-md"
+                                    tooltip={`Modifier cet(te) ${entitee.titre || "division"}`}
+                                    tooltipOptions={{ position: "top" }}
+                                  >
+                                    <Pencil size={16} />
+                                  </Button>
+                                  <Button
+                                    onClick={(e) => {
+                                      setSelectedEntiteeDeux(div); // ✅ ICI div est défini
+                                      setAjoutFonctionDeuxVisible(true);
+                                      e.stopPropagation();
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-emerald-600 font-bold bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg transition-all border-none shadow-sm hover:shadow-md"
+                                    tooltip="Ajouter une fonction"
+                                    tooltipOptions={{ position: "top" }}
+                                  >
+                                    <PlusCircle size={15} />
+                                    <span className="text-xs hidden sm:inline">
+                                      Fonction
+                                    </span>
+                                  </Button>
+                                </div>
+
+                                {/* Partie droite - Flèche d'expansion */}
+                                <div className="flex-shrink-0 ml-1">
+                                  {expandedEntiteeDeux === div.id ? (
+                                    <ChevronDown
+                                      size={16}
+                                      className="text-emerald-500"
+                                    />
+                                  ) : (
+                                    <ChevronRight
+                                      size={16}
+                                      className="text-slate-400"
+                                    />
                                   )}
                                 </div>
-                                {expandedEntiteeDeux === div.id ? (
-                                  <ChevronDown
-                                    size={16}
-                                    className="text-emerald-500"
-                                  />
-                                ) : (
-                                  <ChevronRight
-                                    size={16}
-                                    className="text-slate-400"
-                                  />
-                                )}
                               </div>
 
                               {/* CONTENU DIVISION (EntiteeTrois) */}
@@ -800,10 +951,26 @@ export default function EntiteeUnPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-4 bg-white rounded-xl border border-dashed border-slate-200">
-                          <p className="text-xs text-slate-400 italic">
+                        <div className="text-center py-8 bg-white rounded-xl border border-dashed border-slate-200">
+                          <Layers
+                            size={32}
+                            className="mx-auto text-slate-300 mb-2"
+                          />
+                          <p className="text-xs text-slate-400 italic mb-3">
                             Aucune division rattachée
                           </p>
+                          <Button
+                            onClick={(e) => {
+                              setFormDeuxVisible(true);
+                              e.stopPropagation();
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-emerald-600 font-bold bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-lg transition-all border-none"
+                          >
+                            <PlusCircle size={14} />
+                            <span className="text-xs">
+                              Créer la première division
+                            </span>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -840,6 +1007,7 @@ export default function EntiteeUnPage() {
           setEditing(null);
         }}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={fetchEntiteeUn}
         initial={editing || undefined}
       />
 
@@ -849,6 +1017,7 @@ export default function EntiteeUnPage() {
           setAjoutFonctionVisible(false);
         }}
         entiteeUn={selected}
+        refresh={fetchEntiteeUn}
         onSuccess={() => {
           toast.current?.show({
             severity: "success",
@@ -863,6 +1032,43 @@ export default function EntiteeUnPage() {
         onHide={() => setDetailsVisible(false)}
         entiteeUn={selected}
         toast={toast}
+      />
+
+      <EntiteeDeuxForm
+        visible={formDeuxVisible}
+        onHide={() => {
+          setFormDeuxVisible(false);
+          setEditingDeux(null);
+          setIsEditingDeux(false);
+        }}
+        onSubmit={isEditingDeux ? onEditDeux : onCreateDeux} // ✅ Décision claire
+        refresh={fetchEntiteeUn}
+        initial={editingDeux || undefined}
+        title={
+          isEditingDeux
+            ? `Modifier ${allEntiteeDeux[0]?.titre}`
+            : `Créer ${allEntiteeDeux[0]?.titre}`
+        }
+        entiteeUn={allEntiteeUn}
+      />
+
+      <EntiteeDeuxAjoutFonction
+        visible={ajoutFonctionDeuxVisible}
+        onHide={() => {
+          setAjoutFonctionDeuxVisible(false);
+        }}
+        entiteeDeux={selectedEntiteeDeux}
+        refresh={fetchEntiteeUn}
+        onSuccess={() => {
+          if (selectedEntiteeDeux) {
+            loadEntiteeDeuxDetails(selectedEntiteeDeux.id);
+          }
+          toast.current?.show({
+            severity: "success",
+            summary: "Succès",
+            detail: "Fonction ajoutée",
+          });
+        }}
       />
     </Layout>
   );

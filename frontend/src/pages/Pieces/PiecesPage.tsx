@@ -21,8 +21,10 @@ import {
   Pencil,
   FileStack,
   Trash2,
+  Settings,
 } from "lucide-react";
 import { confirmDialog } from "primereact/confirmdialog";
+import PiecesMetaForm from "./PiecesMetaForm";
 
 export default function PiecesPage() {
   const [allPieces, setAllPieces] = useState<Pieces[]>([]);
@@ -35,6 +37,7 @@ export default function PiecesPage() {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [metaVisible, setMetaVisible] = useState(false);
   // --- NOUVEAUX ÉTATS POUR LE FILTRE ---
 
   const affichage = async () => {
@@ -229,10 +232,10 @@ export default function PiecesPage() {
                         setSelected(n);
                         setDetailsVisible(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                       title="Voir détails"
                     >
-                      <Eye size={18} />
+                      <Eye size={20} />
                     </button>
                     <button
                       onClick={(e) => {
@@ -240,19 +243,29 @@ export default function PiecesPage() {
                         setFormVisible(true);
                         e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                       title="Modifier"
                     >
-                      <Pencil size={18} />
+                      <Pencil size={20} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        setSelected(n);
+                        setMetaVisible(true);
+                        e.stopPropagation();
+                      }}
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                    >
+                      <Settings size={20} />
                     </button>
                     <button
                       onClick={(e) => {
                         handleDelete(String(n.id)!);
                         e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-3 text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-md rounded-xl transition-all"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={20} />
                     </button>
                   </div>
                 </td>
@@ -289,6 +302,7 @@ export default function PiecesPage() {
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={affichage}
         initial={editing || {}}
         title={
           editing ? "Modifier le type de pièce" : "Ajouter un nouveau type"
@@ -299,6 +313,13 @@ export default function PiecesPage() {
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}
         pieces={selected}
+      />
+
+      <PiecesMetaForm
+        visible={metaVisible}
+        onHide={() => setMetaVisible(false)}
+        piece={selected} // ✅ Nouveau prop "piece"
+        refresh={affichage}
       />
     </Layout>
   );

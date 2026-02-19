@@ -276,6 +276,7 @@ export default function RayonPage() {
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={handleAction}
+        refresh={fetchRayons}
         initial={editing || {}}
       />
 

@@ -2,137 +2,99 @@ const { Permission } = require("../models");
 
 module.exports = async () => {
   const permissions = [
-    { resource: "programme", action: "create" },
-    { resource: "programme", action: "read" },
-    { resource: "programme", action: "update" },
-    { resource: "programme", action: "delete" },
-
-    { resource: "chapitre", action: "create" },
-    { resource: "chapitre", action: "read" },
-    { resource: "chapitre", action: "update" },
-    { resource: "chapitre", action: "delete" },
-
-    { resource: "liquidation", action: "create" },
-    { resource: "liquidation", action: "read" },
-    { resource: "liquidation", action: "update" },
-    { resource: "liquidation", action: "delete" },
-
-    { resource: "nature", action: "create" },
-    { resource: "nature", action: "read" },
-    { resource: "nature", action: "update" },
-    { resource: "nature", action: "delete" },
-
+    { resource: "exercice", action: "access" },
     { resource: "exercice", action: "create" },
     { resource: "exercice", action: "read" },
     { resource: "exercice", action: "update" },
     { resource: "exercice", action: "delete" },
 
-    { resource: "fournisseur", action: "create" },
-    { resource: "fournisseur", action: "read" },
-    { resource: "fournisseur", action: "update" },
-    { resource: "fournisseur", action: "delete" },
-
-    { resource: "serviceBeneficiaire", action: "create" },
-    { resource: "serviceBeneficiaire", action: "read" },
-    { resource: "serviceBeneficiaire", action: "update" },
-    { resource: "serviceBeneficiaire", action: "delete" },
-
+    { resource: "agent", action: "access" },
     { resource: "agent", action: "create" },
     { resource: "agent", action: "read" },
     { resource: "agent", action: "update" },
     { resource: "agent", action: "delete" },
 
+    { resource: "pieces", action: "access" },
     { resource: "pieces", action: "create" },
     { resource: "pieces", action: "read" },
     { resource: "pieces", action: "update" },
     { resource: "pieces", action: "delete" },
 
+    { resource: "statistique", action: "access" },
     { resource: "statistique", action: "create" },
     { resource: "statistique", action: "read" },
     { resource: "statistique", action: "update" },
 
-    { resource: "type", action: "create" },
-    { resource: "type", action: "read" },
-    { resource: "type", action: "update" },
-    { resource: "type", action: "delete" },
-
+    { resource: "droit", action: "access" },
     { resource: "droit", action: "create" },
     { resource: "droit", action: "read" },
     { resource: "droit", action: "update" },
     { resource: "droit", action: "delete" },
 
-    { resource: "service", action: "read" },
-    { resource: "service", action: "create" },
-    { resource: "service", action: "update" },
-    { resource: "service", action: "delete" },
-
-    { resource: "division", action: "read" },
-    { resource: "division", action: "create" },
-    { resource: "division", action: "update" },
-    { resource: "division", action: "delete" },
-
-    { resource: "section", action: "read" },
-    { resource: "section", action: "create" },
-    { resource: "section", action: "update" },
-    { resource: "section", action: "delete" },
-
+    { resource: "fonction", action: "access" },
     { resource: "fonction", action: "read" },
     { resource: "fonction", action: "create" },
     { resource: "fonction", action: "update" },
     { resource: "fonction", action: "delete" },
 
-    { resource: "sourceDeFinancement", action: "read" },
-    { resource: "sourceDeFinancement", action: "create" },
-    { resource: "sourceDeFinancement", action: "update" },
-    { resource: "sourceDeFinancement", action: "delete" },
-
+    { resource: "document", action: "access" },
     { resource: "document", action: "read" },
     { resource: "document", action: "create" },
     { resource: "document", action: "update" },
     { resource: "document", action: "delete" },
 
+    { resource: "documentType", action: "access" },
     { resource: "documentType", action: "read" },
     { resource: "documentType", action: "create" },
     { resource: "documentType", action: "update" },
     { resource: "documentType", action: "delete" },
 
+    { resource: "historique", action: "access" },
     { resource: "historique", action: "read" },
 
+    { resource: "entiteeUn", action: "access" },
     { resource: "entiteeUn", action: "create" },
     { resource: "entiteeUn", action: "read" },
     { resource: "entiteeUn", action: "update" },
     { resource: "entiteeUn", action: "delete" },
 
+    { resource: "entiteeDeux", action: "access" },
     { resource: "entiteeDeux", action: "create" },
     { resource: "entiteeDeux", action: "read" },
     { resource: "entiteeDeux", action: "update" },
     { resource: "entiteeDeux", action: "delete" },
 
+    { resource: "entiteeTrois", action: "access" },
     { resource: "entiteeTrois", action: "create" },
     { resource: "entiteeTrois", action: "read" },
     { resource: "entiteeTrois", action: "update" },
     { resource: "entiteeTrois", action: "delete" },
 
+    { resource: "salle", action: "access" },
     { resource: "salle", action: "create" },
     { resource: "salle", action: "read" },
     { resource: "salle", action: "update" },
     { resource: "salle", action: "delete" },
 
+    { resource: "rayon", action: "access" },
     { resource: "rayon", action: "create" },
     { resource: "rayon", action: "read" },
     { resource: "rayon", action: "update" },
     { resource: "rayon", action: "delete" },
 
+    { resource: "box", action: "access" },
     { resource: "box", action: "create" },
     { resource: "box", action: "read" },
     { resource: "box", action: "update" },
     { resource: "box", action: "delete" },
 
+    { resource: "trave", action: "access" },
     { resource: "trave", action: "create" },
     { resource: "trave", action: "read" },
     { resource: "trave", action: "update" },
     { resource: "trave", action: "delete" },
 
+    { resource: "site", action: "access" },
     { resource: "site", action: "create" },
     { resource: "site", action: "read" },
     { resource: "site", action: "update" },

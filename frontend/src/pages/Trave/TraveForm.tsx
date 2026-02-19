@@ -8,7 +8,13 @@ import { Dropdown } from "primereact/dropdown";
 import { Hash, Type, MapPin, Save } from "lucide-react";
 import { getRayons } from "../../api/rayon";
 
-export default function TraveForm({ visible, onHide, onSubmit, initial }: any) {
+export default function TraveForm({
+  visible,
+  onHide,
+  onSubmit,
+  refresh,
+  initial,
+}: any) {
   const [formData, setFormData] = useState({
     code: "",
     rayon_id: "",
@@ -42,6 +48,7 @@ export default function TraveForm({ visible, onHide, onSubmit, initial }: any) {
     e.preventDefault();
     // On passe formData au parent (TravePage) qui gère l'appel API via handleAction
     onSubmit(formData);
+    refresh();
   };
 
   return (

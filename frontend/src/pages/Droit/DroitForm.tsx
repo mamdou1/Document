@@ -10,6 +10,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<Droit>) => Promise<void>;
+  //refresh: () => void;
   initial?: Partial<Droit>;
   title?: string;
 };
@@ -19,6 +20,7 @@ export default function DroitForm({
   visible,
   onHide,
   onSubmit,
+  //refresh,
   initial = {},
   title = "Créer un droit",
 }: Props) {
@@ -34,6 +36,7 @@ export default function DroitForm({
     try {
       await onSubmit({ libelle });
       //onHide();
+      //refresh();
     } finally {
       setLoading(false);
     }

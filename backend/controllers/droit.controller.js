@@ -44,7 +44,7 @@ class DroitController {
           {
             model: Permission,
             through: { attributes: [] }, // cache la table pivot
-            attributes: ["resource", "action"],
+            attributes: ["id", "resource", "action"],
           },
         ],
       });

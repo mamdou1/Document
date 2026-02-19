@@ -5,10 +5,68 @@ import { Agent } from "http";
 export type Genre = "HOMME" | "FEMME";
 export type ModeChargement = "INDIVIDUEL" | "LOT_UNIQUE";
 
+export type PieceRecord = {
+  id?: number;
+  rowId?: number;
+  valueIds: Record<string, number>;
+  values: Record<string, any>;
+  files?: any[];
+  createdAt?: string;
+};
+
 export interface Permission {
   id: number;
   resource: string;
   action: "create" | "read" | "update" | "delete";
+}
+
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface ApiResponse {
+  message: string;
+  error?: string;
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface VerifyCodePayload {
+  code: string;
+}
+
+export interface UpdatePasswordPayload {
+  newPassword: string;
+}
+
+export interface ApiResponses {
+  message: string;
+  token?: string;
+  error?: string;
+}
+
+export interface TotalResponse {
+  total: number;
+}
+
+export interface StatsItem {
+  entiteeId?: number;
+  entiteeLibelle?: string;
+  structureLibelle?: string;
+  structureTitre?: string;
+  typeNom?: string;
+  typeCode?: string;
+  mois?: string;
+  moisLibelle?: string;
+  nombre: number;
+}
+
+export interface StatsResponse {
+  message?: string;
+  error?: string;
 }
 
 export interface DroitPermission {
@@ -41,6 +99,9 @@ export interface Pieces {
     disponible: boolean;
   };
 
+  // ✅ NOUVEAU : Métadonnées associées
+  metaFields?: PieceMetaField[];
+
   createdAt?: string;
   updatedAt?: string;
 }
@@ -56,6 +117,7 @@ export interface User {
   prenom: string;
   email: string;
   telephone?: string;
+  username: string;
   num_matricule: string;
   createdAt: string;
   updatedAt: string;
@@ -72,15 +134,13 @@ export interface User {
 }
 
 export interface InscriptionPayload {
-  nomGym: string;
-  adresseGym: string;
-  telephoneGym: string;
-  nomAdmin: string;
-  prenomAdmin: string;
-  emailAdmin: string;
-  passwordAdmin: string;
-  telephoneAdmin: string;
-  adresseAdmin: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone?: string;
+  username: string;
+  num_matricule: string;
+  photo_profil?: string;
 }
 
 export interface Fonction {
@@ -194,6 +254,9 @@ export interface Document {
   typeDocument?: TypeDocument;
   values?: DocumentValue[];
   pieces?: Pieces[];
+
+  // ✅ NOUVEAU : Valeurs des métadonnées des pièces
+  pieceValues?: PieceValue[];
   createdAt?: string;
 }
 
@@ -204,6 +267,74 @@ export interface CreateDocumentPayload {
 
 export interface UploadResponse {
   success: boolean;
+}
+
+export type PieceMetaFieldType = "text" | "number" | "date" | "file";
+
+export interface PieceMetaField {
+  id: number;
+  piece_id: number;
+  name: string;
+  label: string;
+  field_type: PieceMetaFieldType;
+  required: boolean;
+  position: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreatePieceMetaFieldPayload {
+  name: string;
+  label: string;
+  field_type: PieceMetaFieldType;
+  required: boolean;
+  position?: number;
+}
+
+export interface PieceValue {
+  id: number;
+  document_id: number;
+  piece_id: number;
+  piece_meta_field_id: number;
+  row_id?: number;
+  value: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+
+  // Associations (optionnelles)
+  metaField?: PieceMetaField;
+  file?: DocumentFichier;
+}
+
+export interface DocumentFichier {
+  id: number;
+  document_id: number;
+  piece_id: number | null;
+  piece_value_id: number | null;
+  fichier: string;
+  original_name: string;
+  mode: "INDIVIDUEL" | "LOT_UNIQUE";
+  createdAt?: string;
+  updatedAt?: string;
+
+  // Associations
+  piece?: Pieces;
+  document?: Document;
+  pieceValue?: PieceValue;
+}
+
+// Payload pour la création de document avec métadonnées de pièces
+export interface CreateDocumentWithPiecesPayload {
+  type_document_id: number;
+  values: Record<number, any>;
+  piece_values?: Record<number, Record<number, any>>; // piece_id -> { meta_field_id: value }
+}
+
+// Payload pour l'upload de fichier lié à une métadonnée de pièce
+export interface UploadPieceFilePayload {
+  piece_id: number;
+  piece_value_id?: number;
+  file: File;
 }
 
 export interface Site {
@@ -273,7 +404,15 @@ export interface Box {
   trave_id: string; // Foreign Key vers Salle
   trave?: Trave;
 
-  type_document_id: string;
+  type_document_id: number;
+  typeDocument?: TypeDocument;
+
+  entitee_un_id?: number;
+  entitee_deux_id?: number;
+  entitee_trois_id?: number;
+  entitee_un: EntiteeUn;
+  entitee_deux: EntiteeDeux;
+  entitee_trois: EntiteeTrois;
 
   document: Document;
   document_id: number;

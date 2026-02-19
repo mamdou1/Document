@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
       document_id: { type: DataTypes.INTEGER, allowNull: false },
       piece_id: { type: DataTypes.INTEGER, allowNull: true },
+      piece_value_id: { type: DataTypes.INTEGER, allowNull: true },
       fichier: { type: DataTypes.STRING, allowNull: false },
       original_name: { type: DataTypes.STRING },
       mode: {
@@ -29,6 +30,11 @@ module.exports = (sequelize, DataTypes) => {
     DocumentFichier.belongsTo(models.Document, {
       foreignKey: "document_id",
       as: "document",
+    });
+
+    DocumentFichier.belongsTo(models.PieceValue, {
+      foreignKey: "piece_value_id",
+      as: "pieceValue",
     });
   };
 

@@ -10,6 +10,7 @@ export default function EntiteeDeuxAjoutFonction({
   visible,
   onHide,
   entiteeDeux,
+  refresh,
   onSuccess,
   editing,
 }: any) {
@@ -52,7 +53,7 @@ export default function EntiteeDeuxAjoutFonction({
         // --- MODE CREATION ---
         await createFonction({
           libelle,
-          entitee_un_id: entiteeDeux.id,
+          entitee_deux_id: entiteeDeux.id,
         });
         toast.current?.show({
           severity: "success",
@@ -68,6 +69,7 @@ export default function EntiteeDeuxAjoutFonction({
       setTimeout(() => {
         onSuccess();
       }, 500);
+      refresh();
     } catch (error) {
       console.error("Erreur lors de l'opération", error);
       toast.current?.show({

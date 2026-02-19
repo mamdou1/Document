@@ -49,36 +49,37 @@ export default function ConfigurationStructure() {
   });
 
   // ✅ Charger les titres et les parents au montage
+  const initData = async () => {
+    try {
+      const [t1, t2, t3, un] = await Promise.all([
+        getEntiteeUnTitre(),
+        getEntiteeDeuxTitre(),
+        getEntiteeTroisTitre(),
+        getAllEntiteeUn(),
+      ]);
+
+      // ✅ IL MANQUAIT CECI : Mettre à jour l'état titles avec les données reçues
+      setTitles({
+        entitee1: t1.titre || "Direction",
+        entitee2: t2.titre || "Division",
+        entitee3: t3.titre || "Service",
+      });
+
+      // Fermer la modale
+      setConfigVisible(false);
+
+      setDataEntiteUn(Array.isArray(un) ? un : []);
+    } catch (err) {
+      console.error("Erreur initialisation:", err);
+      toast.current?.show({
+        severity: "error",
+        summary: "erruer",
+        detail: "Titre non récuperer",
+      });
+    }
+  };
+
   useEffect(() => {
-    const initData = async () => {
-      try {
-        const [t1, t2, t3, un] = await Promise.all([
-          getEntiteeUnTitre(),
-          getEntiteeDeuxTitre(),
-          getEntiteeTroisTitre(),
-          getAllEntiteeUn(),
-        ]);
-
-        // ✅ IL MANQUAIT CECI : Mettre à jour l'état titles avec les données reçues
-        setTitles({
-          entitee1: t1.titre || "Direction",
-          entitee2: t2.titre || "Division",
-          entitee3: t3.titre || "Service",
-        });
-
-        // Fermer la modale
-        setConfigVisible(false);
-
-        setDataEntiteUn(Array.isArray(un) ? un : []);
-      } catch (err) {
-        console.error("Erreur initialisation:", err);
-        toast.current?.show({
-          severity: "error",
-          summary: "erruer",
-          detail: "Titre non récuperer",
-        });
-      }
-    };
     initData();
   }, []);
 
@@ -96,6 +97,7 @@ export default function ConfigurationStructure() {
         summary: "Ok",
         detail: "Titre ajouter avec succès",
       });
+      initData();
     } catch (err) {
       toast.current?.show({
         severity: "error",
@@ -260,6 +262,7 @@ export default function ConfigurationStructure() {
           visible={form1Visible}
           onHide={() => setForm1Visible(false)}
           onSubmit={async (d) => setForm1Visible(false)}
+          refresh={initData}
           title={`Créer ${titles.entitee1}`}
         />
 
@@ -268,6 +271,7 @@ export default function ConfigurationStructure() {
           visible={form2Visible} // Utilise form2Visible
           onHide={() => setForm2Visible(false)}
           onSubmit={async (d) => setForm2Visible(false)}
+          refresh={initData}
           title={`Nouveau ${titles.entitee2}`}
           entiteeUn={dataEntiteUn} // On passe la liste des parents niveau 1
         />
@@ -277,6 +281,7 @@ export default function ConfigurationStructure() {
           visible={form3Visible} // Utilise form3Visible
           onHide={() => setForm3Visible(false)}
           onSubmit={async (d) => setForm3Visible(false)}
+          refresh={initData}
           title={`Nouveau ${titles.entitee3}`}
           entiteeDeux={dataEntiteDeux} // Décommente si tu as chargé dataEntiteDeux
         />

@@ -9,6 +9,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<EntiteeDeux>) => Promise<void>;
+  refresh: () => void;
   initial?: Partial<EntiteeDeux>; // ✅ correction ici
   title?: string;
   entiteeUn: EntiteeUn[];
@@ -18,6 +19,7 @@ export default function EntiteeDeuxForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   initial = {},
   title = "Ajouter une division",
   entiteeUn,
@@ -32,6 +34,11 @@ export default function EntiteeDeuxForm({
 
   useEffect(() => {
     if (visible) {
+      console.log("📝 Formulaire ouvert avec initial:", initial);
+      console.log("📝 entitee_un_id:", initial.entitee_un_id);
+      console.log("📝 libelle:", initial.libelle);
+      console.log("📝 code:", initial.code);
+
       setLibelle(initial.libelle || "");
       setCode(initial.code || "");
       setEntitee_un_id(initial.entitee_un_id || entiteeUn[0]?.id || 0);
@@ -39,10 +46,14 @@ export default function EntiteeDeuxForm({
   }, [visible, entiteeUn]);
 
   const handleSubmit = async () => {
+    console.log("🚀 Soumission avec:", { code, libelle, entitee_un_id });
     setLoading(true);
     try {
       await onSubmit({ code, libelle, entitee_un_id });
-      //onHide();
+      console.log("✅ Soumission réussie");
+      refresh();
+    } catch (error) {
+      console.error("❌ Erreur soumission:", error);
     } finally {
       setLoading(false);
     }

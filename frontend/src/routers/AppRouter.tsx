@@ -21,6 +21,11 @@ import SallePage from "../pages/Salle/SallePage";
 import TravePage from "../pages/Trave/TravePage";
 import SitePage from "../pages/Site/SitePage";
 import DocumentTypeEntitee from "../pages/DomentType/DocumentTypeEntitee";
+import WelcomeLandingPage from "../pages/Dashboard/DashbordBis";
+import ChangePassword from "../pages/Auth/ChangePassword";
+import SendEmail from "../pages/Auth/SendEmail";
+import VerifyEmail from "../pages/Auth/VerifyEmail";
+import UpdatePassword from "../pages/Auth/UpdatePassword";
 
 // 🔥FIX ICI🔥
 const PrivateRoute: React.FC<{ children: ReactElement }> = ({ children }) => {
@@ -35,15 +40,33 @@ const PrivateRoute: React.FC<{ children: ReactElement }> = ({ children }) => {
 };
 
 export default function AppRouter() {
+  const { can, loading } = useAuth();
+  if (loading) return <div>Chargement...</div>;
   return (
     <Routes>
       <Route path="/connexion" element={<AuthSwitcher />} />
+      <Route path="/send-code" element={<SendEmail />} />
+      <Route path="/verify-code" element={<VerifyEmail />} />
+      <Route path="/update-password" element={<UpdatePassword />} />
 
       <Route
         path="/"
         element={
           <PrivateRoute>
-            <Dashboard />
+            {/* 💡 On vérifie ici aussi la permission ! */}
+            {can("statistique", "read") ? (
+              <Dashboard />
+            ) : (
+              <Navigate to="/welcome" replace />
+            )}
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/welcome"
+        element={
+          <PrivateRoute>
+            <WelcomeLandingPage />
           </PrivateRoute>
         }
       />
@@ -181,6 +204,14 @@ export default function AppRouter() {
         element={
           <PrivateRoute>
             <SitePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/change-password"
+        element={
+          <PrivateRoute>
+            <ChangePassword />
           </PrivateRoute>
         }
       />

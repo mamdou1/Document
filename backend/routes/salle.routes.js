@@ -14,7 +14,7 @@ router.post(
 router.get(
   "/",
   verifyToken,
-  authorizePermission("salle", "read"),
+  //authorizePermission("salle", "read"),
   ctrl.findAll,
 );
 router.get(

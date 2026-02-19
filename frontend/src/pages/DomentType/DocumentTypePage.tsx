@@ -584,6 +584,7 @@ export default function DocumentTypePage() {
         visible={metaVisible}
         onHide={() => setMetaVisible(false)}
         onSubmit={handleMetaSubmit}
+        refresh={load}
         type={selected}
       />
 
@@ -595,28 +596,6 @@ export default function DocumentTypePage() {
         title={"Ajouter des pièces au dossier"}
         pieces={pieces}
       />
-
-      {/* <DocumentTypeForm
-        visible={formVisible}
-        onHide={() => setFormVisible(false)}
-        onSubmit={handleSubmit} // Cette fonction gère déjà la logique API
-        initial={editing} // Contient les objets complets entitee_un, etc.
-        title={editing ? "Modifier le Type" : "Nouveau Type"}
-      /> */}
-
-      {/* Formulaire de création/édition SIMPLE (Code et Nom uniquement) */}
-      {/* <DocumentTypeForm
-        visible={formVisible}
-        onHide={() => setFormVisible(false)}
-        onSubmit={handleSubmit}
-        initial={editing}
-        title={editing ? "Modifier l'identité" : "Nouveau Type"}
-        // AJOUTE CES DEUX PROPS POUR L'AFFICHAGE :
-        isFiltered={!!selectedTypeDoc}
-        currentStructureLabel={
-          optionsEntites.find((o) => o.value === selectedTypeDoc)?.label || ""
-        }
-      /> */}
 
       {/* NOUVEAU Formulaire d'affectation (Ouvert par SplinePointer) */}
       <DocumentTypeAffectationForm

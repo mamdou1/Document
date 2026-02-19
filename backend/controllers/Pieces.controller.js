@@ -10,10 +10,8 @@ const HistoriqueService = require("../services/historique.service");
 
 exports.createPieces = async (req, res) => {
   try {
-    if (req.user.role !== "ADMIN")
-      return res.status(403).json({ message: "Accès refusé" });
-
     const { code_pieces, libelle } = req.body;
+    console.log("📤 Données réçu:", req.body);
 
     if (!libelle || !code_pieces)
       return res
@@ -31,6 +29,7 @@ exports.createPieces = async (req, res) => {
       code_pieces: code_pieces.toUpperCase(),
       libelle: libelle.toUpperCase(),
     });
+    console.log("📤 Données enregistrer:", pieces);
 
     res.status(201).json(pieces);
   } catch (err) {

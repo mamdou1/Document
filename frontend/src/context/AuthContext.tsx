@@ -56,8 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setloading(false);
   }, []);
 
-  const login = async (telephone: string, password: string) => {
-    const res = await api.post("/auth/connexion", { telephone, password });
+  const login = async (username: string, password: string) => {
+    const res = await api.post("/auth/connexion", { username, password });
     const { accessToken } = res.data;
     localStorage.setItem("accessToken", accessToken);
     // récupérer user connecté via /user/me

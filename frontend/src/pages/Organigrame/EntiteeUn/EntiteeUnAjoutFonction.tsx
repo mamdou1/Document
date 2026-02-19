@@ -10,6 +10,7 @@ export default function EntiteeUnAjoutFonction({
   visible,
   onHide,
   entiteeUn,
+  refresh,
   onSuccess,
   editing,
 }: any) {
@@ -68,6 +69,7 @@ export default function EntiteeUnAjoutFonction({
       setTimeout(() => {
         onSuccess();
       }, 500);
+      refresh();
     } catch (error) {
       console.error("Erreur lors de l'opération", error);
       toast.current?.show({

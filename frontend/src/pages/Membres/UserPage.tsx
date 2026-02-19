@@ -484,6 +484,7 @@ export default function UserPage() {
           setFormVisible(false);
         }}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={affichage}
         initial={editing || undefined}
         title={editing ? "Modifier le membre" : "Ajouter un nouveau membre"}
         droits={droit}
