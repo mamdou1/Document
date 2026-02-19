@@ -9,7 +9,7 @@ import RecherchePage from "../pages/Recherche/Recherche";
 import DroitPage from "../pages/Droit/DroitPage";
 import { useAuth } from "../context/AuthContext";
 import HistoriquePage from "../pages/HistoriqueLog/HistoriquePage";
-import DocumentTypePage from "../pages/DomentType/DocumentTypePage";
+//import DocumentTypePage from "../pages/DomentType/DocumentTypePage";
 import DocumentPage from "../pages/Document/DocumentPage";
 import ConfigurationStructure from "../pages/Organigrame/ConfigurationStructure";
 import EntiteeUnPage from "../pages/Organigrame/EntiteeUn/EntiteeUnPage";
@@ -127,6 +127,14 @@ export default function AppRouter() {
           </PrivateRoute>
         }
       />
+      {/* <Route
+        path="/dossierType"
+        element={
+          <PrivateRoute>
+            <DocumentTypePage />
+          </PrivateRoute>
+        }
+      /> */}
       <Route
         path="/dossierType"
         element={
