@@ -14,6 +14,10 @@ import {
   UserCheck,
   Layers,
 } from "lucide-react";
+import { getAllEntiteeUn } from "../../api/entiteeUn";
+import { getAllEntiteeDeux } from "../../api/entiteeDeux";
+import { getAllEntiteeTrois } from "../../api/entiteeTrois";
+import { EntiteeDeux, EntiteeUn, EntiteeTrois } from "../../interfaces";
 
 export default function HistoriquePage() {
   const [logs, setLogs] = useState<HistoriqueLog[]>([]);
@@ -29,6 +33,45 @@ export default function HistoriquePage() {
   const [dateTo, setDateTo] = useState<string>("");
   const [actionFilter, setActionFilter] = useState<string>("");
   const [resourceFilter, setResourceFilter] = useState<string>("");
+
+  const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
+  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
+  const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
+
+  const loadStats = async () => {
+    setLoading(true);
+    try {
+      // Totaux
+      const [ent1, ent2, ent3] = await Promise.all([
+        getAllEntiteeUn(),
+        getAllEntiteeDeux(),
+        getAllEntiteeTrois(),
+      ]);
+      setAllEntiteeUn(Array.isArray(ent1) ? ent1 : []);
+      setAllEntiteeDeux(Array.isArray(ent2) ? ent2 : []);
+      setAllEntiteeTrois(Array.isArray(ent3) ? ent3 : []);
+
+      // Agents par structure
+    } catch (error: any) {
+      toast?.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail:
+          error?.response?.data?.message ||
+          "Erreur lors du chargement des statistiques",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  let titre1 = allEntiteeUn[0]?.titre || "Niveau 1";
+  let titre2 = allEntiteeDeux[0]?.titre || "Niveau 2";
+  let titre3 = allEntiteeTrois[0]?.titre || "Niveau 3";
 
   const [pagination, setPagination] = useState({
     total: 0,
@@ -111,6 +154,7 @@ export default function HistoriquePage() {
       update: "Modification",
       delete: "Suppression",
       read: "Consultation",
+      access: "Accès",
       login: "Connexion",
       logout: "Déconnexion",
       upload: "Téléversement",
@@ -121,28 +165,22 @@ export default function HistoriquePage() {
 
   function formatResource(resource: string) {
     const map: Record<string, string> = {
-      user: "agent",
-      liquidations: " liquidation",
-      droits: "profil",
-      exercices: "exercice",
-      programmes: "programme",
-      chapitres: " chapitre",
-      natures: " nature",
-      fonctions: " fonction",
-      fournisseur: "fournisseur",
-      serviceBeneficiaire: "service bénéficiaire",
-      pieces: " pièce",
-      piece: " pièce",
-      type: "type de dossier",
-      services: "service",
-      divisions: " division",
-      sections: " section",
-      statistiques: " statistique",
-      auth: "authentification",
-      historique: "historique",
-      droitPermission: " permission",
-      connexion: "connexion",
-      deconnexion: "deconnexion",
+      user: "Agent",
+      droits: "Profil",
+      exercices: "Exercice",
+      fonctions: "Fonction",
+      pieces: "Pièce",
+      document: "Document",
+      documentType: "Type de document",
+      entiteeUn: `${titre1}`,
+      entiteeDeux: `${titre2}`,
+      entiteeTrois: `${titre3}`,
+      salle: "Salle",
+      rayon: "Rayon",
+      trave: "Travée",
+      box: "Box",
+      site: "Site",
+      auth: "Authentification",
     };
 
     return map[resource] || resource;
@@ -163,6 +201,8 @@ export default function HistoriquePage() {
         return "bg-blue-50 text-blue-700";
       case "delete":
         return "bg-red-50 text-red-700";
+      case "access":
+        return "bg-yellow-50 text-yellow-700";
       case "login":
         return "bg-purple-50 text-purple-700";
       default:
@@ -243,6 +283,7 @@ export default function HistoriquePage() {
                 <option value="update">Update</option>
                 <option value="delete">Delete</option>
                 <option value="read">Read</option>
+                <option value="access">Access</option>
                 <option value="login">Login</option>
                 <option value="logout">Logout</option>
               </select>

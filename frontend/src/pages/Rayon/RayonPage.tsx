@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../components/layout/Layoutt";
 import RayonDetails from "./RayonDetails";
 import RayonForm from "./RayonForm";
@@ -8,12 +8,6 @@ import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import Pagination from "../../components/layout/Pagination";
-import {
-  getRayons,
-  createRayon,
-  updateRayon,
-  deleteRayon,
-} from "../../api/rayon";
 import {
   Layers,
   Plus,
@@ -25,59 +19,58 @@ import {
   Hash,
   Archive,
   WavesLadder,
+  XCircle,
 } from "lucide-react";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useRayons,
+  useCreateRayon,
+  useUpdateRayon,
+  useDeleteRayon,
+} from "../../hooks/useRayons";
+
 export default function RayonPage() {
-  const [allRayon, setAllRayon] = useState<Rayon[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par useRayons
+  const { data: allRayon = [], isLoading, error, refetch } = useRayons();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateRayon();
+  const updateMutation = useUpdateRayon();
+  const deleteMutation = useDeleteRayon();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<Rayon | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState<Partial<Rayon> | null>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const fetchRayons = async () => {
-    setLoading(true);
-    try {
-      const data = await getRayons();
-      setAllRayon(data);
-    } catch (err) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de charger les Rayon",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ PLUS BESOIN DE fetchRayons() NI DE useEffect !
 
-  useEffect(() => {
-    fetchRayons();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer handleAction
   const handleAction = async (payload: any) => {
     try {
       if (editing?.id) {
-        const updated = await updateRayon(editing.id, payload);
-        setAllRayon((prev) =>
-          prev.map((e) => (e.id === updated.id ? updated : e)),
-        );
+        await updateMutation.mutateAsync({
+          id: String(editing.id),
+          data: payload,
+        });
         toast.current?.show({
           severity: "success",
           summary: "Succès",
-          detail: "Rayon mise à jour",
+          detail: "Rayon mis à jour",
         });
       } else {
-        const saved = await createRayon(payload);
-        setAllRayon((prev) => [saved, ...prev]);
+        await createMutation.mutateAsync(payload);
         toast.current?.show({
           severity: "success",
           summary: "Succès",
-          detail: "Rayon créée",
+          detail: "Rayon créé",
         });
       }
       setFormVisible(false);
@@ -90,33 +83,26 @@ export default function RayonPage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
       message:
         "Voulez-vous supprimer ce rayon définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
-
-      // --- Personnalisation des labels ---
+      icon: "pi pi-info-circle",
       acceptLabel: "Supprimer",
       rejectLabel: "Annuler",
-
-      // --- Styling des boutons ---
-      // Ajout de classes de mise en page (flexbox) et de style
       acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
       rejectClassName:
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-
-      // --- Style du dialogue lui-même (optionnel) ---
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteRayon(id);
-          setAllRayon((prev) => prev.filter((e) => e.id !== id));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
-            detail: "Rayon supprimée",
+            detail: "Rayon supprimé",
           });
         } catch (err) {
           toast.current?.show({
@@ -129,6 +115,7 @@ export default function RayonPage() {
     });
   };
 
+  // Filtrage et pagination (inchangés)
   const filtered = allRayon.filter((e) =>
     `${e.code} ${e.salle?.libelle || ""}`
       .toLowerCase()
@@ -140,11 +127,38 @@ export default function RayonPage() {
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 5: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header Section */}
+      {/* Header Section (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
@@ -170,7 +184,7 @@ export default function RayonPage() {
         />
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <div className="relative group max-w-md">
           <Search
@@ -186,7 +200,7 @@ export default function RayonPage() {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Table Section (inchangé) */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -249,18 +263,6 @@ export default function RayonPage() {
             ))}
           </tbody>
         </table>
-
-        {loading && (
-          <div className="p-12 text-center text-slate-400 animate-pulse">
-            Chargement des données...
-          </div>
-        )}
-        {!loading && filtered.length === 0 && (
-          <div className="p-12 text-center text-slate-500">
-            <WavesLadder size={48} className="mx-auto text-slate-200 mb-4" />
-            Aucune étagère trouvée.
-          </div>
-        )}
       </div>
 
       <div className="mt-6 flex justify-center">
@@ -272,11 +274,12 @@ export default function RayonPage() {
         />
       </div>
 
+      {/* Modals (inchangés) */}
       <RayonForm
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={handleAction}
-        refresh={fetchRayons}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || {}}
       />
 

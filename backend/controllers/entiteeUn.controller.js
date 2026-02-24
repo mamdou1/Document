@@ -1,76 +1,59 @@
+// controllers/entiteeUn.controller.js
 const { EntiteeUn, Fonction } = require("../models");
-
-// exports.createEntiteeUn = async (req, res) => {
-//   console.log("data reçu avant traitement : ", req.body);
-
-//   try {
-//     const entitee_un = await EntiteeUn.create(req.body);
-//     res.status(201).json(entitee_un);
-//     console.log("data après traitement : ", req.body);
-//   } catch (err) {
-//     res
-//       .status(500)
-//       .json({ message: "Erreur création entitee_un", error: err.message });
-//   }
-// };
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 exports.createEntiteeUn = async (req, res) => {
-  console.log("Headers:", req.headers);
-  console.log("Body reçu:", req.body);
-  console.log("Type de body:", typeof req.body);
+  const startTime = Date.now();
 
   try {
-    console.log("Tentative de création...");
+    logger.info("📝 Tentative de création d'une entité de niveau 1", {
+      userId: req.user?.id,
+      body: req.body,
+    });
 
     // 1. Trouver le titre utilisé par les autres éléments
     const exemple = await EntiteeUn.findOne({ attributes: ["titre"] });
-    const titreGlobal = exemple.titre;
+    const titreGlobal = exemple?.titre || "Défaut";
 
     // 2. Créer l'élément avec le titre récupéré
     const entitee_un = await EntiteeUn.create({
       ...req.body,
       titre: titreGlobal,
     });
-    console.log("Création réussie:", entitee_un);
+
+    logger.info("✅ Entité de niveau 1 créée avec succès", {
+      entiteeId: entitee_un.id,
+      libelle: entitee_un.libelle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logCreate(req, "entiteeUn", entitee_un);
 
     res.status(201).json(entitee_un);
   } catch (err) {
-    console.error("Erreur détaillée:", err);
+    logger.error("❌ Erreur création entiteeUn:", {
+      error: err.message,
+      stack: err.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur création entitee_un",
       error: err.message,
-      stack: err.stack, // Pour plus de détails
     });
   }
 };
 
-// exports.createEntiteeUnTitre = async (req, res) => {
-//   try {
-//     const { titre } = req.body;
-
-//     // Vérification basique
-//     if (!titre) {
-//       return res.status(400).json({ message: "le champs titre est requis" });
-//     }
-
-//     // Création
-//     const titres = await EntiteeUn.create({
-//       titre,
-//     });
-
-//     res.status(201).json(titres);
-//   } catch (err) {
-//     console.error("❌ Erreur création titre:", err);
-//     res.status(500).json({
-//       message: "Erreur lors de la création du titre",
-//       error: err.message,
-//     });
-//   }
-// };
-
 exports.getAllEntiteeUn = async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const entitee_un = await EntiteeUn.findAll();
+
     res.json(entitee_un);
   } catch (err) {
     res
@@ -80,62 +63,124 @@ exports.getAllEntiteeUn = async (req, res) => {
 };
 
 exports.getEntiteeUnTitre = async (req, res) => {
-  try {
-    const entitee = await EntiteeUn.findOne({
-      attributes: ["titre"], // on récupère uniquement le titre
-    });
+  const startTime = Date.now();
 
-    if (!entitee) {
-      return res
-        .status(404)
-        .json({ message: "Aucun titre trouvé pour EntiteeUn" });
-    }
+  try {
+    const entitee = await EntiteeUn.findOne({ attributes: ["titre"] });
 
     res.json({ titre: entitee.titre });
   } catch (err) {
-    console.error("❌ Erreur getEntiteeUnTitre:", err);
     res.status(500).json({ message: err.message });
   }
 };
 
 exports.updateEntiteeUnTitre = async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const { titre } = req.body;
     if (!titre) {
+      logger.warn("⚠️ Tentative de mise à jour sans titre", {
+        userId: req.user?.id,
+      });
       return res.status(400).json({ message: "Le champ 'titre' est requis" });
     }
 
-    // 1. Vérifier s'il y a au moins un enregistrement
+    logger.info("📝 Tentative de mise à jour du titre global", {
+      userId: req.user?.id,
+      nouveauTitre: titre,
+    });
+
+    // Récupérer l'ancien titre pour l'historique
+    const oldTitre = await EntiteeUn.findOne({ attributes: ["titre"] });
+    const oldValue = oldTitre ? oldTitre.titre : null;
+
+    // Vérifier l'existence d'enregistrements
     const count = await EntiteeUn.count();
 
     if (count === 0) {
-      // SI vide : On crée une entrée "modèle" pour initialiser le titre
-      // (Optionnel : vous pouvez aussi créer une entrée avec des champs vides)
-      await EntiteeUn.create({
-        titre: titre,
+      // Création initiale si la table est vide
+      await EntiteeUn.create({ titre: titre });
+
+      logger.info("✅ Titre initial créé pour EntiteeUn", {
+        titre,
+        userId: req.user?.id,
+        duration: Date.now() - startTime,
       });
+
       return res.json({ message: "Titre initial créé", titre });
     }
 
-    // 2. SI la table n'est pas vide : On met à jour TOUTES les lignes d'un coup
-    // .update({ champs }, { where: {} }) applique le changement à 100% de la table
+    // Mise à jour globale de la colonne titre
     await EntiteeUn.update({ titre: titre }, { where: {} });
+
+    logger.info("✅ Titre global mis à jour avec succès", {
+      ancienTitre: oldValue,
+      nouveauTitre: titre,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "update",
+      resource: "entiteeUn_titre",
+      resource_id: null,
+      resource_identifier: "titre global",
+      description: `Modification du titre global : ${oldValue || "null"} → ${titre}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      old_data: { titre: oldValue },
+      new_data: { titre },
+      data: { duration: Date.now() - startTime },
+    });
 
     res.json({ message: "Titre mis à jour pour tous les éléments", titre });
   } catch (err) {
-    console.error("❌ Erreur updateEntiteeUnTitre:", err);
+    logger.error("❌ Erreur updateEntiteeUnTitre:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: err.message });
   }
 };
 
-// Récupère les fonctions liées directement à ce EntiteeUn [cite: 3, 5]
 exports.getFunctionsByEntiteeUn = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const fonctions = await Fonction.findAll({
-      where: { entitee_un_id: req.params.id },
+    logger.debug("🔍 Récupération des fonctions d'une entité niveau 1", {
+      entiteeId: id,
+      userId: req.user?.id,
     });
+
+    const fonctions = await Fonction.findAll({
+      where: { entitee_un_id: id },
+    });
+
+    logger.info("✅ Fonctions récupérées", {
+      entiteeId: id,
+      count: fonctions.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(fonctions);
   } catch (err) {
+    logger.error("❌ Erreur getFunctionsByEntiteeUn:", {
+      entiteeId: id,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
       .json({ message: "Erreur récupération fonctions", error: err.message });
@@ -143,16 +188,52 @@ exports.getFunctionsByEntiteeUn = async (req, res) => {
 };
 
 exports.updateEntiteeUn = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
+    logger.info("📝 Tentative de modification d'une entité niveau 1", {
+      entiteeId: id,
+      userId: req.user?.id,
+      body: req.body,
+    });
+
+    const oldEntitee = await EntiteeUn.findByPk(id);
+    if (!oldEntitee) {
+      logger.warn("⚠️ Entité niveau 1 non trouvée", {
+        entiteeId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "EntiteeUn non trouvé" });
+    }
+
+    const oldCopy = oldEntitee.toJSON();
     const payload = req.body;
 
-    const ent = await EntiteeUn.findByPk(id);
-    if (!ent) return res.status(404).json({ message: "EntiteeUn non trouvé" });
+    await oldEntitee.update(payload);
 
-    await ent.update(payload);
-    res.status(200).json(ent);
+    const updated = await EntiteeUn.findByPk(id);
+
+    logger.info("✅ Entité niveau 1 modifiée avec succès", {
+      entiteeId: id,
+      libelle: updated.libelle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(req, "entiteeUn", oldCopy, updated);
+
+    res.status(200).json(updated);
   } catch (err) {
+    logger.error("❌ Erreur updateEntiteeUn:", {
+      entiteeId: id,
+      error: err.message,
+      stack: err.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
       .json({ message: "Erreur mise à jour EntiteeUn", error: err.message });
@@ -160,17 +241,47 @@ exports.updateEntiteeUn = async (req, res) => {
 };
 
 exports.deleteEntiteeUn = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const ent = await EntiteeUn.findByPk(id);
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    if (!ent) return res.status(404).json({ message: "EntiteeUn non trouvé" });
+  try {
+    logger.info("🗑️ Tentative de suppression d'une entité niveau 1", {
+      entiteeId: id,
+      userId: req.user?.id,
+    });
+
+    const ent = await EntiteeUn.findByPk(id);
+    if (!ent) {
+      logger.warn("⚠️ Entité niveau 1 non trouvée pour suppression", {
+        entiteeId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "EntiteeUn non trouvé" });
+    }
 
     await ent.destroy();
+
+    logger.info("✅ Entité niveau 1 supprimée avec succès", {
+      entiteeId: id,
+      libelle: ent.libelle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "entiteeUn", ent);
+
     res.status(200).json({ message: "EntiteeUn supprimé" });
   } catch (err) {
+    logger.error("❌ Erreur deleteEntiteeUn:", {
+      entiteeId: id,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
-      .json({ message: "Erreur suppresion EntiteeUn", error: err.message });
+      .json({ message: "Erreur suppression EntiteeUn", error: err.message });
   }
 };

@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Layout from "../../components/layout/Layoutt";
 import UserForm from "./UsersForm";
 import type { User } from "../../interfaces";
 import UserDetails from "./UserDetails";
-import { getUsers, createUser, updateUser, deleteUser } from "../../api/users";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
@@ -22,62 +21,70 @@ import {
   ArrowUpDown,
   FolderLock,
 } from "lucide-react";
-import { getDroits } from "../../api/droit";
-//import { getAllServices } from "../../api/service";
-import { Droit, Fonction, AgentEntiteeAccess } from "../../interfaces";
 import UserAcces from "./UserAcces";
-import { grantAccess } from "../../api/agentEntiteeAccess";
+
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useInitialData,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useGrantAccess,
+} from "../../hooks/useUsers";
 
 export default function UserPage() {
-  const [allUser, setAllUser] = useState<User[]>([]);
-  //const [allServices, setAllServices] = useState<Service[]>([]);
+  const { user } = useAuth();
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer les useState multiples par useInitialData
+  const {
+    users: allUser = [],
+    droits: droit = [],
+    onLigneUsers = [],
+    isLoading,
+    error,
+    refetch,
+  } = useInitialData();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateUser();
+  const updateMutation = useUpdateUser();
+  const deleteMutation = useDeleteUser();
+  const grantAccessMutation = useGrantAccess();
+
+  // États UI (inchangés)
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
   const [detailsUser, setDetailsUser] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
   const [accesUser, setAccesUser] = useState(false);
   const [editing, setEditing] = useState<Partial<User> | null>(null);
-  const toast = useRef<Toast>(null);
-  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [champDeTrie, setChampDeTrie] = useState<keyof User>("prenom");
-  const [OrdreDeTrie, setOrdreDeTrie] = useState<"asc" | "desc">("asc");
+  const [ordreDeTrie, setOrdreDeTrie] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const [droit, setDroit] = useState<Droit[]>([]);
   const [selectedDroit, setSelectedDroit] = useState<string | null>(null);
-  const [fonction, setFonction] = useState<Fonction[]>([]);
 
-  const affichage = async () => {
-    setLoading(true);
-    try {
-      const [u, dr] = await Promise.all([getUsers(), getDroits()]);
-      setAllUser(Array.isArray(u) ? u : []);
-      setDroit(Array.isArray(dr) ? dr : []);
-    } catch (err) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de charger les membres",
-      });
-    } finally {
-      setLoading(false);
-    }
+  // ✅ PLUS BESOIN DE LA FONCTION affichage() NI DE useEffect !
+
+  const onlineUserIds = useMemo(() => {
+    return new Set(onLigneUsers.map((u: any) => Number(u.id)));
+  }, [onLigneUsers]);
+
+  const isUserOnline = (userId: number) => {
+    return onlineUserIds.has(Number(userId));
   };
 
-  useEffect(() => {
-    affichage();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer onCreate
   const onCreate = async (payload: Partial<User>, photoFile?: File) => {
     try {
-      const saved = await createUser(payload, photoFile);
-      setAllUser((s) => [saved, ...s]);
+      await createMutation.mutateAsync({ payload, photoFile });
       toast.current?.show({
         severity: "success",
         summary: "Succès",
         detail: "Utilisateur créé",
       });
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
@@ -87,17 +94,22 @@ export default function UserPage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer onEdit
   const onEdit = async (payload: Partial<User>, photoFile?: File) => {
     if (!editing?.id) return;
     try {
-      const update = await updateUser(payload, editing.id, photoFile);
-      setAllUser((s) => s.map((g) => (g.id === update.id ? update : g)));
+      await updateMutation.mutateAsync({
+        id: String(editing.id),
+        payload,
+        photoFile,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Mis à jour",
         detail: "Utilisateur modifié",
       });
       setEditing(null);
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
@@ -107,29 +119,22 @@ export default function UserPage() {
     }
   };
 
+  // ✅ ÉTAPE 5: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
       message:
         "Voulez-vous supprimer cet agent définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
-
-      // --- Personnalisation des labels ---
+      icon: "pi pi-info-circle",
       acceptLabel: "Supprimer",
       rejectLabel: "Annuler",
-
-      // --- Styling des boutons ---
-      // Ajout de classes de mise en page (flexbox) et de style
       acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
       rejectClassName:
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-
-      // --- Style du dialogue lui-même (optionnel) ---
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteUser(id);
-          setAllUser((s) => s.filter((g) => g.id !== id));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
@@ -146,9 +151,9 @@ export default function UserPage() {
     });
   };
 
+  // ✅ ÉTAPE 6: Remplacer handleGrantAccess
   const handleGrantAccess = async (payload: any[]) => {
     try {
-      // ✅ Vérifier que le payload n'est pas vide
       if (!payload || payload.length === 0) {
         toast.current?.show({
           severity: "warn",
@@ -158,13 +163,8 @@ export default function UserPage() {
         return;
       }
 
-      console.log("📦 Payload envoyé:", payload); // DEBUG
-
-      // ✅ Appel direct à grantAccess avec le tableau
-      await grantAccess(payload);
-
-      // ✅ Rafraîchir les données
-      await affichage();
+      console.log("📦 Payload envoyé:", payload);
+      await grantAccessMutation.mutateAsync(payload);
 
       toast.current?.show({
         severity: "success",
@@ -172,15 +172,11 @@ export default function UserPage() {
         detail: `${payload.length} accès ajoutés avec succès`,
       });
 
-      // ✅ Fermer le modal
       setAccesUser(false);
     } catch (e: any) {
       console.error("❌ Erreur grantAccess:", e);
-
-      // ✅ Afficher le message d'erreur du backend
       const errorMessage =
         e.response?.data?.message || "Impossible d'appliquer les accès";
-
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
@@ -189,52 +185,79 @@ export default function UserPage() {
     }
   };
 
-  const filteredUsers = allUser.filter((u) => {
-    const matchesSearch = [
-      u.nom,
-      u.prenom,
-      //u.fonction,
-      u.telephone,
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(query.toLowerCase());
-    // Vérifie si l'ID du droit de l'utilisateur correspond au filtre (si un filtre est choisi)
-    const userDroitId = typeof u.droit === "object" ? u.droit.id : u.droit;
-    const matchesDroit = !selectedDroit || userDroitId === selectedDroit;
+  // Filtrer, trier et paginer (inchangé)
+  const filteredUsers = useMemo(() => {
+    return allUser.filter((u) => {
+      const matchesSearch = [u.nom, u.prenom, u.telephone]
+        .join(" ")
+        .toLowerCase()
+        .includes(query.toLowerCase());
 
-    return matchesSearch && matchesDroit;
-  });
+      const userDroitId = typeof u.droit === "object" ? u.droit?.id : u.droit;
+      const matchesDroit =
+        !selectedDroit || String(userDroitId) === String(selectedDroit);
+
+      return matchesSearch && matchesDroit;
+    });
+  }, [allUser, query, selectedDroit]);
 
   const profilOption = [
-    {
-      label: "Tout les profils",
-      value: null,
-    },
+    { label: "Tous les profils", value: null },
     ...droit.map((x) => ({
       label: x.libelle,
       value: x.id,
     })),
   ];
 
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    const aVal = String(a[champDeTrie] || "").toLowerCase();
-    const bVal = String(b[champDeTrie] || "").toLowerCase();
-    return OrdreDeTrie === "asc"
-      ? aVal.localeCompare(bVal)
-      : bVal.localeCompare(aVal);
-  });
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      const aVal = String(a[champDeTrie] || "").toLowerCase();
+      const bVal = String(b[champDeTrie] || "").toLowerCase();
+      return ordreDeTrie === "asc"
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    });
+  }, [filteredUsers, champDeTrie, ordreDeTrie]);
 
-  const paginatedUser = sortedUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const paginatedUser = useMemo(() => {
+    return sortedUsers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage,
+    );
+  }, [sortedUsers, currentPage, itemsPerPage]);
+
+  // ✅ ÉTAPE 7: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header Section */}
+      {/* Header Section (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -267,7 +290,7 @@ export default function UserPage() {
         </Button>
       </div>
 
-      {/* Filter Bar */}
+      {/* Filter Bar (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[300px] relative group">
           <Search
@@ -289,7 +312,7 @@ export default function UserPage() {
             options={profilOption}
             placeholder="Filtrer par Profil"
             className="w-full bg-slate-50 border-slate-200 rounded-xl"
-            showClear // Permet d'effacer le filtre facilement
+            showClear
           />
         </div>
 
@@ -308,7 +331,7 @@ export default function UserPage() {
         )}
       </div>
 
-      {/* Table Section */}
+      {/* Table Section (inchangé) */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -323,7 +346,7 @@ export default function UserPage() {
                 className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-emerald-600 transition-colors"
                 onClick={() => {
                   setChampDeTrie("prenom");
-                  setOrdreDeTrie(OrdreDeTrie === "asc" ? "desc" : "asc");
+                  setOrdreDeTrie(ordreDeTrie === "asc" ? "desc" : "asc");
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -334,7 +357,7 @@ export default function UserPage() {
                 className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-emerald-600 transition-colors"
                 onClick={() => {
                   setChampDeTrie("nom");
-                  setOrdreDeTrie(OrdreDeTrie === "asc" ? "desc" : "asc");
+                  setOrdreDeTrie(ordreDeTrie === "asc" ? "desc" : "asc");
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -349,6 +372,9 @@ export default function UserPage() {
               </th>
               <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-24">
                 Téléphone
+              </th>
+              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase">
+                Statut
               </th>
               <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
                 Actions
@@ -367,6 +393,10 @@ export default function UserPage() {
               >
                 <td className="px-6 py-4 flex justify-center">
                   <div className="relative">
+                    {/* Badge online */}
+                    {u.is_on_line && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                    )}
                     {u.photo_profil ? (
                       <img
                         src={`http://localhost:5000/uploads/profiles/${u.photo_profil}`}
@@ -403,6 +433,17 @@ export default function UserPage() {
                   {u.telephone}
                 </td>
                 <td className="px-6 py-4">
+                  {u.is_on_line ? (
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                      ● En ligne
+                    </span>
+                  ) : (
+                    <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold">
+                      Hors ligne
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
@@ -410,6 +451,7 @@ export default function UserPage() {
                         setSelectedUser(u);
                         setAccesUser(true);
                       }}
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
                     >
                       <FolderLock size={18} />
                     </button>
@@ -450,22 +492,6 @@ export default function UserPage() {
             ))}
           </tbody>
         </table>
-
-        {loading && (
-          <div className="p-12 text-center text-emerald-500 font-bold animate-pulse">
-            Chargement des données...
-          </div>
-        )}
-        {paginatedUser.length === 0 && !loading && (
-          <div className="p-12 text-center">
-            <div className="text-slate-300 mb-2 flex justify-center">
-              <Search size={48} />
-            </div>
-            <p className="text-slate-500 font-bold italic">
-              Aucun membre ne correspond à votre recherche
-            </p>
-          </div>
-        )}
       </div>
 
       <div className="mt-6 flex justify-center">
@@ -477,6 +503,7 @@ export default function UserPage() {
         />
       </div>
 
+      {/* Modals (inchangés) */}
       <UserForm
         visible={formVisible}
         onHide={() => {
@@ -484,7 +511,7 @@ export default function UserPage() {
           setFormVisible(false);
         }}
         onSubmit={editing ? onEdit : onCreate}
-        refresh={affichage}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || undefined}
         title={editing ? "Modifier le membre" : "Ajouter un nouveau membre"}
         droits={droit}
@@ -497,10 +524,8 @@ export default function UserPage() {
           setSelectedUser(null);
         }}
         user={selectedUser}
-        // AJOUT DES PROPS MANQUANTES :
-        onRefresh={affichage} // Utilise votre fonction de chargement existante
+        onRefresh={() => refetch()} // ✅ Utiliser refetch
         onEditAccess={(access) => {
-          // Logique pour ouvrir le formulaire d'accès en mode édition si nécessaire
           console.log("Éditer l'accès:", access);
           setDetailsUser(false);
           setAccesUser(true);
@@ -512,16 +537,9 @@ export default function UserPage() {
         onHide={() => setAccesUser(false)}
         onSubmit={handleGrantAccess}
         agentId={Number(selectedUser?.id)}
-        // ✅ SOLUTION: Créer une référence stable ou utiliser un useMemo
         initial={selectedUser?.agent_access || []}
         title="Gestion des accès"
       />
-
-      {/* <UserPermission
-        visible={permissionModal}
-        agentId={selectedAgentId}
-        onHide={() => setPermissionModal(false)}
-      /> */}
     </Layout>
   );
 }

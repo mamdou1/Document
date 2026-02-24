@@ -18,10 +18,10 @@ export default function RayonForm({
   const [formData, setFormData] = useState({
     code: "",
     salle_id: "",
-    mb_traves_par_rayon: 1,
-    nb_box: 1, // Nouveau champ
-    sigle_trave: "T", // Nouveau champ
-    sigle_box: "B", // Nouveau champ
+    // mb_traves_par_rayon: 1,
+    // nb_box: 1, // Nouveau champ
+    // sigle_trave: "T", // Nouveau champ
+    // sigle_box: "B", // Nouveau champ
   });
   const [salles, setSalles] = useState<Salle[]>([]);
   const [loadingSalles, setLoadingSalles] = useState(false);
@@ -32,19 +32,19 @@ export default function RayonForm({
       setFormData({
         code: initial.code || "",
         salle_id: initial.salle_id || "",
-        mb_traves_par_rayon: 0,
-        nb_box: 0,
-        sigle_trave: "",
-        sigle_box: "",
+        // mb_traves_par_rayon: 0,
+        // nb_box: 0,
+        // sigle_trave: "",
+        // sigle_box: "",
       });
     } else {
       setFormData({
         code: "",
         salle_id: "",
-        mb_traves_par_rayon: 1,
-        nb_box: 1,
-        sigle_trave: "T",
-        sigle_box: "B",
+        // mb_traves_par_rayon: 1,
+        // nb_box: 1,
+        // sigle_trave: "T",
+        // sigle_box: "B",
       });
     }
   }, [initial, visible]);
@@ -114,15 +114,15 @@ export default function RayonForm({
           />
         </div>
 
-        {!initial?.id && (
+        {/* {!initial?.id && (
           <div className="space-y-4">
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest border-b pb-2">
               Paramètres de génération
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Travées */}
-              <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div className="grid grid-cols-2 gap-4"> */}
+        {/* Travées */}
+        {/* <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <label className="text-[10px] font-black text-emerald-800 flex items-center gap-1 uppercase">
                   <Grid3X3 size={12} /> Travées / R
                 </label>
@@ -152,10 +152,10 @@ export default function RayonForm({
                     placeholder="Ex: T"
                   />
                 </div>
-              </div>
+              </div> */}
 
-              {/* Boxes */}
-              <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+        {/* Boxes */}
+        {/* <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <label className="text-[10px] font-black text-emerald-800 flex items-center gap-1 uppercase">
                   <BoxIcon size={12} /> Boxes / T
                 </label>
@@ -185,7 +185,7 @@ export default function RayonForm({
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         <div className="flex justify-end gap-3 mt-4">
           <Button

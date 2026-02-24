@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../components/layout/Layoutt";
 import SalleDetails from "./SalleDetails";
 import SalleForm from "./SalleForm";
@@ -9,12 +9,6 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import Pagination from "../../components/layout/Pagination";
 import {
-  getSalles,
-  createSalle,
-  updateSalle,
-  deleteSalle,
-} from "../../api/salle";
-import {
   LayoutGrid,
   Plus,
   Search,
@@ -23,55 +17,54 @@ import {
   Trash2,
   Hash,
   DoorOpen,
+  XCircle,
 } from "lucide-react";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useSalles,
+  useCreateSalle,
+  useUpdateSalle,
+  useDeleteSalle,
+} from "../../hooks/useSalles";
+
 export default function SallePage() {
-  const [allSalles, setAllSalles] = useState<Salle[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par useSalles
+  const { data: allSalles = [], isLoading, error, refetch } = useSalles();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateSalle();
+  const updateMutation = useUpdateSalle();
+  const deleteMutation = useDeleteSalle();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<Salle | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState<Partial<Salle> | null>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const fetchSalles = async () => {
-    setLoading(true);
-    try {
-      const data = await getSalles();
-      setAllSalles(Array.isArray(data) ? data : data.salle || []);
-    } catch (err) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Chargement échoué",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ PLUS BESOIN DE fetchSalles() NI DE useEffect !
 
-  useEffect(() => {
-    fetchSalles();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer handleAction
   const handleAction = async (payload: any) => {
     try {
       if (editing?.id) {
-        const updated = await updateSalle(editing.id, payload);
-        setAllSalles((prev) =>
-          prev.map((s) => (s.id === updated.id ? updated : s)),
-        );
+        await updateMutation.mutateAsync({
+          id: String(editing.id),
+          data: payload,
+        });
         toast.current?.show({
           severity: "success",
           summary: "Succès",
           detail: "Salle mise à jour",
         });
       } else {
-        const saved = await createSalle(payload);
-        setAllSalles((prev) => [saved, ...prev]);
+        await createMutation.mutateAsync(payload);
         toast.current?.show({
           severity: "success",
           summary: "Succès",
@@ -79,7 +72,6 @@ export default function SallePage() {
         });
       }
       setFormVisible(false);
-      fetchSalles();
     } catch (err) {
       toast.current?.show({
         severity: "error",
@@ -89,29 +81,22 @@ export default function SallePage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
       message:
         "Voulez-vous supprimer cette salle définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
-
-      // --- Personnalisation des labels ---
+      icon: "pi pi-info-circle",
       acceptLabel: "Supprimer",
       rejectLabel: "Annuler",
-
-      // --- Styling des boutons ---
-      // Ajout de classes de mise en page (flexbox) et de style
       acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
       rejectClassName:
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-
-      // --- Style du dialogue lui-même (optionnel) ---
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteSalle(id);
-          setAllSalles((prev) => prev.filter((s) => s.id !== id));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
@@ -128,6 +113,7 @@ export default function SallePage() {
     });
   };
 
+  // Filtrage et pagination (inchangés)
   const filtered = allSalles.filter((s) =>
     `${s.code_salle} ${s.libelle}`.toLowerCase().includes(query.toLowerCase()),
   );
@@ -137,11 +123,38 @@ export default function SallePage() {
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 5: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header */}
+      {/* Header (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
@@ -167,7 +180,7 @@ export default function SallePage() {
         />
       </div>
 
-      {/* Search */}
+      {/* Search (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex justify-between items-center">
         <div className="relative group max-w-md w-full">
           <Search
@@ -183,7 +196,7 @@ export default function SallePage() {
         </div>
       </div>
 
-      {/* Grid of Cards */}
+      {/* Grid of Cards (inchangé) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginated.map((s) => (
           <div
@@ -234,7 +247,7 @@ export default function SallePage() {
         ))}
       </div>
 
-      {!loading && filtered.length === 0 && (
+      {!isLoading && filtered.length === 0 && (
         <div className="p-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
           <LayoutGrid size={48} className="mx-auto text-slate-200 mb-4" />
           <p className="text-slate-500 font-medium">Aucune salle trouvée</p>
@@ -250,6 +263,7 @@ export default function SallePage() {
         />
       </div>
 
+      {/* Modals (inchangés) */}
       <SalleForm
         visible={formVisible}
         onHide={() => setFormVisible(false)}

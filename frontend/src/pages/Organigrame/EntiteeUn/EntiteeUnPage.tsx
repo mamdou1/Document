@@ -324,35 +324,13 @@
 //   );
 // }
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../../components/layout/Layoutt";
 import EntiteeUnDetails from "./EntiteeUnDetails";
 import EntiteeUnForm from "./EntiteeUnForm";
 import EntiteeUnAjoutFonction from "./EntiteeUnAjoutFonction";
-import {
-  EntiteeUn,
-  EntiteeDeux,
-  EntiteeTrois,
-  Fonction,
-} from "../../../interfaces";
+import { EntiteeUn, EntiteeDeux, EntiteeTrois } from "../../../interfaces";
 import { confirmDialog } from "primereact/confirmdialog";
-
-import {
-  getAllEntiteeUn,
-  createEntiteeUn,
-  updateEntiteeUnById,
-  deleteEntiteeUnById,
-  getFunctionsByEntiteeUn,
-} from "../../../api/entiteeUn";
-import {
-  createEntiteeDeux,
-  getAllEntiteeDeux,
-  getEntiteeDeuxByEntiteeUn,
-  getFunctionsByEntiteeDeux,
-  updateEntiteeDeuxById,
-} from "../../../api/entiteeDeux";
-import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
-import { deleteFonctionById } from "../../../api/fonction";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import Pagination from "../../../components/layout/Pagination";
@@ -371,13 +349,58 @@ import {
   GitMerge,
   Bookmark,
   PlusIcon,
+  XCircle,
 } from "lucide-react";
 import EntiteeDeuxAjoutFonction from "../EntiteeDeux/EntiteeDeuxAjoutFonction";
 import EntiteeDeuxForm from "../EntiteeDeux/EntiteeDeuxForm";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useEntiteeUn,
+  useCreateEntiteeUn,
+  useUpdateEntiteeUn,
+  useDeleteEntiteeUn,
+} from "../../../hooks/useEntiteeUn";
+
+import {
+  useEntiteeDeux,
+  useEntiteeDeuxByEntiteeUn,
+  useCreateEntiteeDeux,
+  useUpdateEntiteeDeux,
+  useDeleteEntiteeDeux,
+} from "../../../hooks/useEntiteeDeux";
+
+import { useEntiteeTroisByEntiteeDeux } from "../../../hooks/useEntiteeTrois";
+import { getEntiteeDeuxByEntiteeUn } from "../../../api/entiteeDeux";
+import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
+
 export default function EntiteeUnPage() {
-  const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
-  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par les hooks
+  const {
+    data: allEntiteeUn = [],
+    isLoading: isLoadingUn,
+    error: errorUn,
+    refetch: refetchUn,
+  } = useEntiteeUn();
+
+  const {
+    data: allEntiteeDeux = [],
+    isLoading: isLoadingDeux,
+    error: errorDeux,
+    refetch: refetchDeux,
+  } = useEntiteeDeux();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createUnMutation = useCreateEntiteeUn();
+  const updateUnMutation = useUpdateEntiteeUn();
+  const deleteUnMutation = useDeleteEntiteeUn();
+  const createDeuxMutation = useCreateEntiteeDeux();
+  const updateDeuxMutation = useUpdateEntiteeDeux();
+  const deleteDeuxMutation = useDeleteEntiteeDeux();
+
+  // États UI
   const [selected, setSelected] = useState<EntiteeUn | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState(false);
@@ -385,73 +408,58 @@ export default function EntiteeUnPage() {
   const [ajoutFonctionDeuxVisible, setAjoutFonctionDeuxVisible] =
     useState(false);
   const [formDeuxVisible, setFormDeuxVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Partial<EntiteeUn> | null>(null);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   // États pour les accordéons
   const [expandedEntitee, setExpandedEntitee] = useState<number | null>(null);
-  const [entiteeDeux, setEntiteeDeux] = useState<Record<number, EntiteeDeux[]>>(
-    {},
-  );
-  const [entiteeTroisMap, setEntiteeTroisMap] = useState<
-    Record<number, EntiteeTrois[]>
-  >({});
   const [expandedEntiteeDeux, setExpandedEntiteeDeux] = useState<number | null>(
     null,
   );
-  const [fonctions, setFonctions] = useState<Record<number, any[]>>({});
-  const [entiteeTrois, setEntiteeTrois] = useState<
-    Record<number, EntiteeTrois[]>
-  >({});
   const [editingDeux, setEditingDeux] = useState<Partial<EntiteeDeux> | null>(
     null,
   );
   const [selectedEntiteeDeux, setSelectedEntiteeDeux] =
     useState<EntiteeDeux | null>(null);
-
   const [isEditingDeux, setIsEditingDeux] = useState(false);
 
-  const fetchEntiteeUn = async () => {
-    setLoading(true);
+  // ✅ Maps pour stocker les données par ID (comme dans l'ancienne version)
+  const [entiteeDeuxMap, setEntiteeDeuxMap] = useState<
+    Record<number, EntiteeDeux[]>
+  >({});
+  const [entiteeTroisMap, setEntiteeTroisMap] = useState<
+    Record<number, EntiteeTrois[]>
+  >({});
+
+  // ✅ Charger les divisions quand on ouvre une entité
+  const loadEntiteeDetails = async (entiteeId: number) => {
+    if (entiteeDeuxMap[entiteeId]) return; // Déjà chargé
+
     try {
-      const [entUn, entDeux] = await Promise.all([
-        getAllEntiteeUn(),
-        getAllEntiteeDeux(),
-      ]);
-      setAllEntiteeUn(Array.isArray(entUn) ? entUn : entUn.entiteeUn || []);
-      setAllEntiteeDeux(
-        Array.isArray(entDeux) ? entDeux : entDeux.entiteeDeux || [],
-      );
-    } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de charger",
-      });
-    } finally {
-      setLoading(false);
+      const response = await getEntiteeDeuxByEntiteeUn(entiteeId);
+      const divisions = Array.isArray(response)
+        ? response
+        : response.entiteeDeux || [];
+      setEntiteeDeuxMap((prev) => ({ ...prev, [entiteeId]: divisions }));
+    } catch (err) {
+      console.error("Erreur chargement divisions", err);
     }
   };
 
-  useEffect(() => {
-    fetchEntiteeUn();
-  }, []);
+  // ✅ Charger les sections quand on ouvre une division
+  const loadEntiteeTroisDetails = async (entiteeDeuxId: number) => {
+    if (entiteeTroisMap[entiteeDeuxId]) return; // Déjà chargé
 
-  // Charger les divisions d'un entiteeUn quand on l'ouvre
-  const loadEntiteeDetails = async (entiteeId: number) => {
     try {
-      // Charger uniquement les divisions (pas les fonctions)
-      const divData = await getEntiteeDeuxByEntiteeUn(entiteeId);
-      setEntiteeDeux((prev) => ({
+      const data = await getEntiteeTroisByEntiteeDeux(entiteeDeuxId);
+      setEntiteeTroisMap((prev) => ({
         ...prev,
-        [entiteeId]: Array.isArray(divData) ? divData : [],
+        [entiteeDeuxId]: Array.isArray(data) ? data : [],
       }));
     } catch (err) {
-      console.error("Erreur chargement détails entiteeUn", err);
+      console.error("Erreur chargement sections", err);
     }
   };
 
@@ -465,37 +473,23 @@ export default function EntiteeUnPage() {
     }
   };
 
-  const toggleEntiteeDeux = async (
-    entiteeId: number,
-    entiteeDeuxId: number,
-  ) => {
+  const toggleEntiteeDeux = async (entiteeDeuxId: number) => {
     if (expandedEntiteeDeux === entiteeDeuxId) {
       setExpandedEntiteeDeux(null);
-      return;
-    }
-
-    setExpandedEntiteeDeux(entiteeDeuxId);
-
-    if (!entiteeTroisMap[entiteeDeuxId]) {
-      try {
-        const data = await getEntiteeTroisByEntiteeDeux(entiteeDeuxId);
-        setEntiteeTroisMap((prev) => ({
-          ...prev,
-          [entiteeDeuxId]: Array.isArray(data) ? data : [],
-        }));
-      } catch (err) {
-        console.error("Erreur chargement sections", err);
-      }
+    } else {
+      setExpandedEntiteeDeux(entiteeDeuxId);
+      await loadEntiteeTroisDetails(entiteeDeuxId);
     }
   };
 
+  // ✅ ÉTAPE 3: Remplacer les handlers pour EntiteeUn
   const onEdit = async (payload: Partial<EntiteeUn>) => {
     if (!editing?.id) return;
     try {
-      const updated = await updateEntiteeUnById(editing.id, payload);
-      setAllEntiteeUn((s) =>
-        s.map((it) => (it.id === updated.id ? updated : it)),
-      );
+      await updateUnMutation.mutateAsync({
+        id: editing.id,
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Mis à jour",
@@ -507,7 +501,25 @@ export default function EntiteeUnPage() {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de mise à jour",
+        detail: err?.response?.data?.message || "Échec de mise à jour",
+      });
+    }
+  };
+
+  const onCreate = async (payload: Partial<EntiteeUn>) => {
+    try {
+      await createUnMutation.mutateAsync(payload);
+      toast.current?.show({
+        severity: "success",
+        summary: "Succès",
+        detail: "Créé avec succès",
+      });
+      setFormVisible(false);
+    } catch (err: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: err?.response?.data?.message || "Opération échouée",
       });
     }
   };
@@ -525,8 +537,7 @@ export default function EntiteeUnPage() {
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteEntiteeUnById(id);
-          setAllEntiteeUn((s) => s.filter((x) => Number(x.id) !== Number(id)));
+          await deleteUnMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
@@ -536,89 +547,56 @@ export default function EntiteeUnPage() {
           toast.current?.show({
             severity: "error",
             summary: "Erreur",
-            detail: "Suppression impossible",
+            detail: err?.response?.data?.message || "Suppression impossible",
           });
         }
       },
     });
   };
 
-  const onCreate = async (payload: Partial<EntiteeUn>) => {
-    try {
-      const data = await createEntiteeUn(payload);
-      setAllEntiteeUn((s) => [data, ...s]);
-      toast.current?.show({
-        severity: "success",
-        summary: "Succès",
-        detail: "Créé avec succès",
-      });
-    } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Opération échouée",
-      });
-    }
-  };
-
+  // ✅ ÉTAPE 4: Remplacer les handlers pour EntiteeDeux
   const onCreateDeux = async (payload: Partial<EntiteeDeux>) => {
     try {
-      const saved = await createEntiteeDeux(payload);
-      setAllEntiteeDeux((s) => [saved, ...s]);
+      await createDeuxMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
         detail: "Élément créé",
       });
+      setFormDeuxVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de création",
+        detail: err?.response?.data?.message || "Échec de création",
       });
     }
   };
 
   const onEditDeux = async (payload: Partial<EntiteeDeux>) => {
-    console.log("✏️ onEditDeux - editingDeux:", editingDeux); // AJOUTEZ CE LOG
-    console.log("✏️ onEditDeux - payload:", payload);
-
-    if (!editingDeux?.id) {
-      console.error("❌ Pas d'ID pour la modification");
-      return;
-    }
-
+    if (!editingDeux?.id) return;
     try {
-      console.log("📤 Envoi requête PUT avec id:", editingDeux.id);
-      const updated = await updateEntiteeDeuxById(editingDeux.id, payload);
-      console.log("✅ Réponse:", updated);
-      // ...
+      await updateDeuxMutation.mutateAsync({
+        id: editingDeux.id,
+        data: payload,
+      });
+      toast.current?.show({
+        severity: "success",
+        summary: "Succès",
+        detail: "Division mise à jour",
+      });
+      setFormDeuxVisible(false);
+      setEditingDeux(null);
     } catch (err: any) {
-      console.error("❌ Erreur complète:", err);
-      console.error("❌ Réponse serveur:", err.response?.data);
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: err?.response?.data?.message || "Échec de mise à jour",
+      });
     }
   };
 
-  const loadEntiteeDeuxDetails = async (entiteeId: number) => {
-    try {
-      // Charger les sections (EntiteeTrois)
-      const secData = await getEntiteeTroisByEntiteeDeux(entiteeId);
-      setEntiteeTrois((prev) => ({
-        ...prev,
-        [entiteeId]: Array.isArray(secData) ? secData : [],
-      }));
-
-      // Charger les fonctions
-      const funcData = await getFunctionsByEntiteeDeux(entiteeId);
-      setFonctions((prev) => ({
-        ...prev,
-        [entiteeId]: funcData || [],
-      }));
-    } catch (err) {
-      console.error("Erreur chargement détails entiteeDeux", err);
-    }
-  };
-
+  // Filtrage et pagination
   const filtered = allEntiteeUn.filter((s) => {
     const isPopulated = s.code !== null && s.libelle !== null;
     if (!isPopulated) return false;
@@ -629,6 +607,39 @@ export default function EntiteeUnPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
+
+  // ✅ ÉTAPE 5: Gérer les états de chargement/erreur
+  const isLoading = isLoadingUn || isLoadingDeux;
+  const error = errorUn || errorDeux;
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => {
+              refetchUn();
+              refetchDeux();
+            }}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -642,10 +653,10 @@ export default function EntiteeUnPage() {
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-              {allEntiteeUn[0]?.titre || "Chargement..."}
+              {allEntiteeUn[0]?.titre || "Entité 1"}
             </h1>
             <p className="text-slate-500 font-medium">
-              Gestion des {allEntiteeUn[0]?.titre.toLowerCase()}s
+              Gestion des {allEntiteeUn[0]?.titre?.toLowerCase() || "entités"}s
             </p>
           </div>
         </div>
@@ -653,7 +664,10 @@ export default function EntiteeUnPage() {
           label={`Nouveau ${allEntiteeUn[0]?.titre || "Élément"}`}
           icon={<Plus size={20} className="mr-2" />}
           className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all"
-          onClick={() => setFormVisible(true)}
+          onClick={() => {
+            setEditing(null);
+            setFormVisible(true);
+          }}
         />
       </div>
 
@@ -678,7 +692,7 @@ export default function EntiteeUnPage() {
         {paginated.length > 0 ? (
           paginated.map((entitee) => {
             const isExpanded = expandedEntitee === entitee.id;
-            const entiteeDivisions = entiteeDeux[entitee.id] || [];
+            const entiteeDivisions = entiteeDeuxMap[entitee.id] || [];
 
             return (
               <div
@@ -689,7 +703,7 @@ export default function EntiteeUnPage() {
                     : "border-slate-100"
                 }`}
               >
-                {/* HEADER DE L'ENTITEE (clic pour déplier) */}
+                {/* HEADER DE L'ENTITEE */}
                 <div
                   onClick={() => toggleEntitee(entitee)}
                   className={`w-full flex items-center justify-between p-5 transition-all cursor-pointer ${
@@ -727,7 +741,6 @@ export default function EntiteeUnPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* ✅ BOUTON EYE ACTIF - Ouvre les détails */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -739,8 +752,6 @@ export default function EntiteeUnPage() {
                     >
                       <Eye size={18} />
                     </button>
-
-                    {/* ✅ BOUTON AJOUTER FONCTION - Dans l'accordéon */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -752,8 +763,6 @@ export default function EntiteeUnPage() {
                     >
                       <PlusCircle size={18} />
                     </button>
-
-                    {/* BOUTON MODIFIER */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -765,8 +774,6 @@ export default function EntiteeUnPage() {
                     >
                       <Pencil size={18} />
                     </button>
-
-                    {/* BOUTON SUPPRIMER */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -777,8 +784,6 @@ export default function EntiteeUnPage() {
                     >
                       <Trash2 size={18} />
                     </button>
-
-                    {/* FLECHE DÉPLI/REPLI */}
                     {isExpanded ? (
                       <ChevronDown size={20} className="text-emerald-500" />
                     ) : (
@@ -787,25 +792,20 @@ export default function EntiteeUnPage() {
                   </div>
                 </div>
 
-                {/* CONTENU DÉPLIÉ (UNIQUEMENT les Divisions) */}
+                {/* CONTENU DÉPLIÉ */}
                 {isExpanded && (
                   <div className="border-t border-slate-100 p-5 space-y-6 bg-slate-50/30">
-                    {/* SECTION DIVISIONS (EntiteeDeux) */}
                     <div className="space-y-3">
-                      {/* En-tête avec titre et bouton général */}
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
                           <Layers size={14} className="text-emerald-500" />
                           {entitee.titre || "Divisions"} rattachées (
                           {entiteeDivisions.length})
                         </h4>
-
-                        {/* BOUTON NOUVEAU GÉNÉRAL (en dehors de la map) */}
                         <Button
                           onClick={(e) => {
-                            // Ici on passe l'entité parente, pas la division
                             setIsEditingDeux(false);
-                            setEditingDeux({ entitee_un_id: entitee.id }); // ou un état spécifique pour la création
+                            setEditingDeux({ entitee_un_id: entitee.id });
                             setFormDeuxVisible(true);
                             e.stopPropagation();
                           }}
@@ -818,7 +818,6 @@ export default function EntiteeUnPage() {
                         </Button>
                       </div>
 
-                      {/* Liste des divisions existantes */}
                       {entiteeDivisions.length > 0 ? (
                         <div className="space-y-2">
                           {entiteeDivisions.map((div) => (
@@ -828,16 +827,13 @@ export default function EntiteeUnPage() {
                             >
                               {/* HEADER DIVISION */}
                               <div
-                                onClick={() =>
-                                  toggleEntiteeDeux(entitee.id, div.id)
-                                }
+                                onClick={() => toggleEntiteeDeux(div.id)}
                                 className={`w-full flex items-center justify-between p-3 cursor-pointer transition-all ${
                                   expandedEntiteeDeux === div.id
                                     ? "bg-emerald-50/50"
                                     : "hover:bg-slate-50"
                                 }`}
                               >
-                                {/* Partie gauche - Info division */}
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                   <div
                                     className={`p-1.5 rounded-lg flex-shrink-0 ${
@@ -867,14 +863,11 @@ export default function EntiteeUnPage() {
                                   </div>
                                 </div>
 
-                                {/* Partie centrale - Boutons d'action spécifiques à la division */}
                                 <div className="flex items-center gap-2 mx-2">
-                                  {/* Bouton Ajouter fonction (spécifique à cette division) */}
                                   <Button
                                     onClick={(e) => {
-                                      // Ici on passe l'entité parente, pas la division
                                       setIsEditingDeux(true);
-                                      setEditingDeux(div); // ou un état spécifique pour la création
+                                      setEditingDeux(div);
                                       setFormDeuxVisible(true);
                                       e.stopPropagation();
                                     }}
@@ -886,7 +879,7 @@ export default function EntiteeUnPage() {
                                   </Button>
                                   <Button
                                     onClick={(e) => {
-                                      setSelectedEntiteeDeux(div); // ✅ ICI div est défini
+                                      setSelectedEntiteeDeux(div);
                                       setAjoutFonctionDeuxVisible(true);
                                       e.stopPropagation();
                                     }}
@@ -901,7 +894,6 @@ export default function EntiteeUnPage() {
                                   </Button>
                                 </div>
 
-                                {/* Partie droite - Flèche d'expansion */}
                                 <div className="flex-shrink-0 ml-1">
                                   {expandedEntiteeDeux === div.id ? (
                                     <ChevronDown
@@ -917,10 +909,11 @@ export default function EntiteeUnPage() {
                                 </div>
                               </div>
 
-                              {/* CONTENU DIVISION (EntiteeTrois) */}
+                              {/* CONTENU DIVISION */}
                               {expandedEntiteeDeux === div.id && (
                                 <div className="p-3 bg-slate-50/30 border-t border-slate-50 space-y-1 ml-8">
-                                  {entiteeTroisMap[div.id]?.length ? (
+                                  {(entiteeTroisMap[div.id] || []).length >
+                                  0 ? (
                                     entiteeTroisMap[div.id].map((sec) => (
                                       <div
                                         key={sec.id}
@@ -1000,6 +993,7 @@ export default function EntiteeUnPage() {
         />
       </div>
 
+      {/* Modals */}
       <EntiteeUnForm
         visible={formVisible}
         onHide={() => {
@@ -1007,7 +1001,7 @@ export default function EntiteeUnPage() {
           setEditing(null);
         }}
         onSubmit={editing ? onEdit : onCreate}
-        refresh={fetchEntiteeUn}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || undefined}
       />
 
@@ -1017,7 +1011,10 @@ export default function EntiteeUnPage() {
           setAjoutFonctionVisible(false);
         }}
         entiteeUn={selected}
-        refresh={fetchEntiteeUn}
+        refresh={() => {
+          refetchUn();
+          refetchDeux();
+        }}
         onSuccess={() => {
           toast.current?.show({
             severity: "success",
@@ -1041,13 +1038,16 @@ export default function EntiteeUnPage() {
           setEditingDeux(null);
           setIsEditingDeux(false);
         }}
-        onSubmit={isEditingDeux ? onEditDeux : onCreateDeux} // ✅ Décision claire
-        refresh={fetchEntiteeUn}
+        onSubmit={isEditingDeux ? onEditDeux : onCreateDeux}
+        refresh={() => {
+          refetchUn();
+          refetchDeux();
+        }}
         initial={editingDeux || undefined}
         title={
           isEditingDeux
-            ? `Modifier ${allEntiteeDeux[0]?.titre}`
-            : `Créer ${allEntiteeDeux[0]?.titre}`
+            ? `Modifier ${allEntiteeDeux[0]?.titre || "division"}`
+            : `Créer ${allEntiteeDeux[0]?.titre || "division"}`
         }
         entiteeUn={allEntiteeUn}
       />
@@ -1058,11 +1058,11 @@ export default function EntiteeUnPage() {
           setAjoutFonctionDeuxVisible(false);
         }}
         entiteeDeux={selectedEntiteeDeux}
-        refresh={fetchEntiteeUn}
+        refresh={() => {
+          refetchUn();
+          refetchDeux();
+        }}
         onSuccess={() => {
-          if (selectedEntiteeDeux) {
-            loadEntiteeDeuxDetails(selectedEntiteeDeux.id);
-          }
           toast.current?.show({
             severity: "success",
             summary: "Succès",

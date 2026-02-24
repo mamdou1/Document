@@ -50,10 +50,10 @@ export default function EntiteeTroisAjoutFonction({
           life: 3000,
         });
       } else {
-        // --- MODE CREATION ---
+        // --- MODE CREATION - CORRIGÉ ICI ---
         await createFonction({
           libelle,
-          entitee_un_id: entiteeTrois.id,
+          entitee_trois_id: entiteeTrois.id, // ✅ CORRECTION : entitee_trois_id au lieu de entitee_un_id
         });
         toast.current?.show({
           severity: "success",
@@ -67,9 +67,10 @@ export default function EntiteeTroisAjoutFonction({
 
       // On laisse un petit délai pour que l'utilisateur voit le toast avant la fermeture
       setTimeout(() => {
-        onSuccess();
+        if (onSuccess) onSuccess();
+        //refresh();
+        onHide();
       }, 500);
-      refresh();
     } catch (error) {
       console.error("Erreur lors de l'opération", error);
       toast.current?.show({
@@ -90,7 +91,6 @@ export default function EntiteeTroisAjoutFonction({
         header={
           <div className="flex items-center gap-2 text-slate-800 font-bold">
             <PlusCircle size={20} className="text-indigo-500" />
-            {/* Utilisation de ?.titre pour éviter le crash si entiteeUn est null */}
             <span>
               {editing ? "Modifier" : "Ajouter"} une fonction au{" "}
               {entiteeTrois?.titre || "..."}
@@ -127,8 +127,9 @@ export default function EntiteeTroisAjoutFonction({
           </div>
           <div className="flex justify-end gap-3 pt-6 border-t">
             <Button
-              label="Ajouter"
+              label={loading ? "Enregistrement..." : "Ajouter"}
               onClick={handleSubmit}
+              disabled={loading}
               className="bg-purple-600 text-white px-8 py-3 rounded-xl shadow-lg"
             />
           </div>

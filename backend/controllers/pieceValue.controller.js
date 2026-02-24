@@ -1,9 +1,18 @@
+// controllers/pieceValue.controller.js
 const { PieceValue, PieceMetaField, DocumentFichier } = require("../models");
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 // Récupérer toutes les valeurs pour un document
 exports.getPieceValuesByDocument = async (req, res) => {
+  const startTime = Date.now();
+  const { documentId } = req.params;
+
   try {
-    const { documentId } = req.params;
+    logger.debug("🔍 Récupération des valeurs de pièces pour document", {
+      documentId,
+      userId: req.user?.id,
+    });
 
     const values = await PieceValue.findAll({
       where: { document_id: documentId },
@@ -21,17 +30,37 @@ exports.getPieceValuesByDocument = async (req, res) => {
       ],
     });
 
+    logger.info("✅ Valeurs de pièces récupérées", {
+      documentId,
+      count: values.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(values);
   } catch (error) {
-    console.error("❌ Erreur getPieceValuesByDocument:", error);
+    logger.error("❌ Erreur getPieceValuesByDocument:", {
+      documentId,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: error.message });
   }
 };
 
 // Récupérer les valeurs pour une pièce spécifique
 exports.getPieceValuesByPiece = async (req, res) => {
+  const startTime = Date.now();
+  const { documentId, pieceId } = req.params;
+
   try {
-    const { documentId, pieceId } = req.params;
+    logger.debug("🔍 Récupération des valeurs pour une pièce spécifique", {
+      documentId,
+      pieceId,
+      userId: req.user?.id,
+    });
 
     const values = await PieceValue.findAll({
       where: {
@@ -52,71 +81,168 @@ exports.getPieceValuesByPiece = async (req, res) => {
       ],
     });
 
+    logger.info("✅ Valeurs de la pièce récupérées", {
+      documentId,
+      pieceId,
+      count: values.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(values);
   } catch (error) {
-    console.error("❌ Erreur getPieceValuesByPiece:", error);
+    logger.error("❌ Erreur getPieceValuesByPiece:", {
+      documentId,
+      pieceId,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: error.message });
   }
 };
 
 // Créer une nouvelle valeur
-// Créer ou mettre à jour une valeur (UPSERT)
 exports.createPieceValue = async (req, res) => {
-  try {
-    const { documentId } = req.params;
-    const { piece_id, piece_meta_field_id, value, row_id } = req.body; // ✅ AJOUTER row_id
+  const startTime = Date.now();
+  const { documentId } = req.params;
 
-    console.log("📦 Création PieceValue:", {
+  try {
+    const { piece_id, piece_meta_field_id, value, row_id } = req.body;
+
+    logger.info("📝 Tentative de création d'une valeur de pièce", {
       documentId,
       piece_id,
       piece_meta_field_id,
-      value,
       row_id,
+      userId: req.user?.id,
     });
 
-    // ✅ CRÉATION SIMPLE, sans findOrCreate
     const pieceValue = await PieceValue.create({
       document_id: parseInt(documentId),
       piece_id: parseInt(piece_id),
       piece_meta_field_id: parseInt(piece_meta_field_id),
       value: value || null,
-      row_id: row_id || null, // ✅ IMPORTANT: sauvegarder le row_id
+      row_id: row_id || null,
     });
+
+    logger.info("✅ Valeur de pièce créée avec succès", {
+      valueId: pieceValue.id,
+      documentId,
+      piece_id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logCreate(req, "pieceValue", pieceValue);
 
     res.status(201).json(pieceValue);
   } catch (error) {
-    console.error("❌ Erreur createPieceValue:", error);
+    logger.error("❌ Erreur createPieceValue:", {
+      documentId,
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: error.message });
   }
 };
 
 // Mettre à jour une valeur
 exports.updatePieceValue = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { value } = req.body;
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    const pieceValue = await PieceValue.findByPk(id);
-    if (!pieceValue) {
+  try {
+    logger.info("📝 Tentative de mise à jour d'une valeur de pièce", {
+      valueId: id,
+      userId: req.user?.id,
+      body: req.body,
+    });
+
+    const oldValue = await PieceValue.findByPk(id);
+    if (!oldValue) {
+      logger.warn("⚠️ Valeur non trouvée", {
+        valueId: id,
+        userId: req.user?.id,
+      });
       return res.status(404).json({ message: "Valeur non trouvée" });
     }
 
-    await pieceValue.update({ value });
-    res.json(pieceValue);
+    const oldCopy = oldValue.toJSON();
+    const { value } = req.body;
+
+    await oldValue.update({ value });
+
+    const updatedValue = await PieceValue.findByPk(id);
+
+    logger.info("✅ Valeur de pièce mise à jour avec succès", {
+      valueId: id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(req, "pieceValue", oldCopy, updatedValue);
+
+    res.json(updatedValue);
   } catch (error) {
-    console.error("❌ Erreur updatePieceValue:", error);
+    logger.error("❌ Erreur updatePieceValue:", {
+      valueId: id,
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: error.message });
   }
 };
 
 // Supprimer une valeur
 exports.deletePieceValue = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
+    logger.info("🗑️ Tentative de suppression d'une valeur de pièce", {
+      valueId: id,
+      userId: req.user?.id,
+    });
+
+    const value = await PieceValue.findByPk(id);
+    if (!value) {
+      logger.warn("⚠️ Valeur non trouvée pour suppression", {
+        valueId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Valeur non trouvée" });
+    }
+
     await PieceValue.destroy({ where: { id } });
+
+    logger.info("✅ Valeur de pièce supprimée avec succès", {
+      valueId: id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "pieceValue", value);
+
     res.json({ success: true });
   } catch (error) {
-    console.error("❌ Erreur deletePieceValue:", error);
+    logger.error("❌ Erreur deletePieceValue:", {
+      valueId: id,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: error.message });
   }
 };

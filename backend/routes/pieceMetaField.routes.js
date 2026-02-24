@@ -8,28 +8,28 @@ const {
 router.post(
   "/pieces/:pieceId/meta-fields",
   verifyToken,
-  authorizePermission("pieces", "create"),
+  authorizePermission("document", "create"),
   ctrl.create,
 );
 
 router.put(
   "/pieces/meta-fields/:id",
   verifyToken,
-  authorizePermission("pieces", "update"),
+  authorizePermission("document", "update"),
   ctrl.update,
 );
 
 router.delete(
   "/pieces/meta-fields/:id",
   verifyToken,
-  authorizePermission("pieces", "delete"),
+  authorizePermission("document", "delete"),
   ctrl.delete,
 );
 
 router.get(
   "/pieces/:pieceId/meta-fields",
   verifyToken,
-  authorizePermission("pieces", "read"),
+  authorizePermission("document", "read"),
   ctrl.getByPiece,
 );
 

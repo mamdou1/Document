@@ -17,7 +17,7 @@ export type PieceRecord = {
 export interface Permission {
   id: number;
   resource: string;
-  action: "create" | "read" | "update" | "delete";
+  action: "create" | "read" | "update" | "delete" | "access";
 }
 
 export interface ChangePasswordPayload {
@@ -121,6 +121,8 @@ export interface User {
   num_matricule: string;
   createdAt: string;
   updatedAt: string;
+  is_on_line?: boolean;
+  last_activity?: string;
 
   // On utilise l'ID pour les formulaires, et l'objet pour l'affichage
   droit?: Droit | string;
@@ -160,19 +162,32 @@ export interface Fonction {
   updatedAt?: string;
 }
 
+// interfaces/index.ts
 export interface HistoriqueLog {
   id: number;
-  agent_id?: number; // juste l’ID
+  agent_id?: number;
   agent?: User;
   action: string;
   resource: string;
   resource_id?: number | null;
+
+  // NOUVEAUX CHAMPS
+  resource_identifier?: string | null; // Identifiant lisible (ex: "Direction Générale (42)")
+  description?: string | null; // Description textuelle de l'action
   method: string;
   path: string;
   status: number;
   ip?: string | null;
   user_agent?: string | null;
-  data?: any | null;
+
+  // Données additionnelles
+  data?: any | null; // Ancien champ (pour compatibilité)
+
+  // NOUVEAUX CHAMPS JSON
+  old_data?: any | null; // Données avant modification
+  new_data?: any | null; // Données après modification
+  deleted_data?: any | null; // Données supprimées
+
   createdAt: string;
   updatedAt: string;
 }
@@ -313,6 +328,7 @@ export interface DocumentFichier {
   piece_value_id: number | null;
   fichier: string;
   original_name: string;
+  new_file_name: string;
   mode: "INDIVIDUEL" | "LOT_UNIQUE";
   createdAt?: string;
   updatedAt?: string;

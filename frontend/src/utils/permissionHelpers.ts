@@ -1,5 +1,14 @@
+// utils/permissionHelpers.ts
 import { Permission } from "../interfaces";
-import { PERMISSION_LABELS, PermissionAction } from "./permissionLabels";
+import {
+  getPermissionLabels,
+  PermissionAction,
+  DEFAULT_TITLES,
+  PermissionLabels, // ✅ Importer le type
+} from "./permissionLabels";
+
+// Utiliser les labels par défaut avec le bon typage
+const PERMISSION_LABELS: PermissionLabels = getPermissionLabels(DEFAULT_TITLES);
 
 export interface UIPermission extends Permission {
   label: string;
@@ -16,9 +25,9 @@ export const groupPermissionsByResource = (
   const map = new Map<string, UIPermission[]>();
 
   permissions.forEach((perm) => {
-    const label =
-      PERMISSION_LABELS[perm.resource]?.[perm.action as PermissionAction] ??
-      `${perm.action} ${perm.resource}`;
+    const resourceLabels = PERMISSION_LABELS[perm.resource];
+    const actionLabels = resourceLabels?.[perm.action as PermissionAction];
+    const label = actionLabels ?? `${perm.action} ${perm.resource}`;
 
     if (!map.has(perm.resource)) {
       map.set(perm.resource, []);

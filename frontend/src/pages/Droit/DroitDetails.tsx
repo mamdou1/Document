@@ -4,11 +4,19 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { TabView, TabPanel } from "primereact/tabview";
 
-import { getPermissionsByDroitId } from "../../api/permission"; // <-- Changé ici
+import { getPermissionsByDroitId } from "../../api/permission";
 import { getAgentsByDroit } from "../../api/droit";
 import type { Permission, Droit, User } from "../../interfaces";
 
-// Import des nouveaux sous-composants
+// ✅ Importer les fonctions pour les titres
+import {
+  loadEntityTitles,
+  getPermissionLabels,
+  DEFAULT_TITLES,
+  PermissionLabels,
+} from "../../utils/permissionLabels";
+
+// Import des sous-composants
 import DroitPermissionListe from "./DroitPermissionListe";
 import DroitAgentListe from "./DroitAgentListe";
 
@@ -23,19 +31,36 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
   const [agents, setAgents] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // ✅ État pour les labels dynamiques
+  const [permissionLabels, setPermissionLabels] = useState<PermissionLabels>(
+    getPermissionLabels(DEFAULT_TITLES),
+  );
+
+  // ✅ Charger les titres des entités
+  useEffect(() => {
+    const loadTitles = async () => {
+      try {
+        const titles = await loadEntityTitles();
+        setPermissionLabels(getPermissionLabels(titles));
+      } catch (error) {
+        console.error("Erreur chargement titres:", error);
+      }
+    };
+    loadTitles();
+  }, []);
+
   useEffect(() => {
     if (!visible || !droit?.id) return;
 
     const loadData = async () => {
       setLoading(true);
       try {
-        // Remplacer getDroitPermission par getPermissionsByDroitId
         const [permissionsData, agentRes] = await Promise.all([
-          getPermissionsByDroitId(Number(droit.id)), // <-- Changé ici
+          getPermissionsByDroitId(Number(droit.id)),
           getAgentsByDroit(Number(droit.id)),
         ]);
 
-        setPermissions(permissionsData); // getPermissionsByDroitId retourne directement les permissions
+        setPermissions(permissionsData);
         setAgents(Array.isArray(agentRes) ? agentRes : []);
       } catch (err) {
         console.error("Erreur chargement détails droit", err);
@@ -112,9 +137,11 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
               }),
             }}
           >
+            {/* ✅ Passage de permissionLabels */}
             <DroitPermissionListe
               permissions={permissions}
               createdAt={droit.createdAt}
+              permissionLabels={permissionLabels}
             />
           </TabPanel>
 

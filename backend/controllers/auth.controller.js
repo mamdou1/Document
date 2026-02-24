@@ -122,6 +122,11 @@ exports.connexion = async (req, res) => {
       agent.id,
     );
 
+    await agent.update({
+      is_on_line: true,
+      last_activity: new Date(),
+    });
+
     res.json({ accessToken, refreshToken });
     console.log("✅ Connexion réussie pour l’agent ID :", agent.id);
   } catch (err) {
@@ -172,6 +177,16 @@ exports.deconnexion = async (req, res) => {
       ip: req.ip,
       user_agent: req.headers["user-agent"],
     });
+
+    await Agent.update(
+      {
+        is_on_line: false,
+        last_activity: new Date(),
+      },
+      {
+        where: { id: req.user.id },
+      },
+    );
 
     res.json({ message: "Déconnexion réussie" });
   } catch (err) {

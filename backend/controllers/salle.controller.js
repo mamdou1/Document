@@ -1,26 +1,29 @@
+// controllers/salle.controller.js
 const { Salle, Rayon, sequelize, Trave, Site, Box } = require("../models");
-
-// exports.create = async (req, res) => {
-//   const data = await Salle.create(req.body);
-//   res.json(data);
-// };
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 exports.create = async (req, res) => {
+  const startTime = Date.now();
   const t = await sequelize.transaction();
+
   try {
+    logger.info("📝 Tentative de création d'une salle avec génération", {
+      userId: req.user?.id,
+      body: req.body,
+    });
+
     const {
       site_id,
       code_salle,
       libelle,
       mb_rayons,
       mb_traves_par_rayon,
-      nb_box,
       sigle_rayon,
       sigle_trave,
-      sigle_box,
     } = req.body;
 
-    //1. Créer la salle
+    // 1. Créer la salle
     const salle = await Salle.create(
       {
         site_id,
@@ -43,42 +46,41 @@ exports.create = async (req, res) => {
 
       // 3. Générer les travées pour chaque Rayon
       for (let j = 1; j <= mb_traves_par_rayon; j++) {
-        // CORRECTION 1 : Utiliser "j" pour le code de la travée, pas "i"
         const traveCode = `${sigle_trave}${j}`;
-
-        const trave = await Trave.create(
+        await Trave.create(
           {
             code: traveCode,
-            // CORRECTION 2 : Lier à rayon.id, pas salle.id (selon votre hiérarchie)
             rayon_id: rayon.id,
           },
           { transaction: t },
         );
-
-        // 4. Générer les box pour chaque trave
-        for (let k = 1; k <= nb_box; k++) {
-          // CORRECTION 1 : Utiliser "k" pour le code de la box, pas "j"
-          const boxCode = `${sigle_box}${k}`;
-
-          await Box.create(
-            {
-              code: boxCode,
-              // CORRECTION 2 : Lier à trave.id, pas ryon.id (selon votre hiérarchie)
-              trave_id: trave.id,
-            },
-            { transaction: t },
-          );
-        }
       }
     }
 
-    // Validation de tous les changements
     await t.commit();
+
+    logger.info("✅ Salle créée avec succès avec génération", {
+      salleId: salle.id,
+      code: salle.code_salle,
+      rayons: mb_rayons,
+      traves: mb_rayons * mb_traves_par_rayon,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logCreate(req, "salle", salle);
+
     res.status(201).json(salle);
   } catch (err) {
-    // Maintenant t.rollback() fonctionnera car t est bien la transaction
     if (t) await t.rollback();
-    console.error(err);
+    logger.error("❌ Erreur création salle:", {
+      error: err.message,
+      stack: err.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur serveur lors de la génération",
       error: err.message,
@@ -87,35 +89,242 @@ exports.create = async (req, res) => {
 };
 
 exports.findAll = async (req, res) => {
-  const data = await Salle.findAll({
-    include: [
-      {
-        model: Site,
-        as: "site", // Vérifie que cet alias correspond à celui dans Rayon.associate
-      },
-    ],
-  });
-  res.json(data);
+  const startTime = Date.now();
+
+  try {
+    logger.debug("🔍 Récupération de toutes les salles", {
+      userId: req.user?.id,
+      query: req.query,
+    });
+
+    const data = await Salle.findAll({
+      include: [
+        {
+          model: Site,
+          as: "site",
+        },
+      ],
+    });
+
+    logger.info("✅ Salles récupérées", {
+      count: data.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique pour les GET avec sidebar
+    if (req.headers["x-sidebar-navigation"] === "true") {
+      await HistoriqueService.log({
+        agent_id: req.user?.id || null,
+        action: "read",
+        resource: "salle",
+        resource_id: null,
+        resource_identifier: "liste des salles",
+        description: "Consultation de la liste des salles",
+        method: req.method,
+        path: req.originalUrl,
+        status: 200,
+        ip: req.ip,
+        user_agent: req.headers["user-agent"],
+        data: {
+          count: data.length,
+          duration: Date.now() - startTime,
+        },
+      });
+    }
+
+    res.json(data);
+  } catch (error) {
+    logger.error("❌ Erreur récupération salles:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.findById = async (req, res) => {
-  const data = await Salle.findByPk(req.params.id);
-  res.json(data);
+  const startTime = Date.now();
+  const { id } = req.params;
+
+  try {
+    logger.debug("🔍 Recherche d'une salle par ID", {
+      salleId: id,
+      userId: req.user?.id,
+    });
+
+    const data = await Salle.findByPk(id);
+    if (!data) {
+      logger.warn("⚠️ Salle non trouvée", {
+        salleId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Salle non trouvée" });
+    }
+
+    logger.info("✅ Salle trouvée", {
+      salleId: id,
+      code: data.code_salle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "read",
+      resource: "salle",
+      resource_id: data.id,
+      resource_identifier: `${data.libelle} (${data.id})`,
+      description: `Consultation de la salle #${data.id}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        duration: Date.now() - startTime,
+      },
+    });
+
+    res.json(data);
+  } catch (error) {
+    logger.error("❌ Erreur recherche salle:", {
+      salleId: id,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.update = async (req, res) => {
-  await Salle.update(req.body, { where: { id: req.params.id } });
-  res.json({ success: true });
+  const startTime = Date.now();
+  const { id } = req.params;
+
+  try {
+    logger.info("📝 Tentative de mise à jour d'une salle", {
+      salleId: id,
+      userId: req.user?.id,
+      body: req.body,
+    });
+
+    const oldSalle = await Salle.findByPk(id);
+    if (!oldSalle) {
+      logger.warn("⚠️ Salle non trouvée pour mise à jour", {
+        salleId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Salle non trouvée" });
+    }
+
+    const oldCopy = oldSalle.toJSON();
+    await Salle.update(req.body, { where: { id } });
+
+    const updatedSalle = await Salle.findByPk(id);
+
+    logger.info("✅ Salle mise à jour avec succès", {
+      salleId: id,
+      code: updatedSalle.code_salle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(req, "salle", oldCopy, updatedSalle);
+
+    res.json({ success: true, data: updatedSalle });
+  } catch (error) {
+    logger.error("❌ Erreur mise à jour salle:", {
+      salleId: id,
+      error: error.message,
+      stack: error.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.delete = async (req, res) => {
-  await Salle.destroy({ where: { id: req.params.id } });
-  res.json({ success: true });
+  const startTime = Date.now();
+  const { id } = req.params;
+
+  try {
+    logger.info("🗑️ Tentative de suppression d'une salle", {
+      salleId: id,
+      userId: req.user?.id,
+    });
+
+    const salle = await Salle.findByPk(id);
+    if (!salle) {
+      logger.warn("⚠️ Salle non trouvée pour suppression", {
+        salleId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Salle non trouvée" });
+    }
+
+    await salle.destroy();
+
+    logger.info("✅ Salle supprimée avec succès", {
+      salleId: id,
+      code: salle.code_salle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "salle", salle);
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error("❌ Erreur suppression salle:", {
+      salleId: id,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.getAllRayonBySalle = async (req, res) => {
-  const data = await Rayon.findAll({
-    where: { salle_id: req.params.id },
-  });
-  res.json(data);
+  const startTime = Date.now();
+  const { id } = req.params;
+
+  try {
+    logger.debug("🔍 Récupération des rayons d'une salle", {
+      salleId: id,
+      userId: req.user?.id,
+    });
+
+    const data = await Rayon.findAll({
+      where: { salle_id: id },
+    });
+
+    logger.info("✅ Rayons de la salle récupérés", {
+      salleId: id,
+      count: data.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    res.json(data);
+  } catch (error) {
+    logger.error("❌ Erreur getAllRayonBySalle:", {
+      salleId: id,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ message: error.message });
+  }
 };

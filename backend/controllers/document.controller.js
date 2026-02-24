@@ -1,3 +1,4 @@
+// controllers/document.controller.js
 const {
   Document,
   DocumentValue,
@@ -10,89 +11,16 @@ const {
   Pieces,
   sequelize,
   PieceValue,
+  PieceMetaField,
 } = require("../models");
 const buildAccessWhere = require("../utils/buildAccessWhere.utils");
+const path = require("path");
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
-// exports.create = async (req, res) => {
-//   const t = await sequelize.transaction();
-
-//   try {
-//     const { type_document_id, values } = req.body;
-
-//     if (!type_document_id) {
-//       return res
-//         .status(400)
-//         .json({ message: "Le type de document est requis" });
-//     }
-
-//     // 1. Créer le document
-//     const doc = await Document.create({ type_document_id }, { transaction: t });
-
-//     const typeDocumentPieces =
-//       await sequelize.models.TypeDocumentPieces.findAll({
-//         where: { document_type_id: type_document_id },
-//         transaction: t,
-//       });
-
-//     if (typeDocumentPieces.length > 0) {
-//       console.log(
-//         "📋 Détail des pièces:",
-//         typeDocumentPieces.map((p) => ({
-//           id: p.id,
-//           piece_id: p.piece_id,
-//           document_type_id: p.document_type_id,
-//         })),
-//       );
-
-//       const pieceRows = typeDocumentPieces.map((tp) => ({
-//         document_id: doc.id,
-//         piece_id: tp.piece_id,
-//         disponible: false,
-//       }));
-
-//       await DocumentPieces.bulkCreate(pieceRows, { transaction: t });
-//     } else {
-//       // Vérifier si le type de document existe
-//       const typeDoc = await sequelize.models.TypeDocument.findByPk(
-//         type_document_id,
-//         { transaction: t },
-//       );
-//       console.log(
-//         `ℹ️ Type de document ${type_document_id}: ${typeDoc ? typeDoc.nom : "NON TROUVÉ !"}`,
-//       );
-//     }
-
-//     // 3. Meta values
-//     if (values && Object.keys(values).length > 0) {
-//       const metaRows = Object.entries(values).map(([meta_field_id, value]) => ({
-//         document_id: doc.id,
-//         meta_field_id: parseInt(meta_field_id),
-//         value: value.toString(),
-//       }));
-//       await DocumentValue.bulkCreate(metaRows, { transaction: t });
-//       console.log(`✅ ${metaRows.length} valeurs meta insérées`);
-//     }
-
-//     await t.commit();
-
-//     res.status(201).json({
-//       message: "Document créé avec succès",
-//       id: doc.id,
-//       type_document_id: doc.type_document_id,
-//       pieces_count: typeDocumentPieces.length,
-//     });
-//   } catch (e) {
-//     if (t) await t.rollback();
-//     res.status(500).json({
-//       message: "Erreur lors de la création du document",
-//       error: e.message,
-//     });
-//   }
-// };
-
-// Dans document.controller.js - modifier la fonction create
 exports.create = async (req, res) => {
   const t = await sequelize.transaction();
+  const startTime = Date.now();
 
   try {
     const { type_document_id, values, piece_values } = req.body;
@@ -102,6 +30,11 @@ exports.create = async (req, res) => {
         .status(400)
         .json({ message: "Le type de document est requis" });
     }
+
+    logger.info("📄 Tentative de création d'un document", {
+      userId: req.user?.id,
+      type_document_id,
+    });
 
     // 1. Créer le document
     const doc = await Document.create({ type_document_id }, { transaction: t });
@@ -148,13 +81,22 @@ exports.create = async (req, res) => {
 
       if (pieceValueRows.length > 0) {
         await PieceValue.bulkCreate(pieceValueRows, {
-          // ✅ Correction ici
           transaction: t,
         });
       }
     }
 
     await t.commit();
+
+    logger.info("✅ Document créé avec succès", {
+      documentId: doc.id,
+      type_document_id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logCreate(req, "document", doc);
 
     res.status(201).json({
       message: "Document créé avec succès",
@@ -163,13 +105,25 @@ exports.create = async (req, res) => {
     });
   } catch (e) {
     if (t) await t.rollback();
-    console.error("❌ Erreur create document:", e);
+    logger.error("❌ Erreur create document:", {
+      error: e.message,
+      stack: e.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: e.message });
   }
 };
 
 exports.getAll = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération de tous les documents", {
+      userId: req.user?.id,
+      query: req.query,
+    });
+
     const data = await Document.findAll({
       include: [
         {
@@ -193,132 +147,56 @@ exports.getAll = async (req, res) => {
       ],
     });
 
-    res.json(data);
-  } catch (e) {
-    console.error("❌ Erreur getAll documents:", e);
-    res.status(500).json({ message: e.message });
-  }
-};
-
-exports.getById = async (req, res) => {
-  try {
-    const data = await Document.findByPk(req.params.id, {
-      include: [
-        {
-          model: TypeDocument,
-          include: [MetaField],
-        },
-        {
-          model: DocumentValue,
-          include: [MetaField, DocumentFile],
-        },
-      ],
+    logger.info("✅ Documents récupérés", {
+      count: data.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
     });
 
-    if (!data) return res.status(404).json({ message: "Not found" });
+    // Journalisation dans l'historique pour les GET avec sidebar
+    if (req.headers["x-sidebar-navigation"] === "true") {
+      await HistoriqueService.log({
+        agent_id: req.user?.id || null,
+        action: "read",
+        resource: "document",
+        resource_id: null,
+        resource_identifier: "liste des documents",
+        description: "Consultation de la liste des documents",
+        method: req.method,
+        path: req.originalUrl,
+        status: 200,
+        ip: req.ip,
+        user_agent: req.headers["user-agent"],
+        data: {
+          count: data.length,
+          duration: Date.now() - startTime,
+        },
+      });
+    }
+
     res.json(data);
   } catch (e) {
+    logger.error("❌ Erreur getAll documents:", {
+      error: e.message,
+      stack: e.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: e.message });
   }
 };
 
-// Dans document.controller.js, au début de getAll
-// exports.getAll = async (req, res) => {
-//   try {
-//     console.log("🔍 Début de getAll documents");
-
-//     // Log 1: Vérifier les modèles disponibles
-//     console.log("📦 Modèles disponibles:", Object.keys(sequelize.models));
-
-//     // Log 2: Vérifier les associations de Document
-//     console.log(
-//       "🔗 Associations de Document:",
-//       Object.keys(Document.associations),
-//     );
-
-//     // Log 3: Tenter la requête étape par étape
-//     console.log("📝 Exécution de Document.findAll...");
-
-//     const data = await Document.findAll({
-//       include: [
-//         {
-//           model: Pieces,
-//           as: "pieces",
-//           attributes: ["id", "libelle", "code_pieces"],
-//         },
-//         {
-//           model: TypeDocument,
-//           as: "typeDocument",
-//           include: [{ model: MetaField, as: "metaFields" }],
-//         },
-//         {
-//           model: DocumentValue,
-//           as: "values",
-//           include: [
-//             { model: MetaField, as: "metaField" },
-//             { model: DocumentFile, as: "file" },
-//           ],
-//         },
-//       ],
-//     });
-
-//     console.log(`✅ ${data.length} documents trouvés`);
-
-//     // Log 4: Aperçu du premier document
-//     if (data.length > 0) {
-//       console.log("📄 Premier document:", {
-//         id: data[0].id,
-//         typeDocument: data[0].typeDocument?.nom,
-//         piecesCount: data[0].pieces?.length,
-//         valuesCount: data[0].values?.length,
-//       });
-//     }
-
-//     res.json(data);
-//   } catch (e) {
-//     console.error("❌ Erreur détaillée getAll documents:");
-//     console.error("   Message:", e.message);
-//     console.error("   Name:", e.name);
-//     console.error("   Stack:", e.stack);
-
-//     // Log 5: Si c'est une erreur d'association, montrer plus de détails
-//     if (e.name === "SequelizeEagerLoadingError") {
-//       console.error("   Cause probable: Association manquante ou incorrecte");
-
-//       // Vérifier les associations de tous les modèles impliqués
-//       console.log("🔍 Vérification des associations:");
-//       console.log(
-//         "   Pieces associations:",
-//         Object.keys(Pieces.associations || {}),
-//       );
-//       console.log(
-//         "   TypeDocument associations:",
-//         Object.keys(TypeDocument.associations || {}),
-//       );
-//       console.log(
-//         "   DocumentValue associations:",
-//         Object.keys(DocumentValue.associations || {}),
-//       );
-//       console.log(
-//         "   MetaField associations:",
-//         Object.keys(MetaField.associations || {}),
-//       );
-//       console.log(
-//         "   DocumentFile associations:",
-//         Object.keys(DocumentFile.associations || {}),
-//       );
-//     }
-
-//     res.status(500).json({
-//       message: e.message,
-//       error: e.toString(),
-//     });
-//   }
-// };
-
 exports.getById = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const data = await Document.findByPk(req.params.id, {
+    logger.debug("🔍 Recherche d'un document par ID", {
+      documentId: id,
+      userId: req.user?.id,
+    });
+
+    const data = await Document.findByPk(id, {
       include: [
         {
           model: TypeDocument,
@@ -345,239 +223,203 @@ exports.getById = async (req, res) => {
       ],
     });
 
-    if (!data) return res.status(404).json({ message: "Not found" });
+    if (!data) {
+      logger.warn("⚠️ Document non trouvé", {
+        documentId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Not found" });
+    }
 
-    // ⚠️ NE PAS formater ici - renvoyez les données brutes d'abord
+    logger.info("✅ Document trouvé", {
+      documentId: id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique pour la consultation d'un document spécifique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "read",
+      resource: "document",
+      resource_id: data.id,
+      resource_identifier: `Document #${data.id}`,
+      description: `Consultation du document #${data.id}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        duration: Date.now() - startTime,
+        params: req.params,
+      },
+    });
+
     res.json(data);
   } catch (e) {
-    console.error("❌ Erreur getById:", e);
+    logger.error("❌ Erreur getById:", {
+      documentId: id,
+      error: e.message,
+      stack: e.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: e.message });
   }
 };
 
 exports.update = async (req, res) => {
-  try {
-    const { values } = req.body;
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    for (const v of values) {
-      await DocumentValue.update({ value: v.value }, { where: { id: v.id } });
+  try {
+    logger.info("📝 Tentative de modification d'un document", {
+      documentId: id,
+      userId: req.user?.id,
+      body: req.body,
+    });
+
+    const oldDoc = await Document.findByPk(id, {
+      include: [{ model: DocumentValue, as: "values" }],
+    });
+
+    if (!oldDoc) {
+      logger.warn("⚠️ Document non trouvé pour modification", {
+        documentId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Document non trouvé" });
     }
 
-    res.json({ success: true });
+    const { values } = req.body;
+
+    // ✅ Gestion des différents formats possibles
+    if (values) {
+      if (Array.isArray(values)) {
+        // Format tableau avec IDs (attendu pour les mises à jour)
+        for (const v of values) {
+          if (v && v.id && v.value !== undefined) {
+            await DocumentValue.update(
+              { value: v.value },
+              { where: { id: v.id } },
+            );
+          }
+        }
+      } else if (typeof values === "object") {
+        // Format objet { meta_field_id: value }
+        for (const [metaFieldId, value] of Object.entries(values)) {
+          // Chercher si une valeur existe déjà
+          const existingValue = await DocumentValue.findOne({
+            where: {
+              document_id: id,
+              meta_field_id: metaFieldId,
+            },
+          });
+
+          if (existingValue) {
+            // Mise à jour
+            await existingValue.update({ value: String(value) });
+          } else {
+            // Création (pour les nouveaux champs)
+            await DocumentValue.create({
+              document_id: id,
+              meta_field_id: metaFieldId,
+              value: String(value),
+            });
+          }
+        }
+      } else {
+        logger.warn("⚠️ Format de values non supporté", {
+          documentId: id,
+          valuesType: typeof values,
+        });
+        return res.status(400).json({
+          message: "Format de valeurs non supporté",
+        });
+      }
+    }
+
+    const updatedDoc = await Document.findByPk(id, {
+      include: [{ model: DocumentValue, as: "values" }],
+    });
+
+    logger.info("✅ Document modifié avec succès", {
+      documentId: id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    await HistoriqueService.logUpdate(req, "document", oldDoc, updatedDoc);
+
+    res.json({ success: true, data: updatedDoc });
   } catch (e) {
+    logger.error("❌ Erreur update document:", {
+      documentId: id,
+      error: e.message,
+      stack: e.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: e.message });
   }
 };
 
 exports.remove = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    await Document.destroy({ where: { id: req.params.id } });
+    logger.info("🗑️ Tentative de suppression d'un document", {
+      documentId: id,
+      userId: req.user?.id,
+    });
+
+    const doc = await Document.findByPk(id);
+    if (!doc) {
+      logger.warn("⚠️ Document non trouvé pour suppression", {
+        documentId: id,
+        userId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Document non trouvé" });
+    }
+
+    await Document.destroy({ where: { id } });
+
+    logger.info("✅ Document supprimé avec succès", {
+      documentId: id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "document", doc);
+
     res.json({ success: true });
   } catch (e) {
+    logger.error("❌ Erreur remove document:", {
+      documentId: id,
+      error: e.message,
+      stack: e.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: e.message });
   }
 };
 
-// exports.uploadDocumentFiles = async (req, res) => {
-//   const t = await sequelize.transaction();
-
-//   try {
-//     const { documentId, pieceId, documentTypeId } = req.params;
-//     const { upload_mode } = req.body;
-//     const files = req.files;
-
-//     console.log("📝 UPLOAD DOCUMENT - Params:", {
-//       documentId,
-//       pieceId,
-//       documentTypeId,
-//     });
-//     console.log("📝 UPLOAD DOCUMENT - Mode:", upload_mode);
-//     console.log("📝 UPLOAD DOCUMENT - Fichiers:", files?.length || 0);
-
-//     if (!files || files.length === 0) {
-//       await t.rollback();
-//       return res.status(400).json({ message: "Aucun fichier uploadé" });
-//     }
-
-//     // ==================== MODE LOT UNIQUE ====================
-//     if (upload_mode === "LOT_UNIQUE") {
-//       console.log("📦 Traitement en mode LOT_UNIQUE");
-
-//       for (const file of files) {
-//         const publicPath = file.path
-//           .replace(/\\/g, "/")
-//           .replace(/^.*uploads\//, "uploads/");
-
-//         console.log("📁 Fichier enregistré:", publicPath);
-
-//         await DocumentFichier.create(
-//           {
-//             document_id: documentId,
-//             piece_id: null, // LOT_UNIQUE n'est pas lié à une pièce spécifique
-//             fichier: publicPath,
-//             original_name: file.originalname,
-//             mode: "LOT_UNIQUE",
-//           },
-//           { transaction: t },
-//         );
-//       }
-
-//       await t.commit();
-
-//       return res.json({
-//         message: "Dossier complet uploadé avec succès",
-//         mode: "LOT_UNIQUE",
-//         fichiers_count: files.length,
-//       });
-//     }
-
-//     // ==================== MODE INDIVIDUEL (par défaut) ====================
-//     if (!pieceId || pieceId === "undefined" || pieceId === "null") {
-//       await t.rollback();
-//       return res.status(400).json({
-//         message: "ID de pièce requis pour le mode INDIVIDUEL",
-//       });
-//     }
-
-//     console.log("📄 Traitement en mode INDIVIDUEL pour pièce:", pieceId);
-
-//     // Vérifier que la pièce est autorisée pour ce type de document
-//     const relation = await TypeDocumentPieces.findOne({
-//       where: {
-//         document_type_id: documentTypeId,
-//         piece_id: pieceId,
-//       },
-//       transaction: t,
-//     });
-
-//     if (!relation) {
-//       await t.rollback();
-//       return res.status(403).json({
-//         message: "Pièce non autorisée pour ce type de document",
-//       });
-//     }
-
-//     // Vérifier que le document existe et que la pièce est disponible
-//     const docPiece = await DocumentPieces.findOne({
-//       where: {
-//         document_id: documentId,
-//         piece_id: pieceId,
-//       },
-//       transaction: t,
-//     });
-
-//     if (!docPiece) {
-//       console.log(
-//         `⚠️ DocumentPieces non trouvé pour document ${documentId}, pièce ${pieceId}`,
-//       );
-//       // On peut créer l'association si elle n'existe pas
-//       await DocumentPieces.create(
-//         {
-//           document_id: documentId,
-//           piece_id: pieceId,
-//           disponible: true,
-//         },
-//         { transaction: t },
-//       );
-//     }
-
-//     // Enregistrer les fichiers
-//     const records = [];
-
-//     for (const file of files) {
-//       const publicPath = file.path
-//         .replace(/\\/g, "/")
-//         .replace(/^.*uploads\//, "uploads/");
-
-//       console.log("📁 Fichier enregistré:", publicPath);
-
-//       const docFichier = await DocumentFichier.create(
-//         {
-//           document_id: documentId,
-//           piece_id: pieceId,
-//           fichier: publicPath,
-//           original_name: file.originalname,
-//           mode: "INDIVIDUEL",
-//         },
-//         { transaction: t },
-//       );
-
-//       records.push(docFichier);
-//     }
-
-//     await t.commit();
-
-//     res.json({
-//       message: "Fichiers ajoutés avec succès",
-//       mode: "INDIVIDUEL",
-//       fichiers: records,
-//       count: records.length,
-//     });
-//   } catch (err) {
-//     await t.rollback();
-//     console.error("❌ Erreur uploadDocumentFiles:", err);
-//     res.status(500).json({
-//       message: "Erreur lors de l'upload des fichiers",
-//       error: err.message,
-//     });
-//   }
-// };
-
-// Dans document.controller.js - modifier uploadDocumentFiles
 exports.uploadDocumentFiles = async (req, res) => {
   const t = await sequelize.transaction();
+  const startTime = Date.now();
+  const { documentId, pieceId } = req.params;
 
   try {
-    const { documentId, pieceId } = req.params;
-    const { piece_value_id } = req.body; // ✅ AJOUT
-    const files = req.files;
-
-    if (!files || files.length === 0) {
-      await t.rollback();
-      return res.status(400).json({ message: "Aucun fichier uploadé" });
-    }
-
-    for (const file of files) {
-      const publicPath = file.path
-        .replace(/\\/g, "/")
-        .replace(/^.*uploads\//, "uploads/");
-
-      await DocumentFichier.create(
-        {
-          document_id: documentId,
-          piece_id: pieceId,
-          piece_value_id: piece_value_id || null, // ✅ Lier à la valeur si fourni
-          fichier: publicPath,
-          original_name: file.originalname,
-          mode: "INDIVIDUEL",
-        },
-        { transaction: t },
-      );
-    }
-
-    await t.commit();
-
-    res.json({
-      message: "Fichiers ajoutés avec succès",
-      count: files.length,
+    logger.info("📤 Upload de fichiers pour document", {
+      documentId,
+      pieceId,
+      userId: req.user?.id,
     });
-  } catch (err) {
-    await t.rollback();
-    console.error("❌ Erreur upload:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
 
-// document.controller.js - Ajoutez cette nouvelle fonction
-
-/**
- * Upload d'un fichier pour une métadonnée de pièce spécifique
- */
-exports.uploadPieceFile = async (req, res) => {
-  const t = await sequelize.transaction();
-
-  try {
-    const { documentId, pieceId } = req.params;
     const { piece_value_id } = req.body;
     const files = req.files;
 
@@ -586,12 +428,107 @@ exports.uploadPieceFile = async (req, res) => {
       return res.status(400).json({ message: "Aucun fichier uploadé" });
     }
 
-    // Vérifier que piece_value_id est fourni
+    const uploadedFiles = [];
+
+    for (const file of files) {
+      const publicPath = file.path
+        .replace(/\\/g, "/")
+        .replace(/^.*uploads\//, "uploads/");
+
+      const fileName = file.filename || path.basename(file.path);
+
+      const docFichier = await DocumentFichier.create(
+        {
+          document_id: documentId,
+          piece_id: pieceId,
+          piece_value_id: piece_value_id || null,
+          fichier: publicPath,
+          original_name: file.originalname,
+          new_file_name: fileName,
+          mode: "INDIVIDUEL",
+        },
+        { transaction: t },
+      );
+
+      uploadedFiles.push(docFichier);
+    }
+
+    await t.commit();
+
+    logger.info("✅ Fichiers uploadés avec succès", {
+      documentId,
+      pieceId,
+      count: uploadedFiles.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "upload",
+      resource: "document_fichier",
+      resource_id: null,
+      resource_identifier: `Upload de ${uploadedFiles.length} fichier(s)`,
+      description: `Upload de ${uploadedFiles.length} fichier(s) pour le document #${documentId}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        count: uploadedFiles.length,
+        files: uploadedFiles.map((f) => ({ id: f.id, name: f.original_name })),
+        duration: Date.now() - startTime,
+      },
+    });
+
+    res.json({
+      message: "Fichiers ajoutés avec succès",
+      files: uploadedFiles,
+      count: uploadedFiles.length,
+    });
+  } catch (err) {
+    await t.rollback();
+    logger.error("❌ Erreur upload:", {
+      documentId,
+      pieceId,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({
+      message: "Erreur lors de l'upload",
+      error: err.message,
+    });
+  }
+};
+
+exports.uploadPieceFile = async (req, res) => {
+  const t = await sequelize.transaction();
+  const startTime = Date.now();
+  const { documentId, pieceId } = req.params;
+
+  try {
+    logger.info("📤 Upload de fichier pour métadonnée de pièce", {
+      documentId,
+      pieceId,
+      userId: req.user?.id,
+    });
+
+    const { piece_value_id } = req.body;
+    const files = req.files;
+
+    if (!files || files.length === 0) {
+      await t.rollback();
+      return res.status(400).json({ message: "Aucun fichier uploadé" });
+    }
+
     if (!piece_value_id) {
       await t.rollback();
       return res.status(400).json({
-        message:
-          "piece_value_id est requis pour lier le fichier à la métadonnée",
+        message: "piece_value_id est requis",
       });
     }
 
@@ -602,12 +539,15 @@ exports.uploadPieceFile = async (req, res) => {
         .replace(/\\/g, "/")
         .replace(/^.*uploads\//, "uploads/");
 
+      const fileName = path.basename(file.path);
+
       const docFichier = await DocumentFichier.create(
         {
           document_id: documentId,
           piece_id: pieceId,
           piece_value_id: piece_value_id,
           fichier: publicPath,
+          new_file_name: fileName,
           original_name: file.originalname,
           mode: "INDIVIDUEL",
         },
@@ -619,6 +559,35 @@ exports.uploadPieceFile = async (req, res) => {
 
     await t.commit();
 
+    logger.info("✅ Fichier uploadé avec succès", {
+      documentId,
+      pieceId,
+      piece_value_id,
+      count: uploadedFiles.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "upload",
+      resource: "document_fichier",
+      resource_id: null,
+      resource_identifier: `Upload de ${uploadedFiles.length} fichier(s)`,
+      description: `Upload de fichier pour métadonnée de pièce #${pieceId} du document #${documentId}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        count: uploadedFiles.length,
+        piece_value_id,
+        duration: Date.now() - startTime,
+      },
+    });
+
     res.json({
       message: "Fichier(s) uploadé(s) avec succès",
       files: uploadedFiles,
@@ -626,7 +595,14 @@ exports.uploadPieceFile = async (req, res) => {
     });
   } catch (err) {
     await t.rollback();
-    console.error("❌ Erreur uploadPieceFile:", err);
+    logger.error("❌ Erreur uploadPieceFile:", {
+      documentId,
+      pieceId,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur lors de l'upload du fichier",
       error: err.message,
@@ -634,21 +610,152 @@ exports.uploadPieceFile = async (req, res) => {
   }
 };
 
-// PATCH /documents/:documentId/pieces/:pieceId/disponible
+exports.uploadLotUniqueWithPieces = async (req, res) => {
+  const t = await sequelize.transaction();
+  const startTime = Date.now();
+  const { documentId } = req.params;
+
+  try {
+    logger.info("📦 Upload lot unique avec pièces", {
+      documentId,
+      userId: req.user?.id,
+    });
+
+    const { piece_ids } = req.body;
+    const files = req.files;
+
+    if (!files || files.length === 0) {
+      await t.rollback();
+      return res.status(400).json({ message: "Aucun fichier uploadé" });
+    }
+
+    const piecesToAssociate = piece_ids ? JSON.parse(piece_ids) : [];
+    const uploadedFiles = [];
+
+    for (const file of files) {
+      const publicPath = file.path
+        .replace(/\\/g, "/")
+        .replace(/^.*uploads\//, "uploads/");
+
+      const fileName = path.basename(file.path);
+
+      if (piecesToAssociate.length > 0) {
+        for (const pieceId of piecesToAssociate) {
+          const docFichier = await DocumentFichier.create(
+            {
+              document_id: documentId,
+              piece_id: pieceId,
+              fichier: publicPath,
+              new_file_name: fileName,
+              original_name: file.originalname,
+              mode: "LOT_UNIQUE",
+            },
+            { transaction: t },
+          );
+
+          const [docPiece, created] = await DocumentPieces.findOrCreate({
+            where: {
+              document_id: documentId,
+              piece_id: pieceId,
+            },
+            defaults: { disponible: true },
+            transaction: t,
+          });
+
+          if (!created && docPiece.disponible !== true) {
+            docPiece.disponible = true;
+            await docPiece.save({ transaction: t });
+          }
+
+          uploadedFiles.push(docFichier);
+        }
+      } else {
+        const docFichier = await DocumentFichier.create(
+          {
+            document_id: documentId,
+            piece_id: null,
+            fichier: publicPath,
+            new_file_name: fileName,
+            original_name: file.originalname,
+            mode: "LOT_UNIQUE",
+          },
+          { transaction: t },
+        );
+        uploadedFiles.push(docFichier);
+      }
+    }
+
+    await t.commit();
+
+    logger.info("✅ Upload lot unique terminé", {
+      documentId,
+      associatedPieces: piecesToAssociate.length,
+      filesCount: uploadedFiles.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "upload",
+      resource: "document_fichier",
+      resource_id: null,
+      resource_identifier: `Upload lot unique avec ${piecesToAssociate.length} pièce(s)`,
+      description: `Upload lot unique pour document #${documentId} avec ${piecesToAssociate.length} pièce(s) associée(s)`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        associatedPieces: piecesToAssociate.length,
+        filesCount: uploadedFiles.length,
+        duration: Date.now() - startTime,
+      },
+    });
+
+    res.json({
+      message:
+        piecesToAssociate.length > 0
+          ? `Fichier uploadé et associé à ${piecesToAssociate.length} pièce(s)`
+          : "Fichier uploadé sans association",
+      files: uploadedFiles,
+      associatedPieces: piecesToAssociate.length,
+    });
+  } catch (err) {
+    await t.rollback();
+    logger.error("❌ Erreur upload lot avec pièces:", {
+      documentId,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ message: err.message });
+  }
+};
 
 exports.updateDocumentPieceDisponibilite = async (req, res) => {
+  const startTime = Date.now();
+  const { documentId, pieceId } = req.params;
+
   try {
-    const { documentId, pieceId } = req.params;
+    logger.info("🔄 Mise à jour disponibilité pièce", {
+      documentId,
+      pieceId,
+      userId: req.user?.id,
+      disponible: req.body.disponible,
+    });
+
     const { disponible } = req.body;
 
-    const [doc] = await DocumentPieces.findOrCreate({
+    const [doc, created] = await DocumentPieces.findOrCreate({
       where: {
         document_id: documentId,
         piece_id: pieceId,
       },
-      defaults: {
-        disponible: false,
-      },
+      defaults: { disponible: false },
     });
 
     if (!doc) {
@@ -660,19 +767,60 @@ exports.updateDocumentPieceDisponibilite = async (req, res) => {
     doc.disponible = disponible;
     await doc.save();
 
+    logger.info("✅ Disponibilité mise à jour", {
+      documentId,
+      pieceId,
+      disponible: doc.disponible,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "update",
+      resource: "document_pieces",
+      resource_id: doc.id,
+      resource_identifier: `Pièce #${pieceId} du document #${documentId}`,
+      description: `Mise à jour disponibilité: ${disponible ? "disponible" : "non disponible"}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        disponible: doc.disponible,
+        duration: Date.now() - startTime,
+      },
+    });
+
     return res.json({
       message: "Disponibilité mise à jour",
       disponible: doc.disponible,
     });
   } catch (error) {
-    console.error(error);
+    logger.error("❌ Erreur update disponibilité:", {
+      documentId,
+      pieceId,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     return res.status(500).json({ message: "Erreur update disponibilité" });
   }
 };
 
 exports.getDocumentFiles = async (req, res) => {
+  const startTime = Date.now();
+  const { documentId, pieceId } = req.params;
+
   try {
-    const { documentId, pieceId } = req.params;
+    logger.debug("🔍 Récupération des fichiers d'une pièce", {
+      documentId,
+      pieceId,
+      userId: req.user?.id,
+    });
 
     const files = await DocumentFichier.findAll({
       where: {
@@ -682,9 +830,24 @@ exports.getDocumentFiles = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
+    logger.info("✅ Fichiers récupérés", {
+      documentId,
+      pieceId,
+      count: files.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     return res.json(files);
   } catch (error) {
-    console.error("❌ getPieceFiles error:", error);
+    logger.error("❌ getPieceFiles error:", {
+      documentId,
+      pieceId,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     return res.status(500).json({
       message: "Erreur lors de la récupération des fichiers",
     });
@@ -692,8 +855,14 @@ exports.getDocumentFiles = async (req, res) => {
 };
 
 exports.getDocumentPieces = async (req, res) => {
+  const startTime = Date.now();
+  const { documentId } = req.params;
+
   try {
-    const { documentId } = req.params;
+    logger.debug("🔍 Récupération des pièces d'un document", {
+      documentId,
+      userId: req.user?.id,
+    });
 
     const document = await Document.findByPk(documentId, {
       include: [
@@ -716,7 +885,6 @@ exports.getDocumentPieces = async (req, res) => {
                   required: false,
                   attributes: ["id", "fichier", "original_name", "createdAt"],
                 },
-                // ✅ AJOUTEZ CET INCLUDE POUR LES MÉTADONNÉES
                 {
                   model: PieceMetaField,
                   as: "metaFields",
@@ -746,29 +914,52 @@ exports.getDocumentPieces = async (req, res) => {
       ],
     });
 
-    if (!document)
+    if (!document) {
+      logger.warn("⚠️ Document non trouvé", {
+        documentId,
+        userId: req.user?.id,
+      });
       return res.status(404).json({ message: "document introuvable" });
+    }
 
-    // 🎯 Flatten propre pour le frontend
     const pieces = document.TypeDocument.Pieces.map((p) => ({
       id: p.id,
       libelle: p.libelle,
       code_pieces: p.code_pieces,
       disponible: p.document_pieces?.disponible ?? false,
       fichiers: p.fichiers || [],
-      metaFields: p.metaFields || [], // ✅ INCLURE LES MÉTADONNÉES
+      metaFields: p.metaFields || [],
     }));
+
+    logger.info("✅ Pièces du document récupérées", {
+      documentId,
+      count: pieces.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
 
     res.json({ pieces });
   } catch (error) {
-    console.error("🔥 getDocumentPieces error:", error);
+    logger.error("🔥 getDocumentPieces error:", {
+      documentId,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
 exports.getLotUniqueFiles = async (req, res) => {
+  const startTime = Date.now();
+  const { documentId } = req.params;
+
   try {
-    const { documentId } = req.params;
+    logger.debug("🔍 Récupération des fichiers lot unique", {
+      documentId,
+      userId: req.user?.id,
+    });
 
     const files = await DocumentFichier.findAll({
       where: {
@@ -778,9 +969,22 @@ exports.getLotUniqueFiles = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
+    logger.info("✅ Fichiers lot unique récupérés", {
+      documentId,
+      count: files.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     return res.json(files);
   } catch (error) {
-    console.error("❌ getLotUniqueFiles:", error);
+    logger.error("❌ getLotUniqueFiles:", {
+      documentId,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     return res.status(500).json({ message: "Erreur récupération lot unique" });
   }
 };

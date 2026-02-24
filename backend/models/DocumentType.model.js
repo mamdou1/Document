@@ -11,6 +11,9 @@ module.exports = (sequelize, DataTypes) => {
       },
       code: DataTypes.STRING,
       nom: DataTypes.STRING,
+      entitee_un_id: { type: DataTypes.INTEGER, allowNull: true },
+      entitee_deux_id: { type: DataTypes.INTEGER, allowNull: true },
+      entitee_trois_id: { type: DataTypes.INTEGER, allowNull: true },
     },
     {
       tableName: "typedocuments", // 👈 correspond exactement au nom réel de la table timestamps: false,

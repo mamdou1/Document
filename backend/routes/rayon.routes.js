@@ -7,14 +7,14 @@ const {
 
 router.post(
   "/",
-  authorizePermission("rayon", "create"),
   verifyToken,
+  authorizePermission("rayon", "create"),
   ctrl.create,
 );
 router.get(
   "/",
   verifyToken,
-  //authorizePermission("rayon", "read"),
+  authorizePermission("rayon", "read"),
   ctrl.getRayons,
 );
 router.get(

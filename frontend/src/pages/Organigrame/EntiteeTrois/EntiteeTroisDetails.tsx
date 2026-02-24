@@ -82,8 +82,8 @@ export default function EntiteeTroisDetails({
       <Dialog
         header={
           <div className="flex items-center gap-2 text-slate-800 font-bold">
-            <div className="bg-orange-100 p-2 rounded-lg">
-              <GitMerge size={18} className="text-orange-600" />
+            <div className="bg-emerald-100 p-2 rounded-lg">
+              <GitMerge size={18} className="text-emerald-600" />
             </div>
             <span>Détails des Postes</span>
           </div>
@@ -105,18 +105,18 @@ export default function EntiteeTroisDetails({
         <div className="pt-2 space-y-6">
           {/* Header Section */}
           <div className="border-b border-slate-100 pb-4">
-            <p className="text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+            <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
               / {entiteeTrois.titre} / Unité
             </p>
             {/* Infos complémentaires */}
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-orange-50/50 border border-orange-100/50">
-              <div className="p-1.5 bg-orange-500 rounded-lg">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
+              <div className="p-1.5 bg-emerald-500 rounded-lg">
                 <Hash size={15} className="text-white" />
               </div>
-              <p className="text-[13px] text-orange-700 font-bold leading-tight">
+              <p className="text-[13px] text-emerald-700 font-bold leading-tight">
                 {entiteeTrois.titre} rattachée à la{" "}
                 {entiteeTrois.entitee_deux?.libelle || "---"} <br />
-                <span className="text-[13px] uppercase text-orange-400 font-black">
+                <span className="text-[13px] uppercase text-emerald-400 font-black">
                   {entiteeTrois.entitee_deux?.libelle || "N/A"}
                 </span>
               </p>
@@ -137,7 +137,7 @@ export default function EntiteeTroisDetails({
                   Fonctions Répertoriées
                 </p>
 
-                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 ml-2 py-0.5 rounded-full shadow-sm">
+                <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 ml-2 py-0.5 rounded-full shadow-sm">
                   {fonctions.length} Total
                 </span>
               </div>
@@ -181,10 +181,10 @@ export default function EntiteeTroisDetails({
                     {fonctions.map((f, index) => (
                       <tr
                         key={f.id}
-                        className="group hover:bg-orange-50/30 transition-colors"
+                        className="group hover:bg-emerald-50/30 transition-colors"
                       >
                         <td className="p-3">
-                          <span className="text-xs font-bold text-slate-400 group-hover:text-orange-500">
+                          <span className="text-xs font-bold text-slate-400 group-hover:text-emerald-500">
                             {String(index + 1).padStart(2, "0")}
                           </span>
                         </td>
@@ -192,7 +192,7 @@ export default function EntiteeTroisDetails({
                           <div className="flex items-center gap-2">
                             <Briefcase
                               size={14}
-                              className="text-slate-300 group-hover:text-orange-400"
+                              className="text-slate-300 group-hover:text-emerald-400"
                             />
                             <span className="text-sm font-bold text-slate-700 group-hover:text-slate-900">
                               {f.libelle}

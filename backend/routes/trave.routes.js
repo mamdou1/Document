@@ -7,14 +7,14 @@ const {
 
 router.post(
   "/",
-  authorizePermission("trave", "create"),
   verifyToken,
+  authorizePermission("trave", "create"),
   ctrl.create,
 );
 router.get(
   "/",
   verifyToken,
-  //authorizePermission("trave", "read"),
+  authorizePermission("trave", "read"),
   ctrl.findAll,
 );
 router.get(

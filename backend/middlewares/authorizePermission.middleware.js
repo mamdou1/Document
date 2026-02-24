@@ -44,10 +44,6 @@ const { Agent, Droit, Permission } = require("../models");
 const authorizePermission = (resource, action) => {
   return async (req, res, next) => {
     try {
-      console.log(
-        `🔐 Vérification permission: ${resource}.${action} pour user ${req.user.id}`,
-      );
-
       const agent = await Agent.findByPk(req.user.id, {
         include: [
           {
@@ -58,16 +54,9 @@ const authorizePermission = (resource, action) => {
         ],
       });
 
-      console.log("👤 Agent trouvé:", agent ? agent.id : "non trouvé");
-
       if (!agent) {
         return res.status(404).json({ message: "Agent non trouvé" });
       }
-
-      console.log(
-        "🔑 Droit de l'agent:",
-        agent.droit ? agent.droit.libelle : "aucun",
-      );
 
       if (!agent.droit) {
         return res.status(403).json({
@@ -83,8 +72,6 @@ const authorizePermission = (resource, action) => {
       const hasPermission = agent.droit.Permissions?.some(
         (p) => p.resource === resource && p.action === action,
       );
-
-      console.log("✅ Permission accordée ?", hasPermission);
 
       if (!hasPermission) {
         return res.status(403).json({

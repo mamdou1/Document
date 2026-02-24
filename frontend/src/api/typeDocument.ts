@@ -5,28 +5,6 @@ import type {
   AddPiecesToTypeDocumentPayload,
 } from "../interfaces";
 
-// export const getTypeDocuments = async (): Promise<{
-//   typeDocument: TypeDocument[];
-// }> => {
-//   const response = await api.get("/types-documents");
-//   return response.data;
-// };
-
-// export const getTypeDocumentById = async (
-//   id: string,
-// ): Promise<TypeDocument> => {
-//   const response = await api.get(`/types-documents/${id}`);
-//   return response.data.type || response.data;
-// };
-
-// export const updateTypeDocument = async (
-//   id: string,
-//   payload: Partial<TypeDocument>,
-// ): Promise<TypeDocument> => {
-//   const response = await api.put(`/types-documents/${id}`, payload);
-//   return response.data.type || response.data;
-// };
-
 export const createTypeDocument = async (
   payload: CreateTypeDocumentPayload,
 ): Promise<TypeDocument> => {

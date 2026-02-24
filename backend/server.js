@@ -6,64 +6,76 @@ const path = require("path");
 dotenv.config();
 
 const sequelize = require("./config/database");
-const historiqueLogger = require("./middlewares/historiqueLogger.middleware");
+//const historiqueLogger = require("./middlewares/historiqueLogger.middleware");
+const { updateActivity } = require("./middlewares/updateActivity.middleware");
+const { verifyToken } = require("./middlewares/auth.middleware");
 
 // ✅ ICI (avant authenticate / sync)
 require("./models");
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(historiqueLogger);
-
+// ✅ CORS EN PREMIER
 app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-audit"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-audit",
+      "x-sidebar-navigation", // ← AJOUTÉ
+    ],
   }),
 );
 
+// ✅ Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// fichiers statiques
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes
+// historique (optionnel)
+//app.use(historiqueLogger);
+
+// ✅ routes publiques AVANT verifyToken
+app.use("/api/auth", require("./routes/auth.routes"));
+
+// ✅ middleware auth après auth routes
+app.use(verifyToken);
+app.use(updateActivity);
+
+// ✅ routes protégées
 app.use("/api/exercices", require("./routes/exercice.routes"));
 app.use("/api/statistiques", require("./routes/statistiques.routes"));
-app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/user", require("./routes/user.routes"));
 app.use("/api/pieces", require("./routes/Pieces.routes"));
 
-//app.use("/api", require("./routes/agentPermission.routes"));
 app.use("/api/permissions", require("./routes/permission.routes"));
 app.use("/api/droits", require("./routes/droit.routes"));
 app.use("/api/droitPermission", require("./routes/droitPermission.routes"));
 
 app.use("/api/fonctions", require("./routes/fonction.routes"));
-
 app.use("/api/historique", require("./routes/historique.routes"));
 
-// Document et generer les champs
 app.use("/api/types-documents", require("./routes/typeDocument.routes"));
 app.use("/api/meta-fields", require("./routes/metafield.routes"));
 app.use("/api/documents", require("./routes/document.routes"));
 
-// Archivage
 app.use("/api/site", require("./routes/site.routes"));
 app.use("/api/salle", require("./routes/salle.routes"));
 app.use("/api/rayon", require("./routes/rayon.routes"));
 app.use("/api/trave", require("./routes/trave.routes"));
 app.use("/api/box", require("./routes/box.routes"));
 
-//Entitee
 app.use("/api/entiteeUn", require("./routes/entiteeUn.routes"));
 app.use("/api/entiteeDeux", require("./routes/entiteeDeux.routes"));
 app.use("/api/entiteeTrois", require("./routes/entiteeTrois.routes"));
 
 app.use("/api/agent-access", require("./routes/agentAccess.routes"));
-app.use("/api", require("./routes/pieceMetaField.routes")); // Routes pour les métadonnées des pièces
+app.use("/api", require("./routes/pieceMetaField.routes"));
 app.use("/api", require("./routes/pieceValue.routes"));
 
 // 404

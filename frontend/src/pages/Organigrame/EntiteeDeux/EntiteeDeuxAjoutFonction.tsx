@@ -69,7 +69,7 @@ export default function EntiteeDeuxAjoutFonction({
       setTimeout(() => {
         onSuccess();
       }, 500);
-      refresh();
+      //refresh();
     } catch (error) {
       console.error("Erreur lors de l'opération", error);
       toast.current?.show({

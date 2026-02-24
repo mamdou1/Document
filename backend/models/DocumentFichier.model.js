@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       piece_value_id: { type: DataTypes.INTEGER, allowNull: true },
       fichier: { type: DataTypes.STRING, allowNull: false },
       original_name: { type: DataTypes.STRING },
+      new_file_name: { type: DataTypes.STRING },
       mode: {
         type: DataTypes.ENUM("INDIVIDUEL", "LOT_UNIQUE"),
         allowNull: false,

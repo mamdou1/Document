@@ -1,3 +1,4 @@
+// controllers/user.controller.js
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -12,6 +13,8 @@ const {
   Permission,
   AgentEntiteeAccess,
 } = require("../models");
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 // Helper pour l'inclusion profonde de la hiérarchie de fonction
 const fonctionInclude = {
@@ -66,14 +69,12 @@ const agentAccessInclude = {
   as: "agent_access",
   attributes: ["id", "created_at", "updated_at"],
   include: [
-    // ✅ Entitee Un (N1)
     {
       model: EntiteeUn,
       as: "entitee_un",
       attributes: ["id", "libelle", "code", "titre"],
       required: false,
     },
-    // ✅ Entitee Deux (N2) avec son parent Entitee Un
     {
       model: EntiteeDeux,
       as: "entitee_deux",
@@ -87,7 +88,6 @@ const agentAccessInclude = {
       ],
       required: false,
     },
-    // ✅ Entitee Trois (N3) avec toute sa hiérarchie
     {
       model: EntiteeTrois,
       as: "entitee_trois",
@@ -115,27 +115,27 @@ const agentAccessInclude = {
  * ✅ Créer un utilisateur (par ADMIN)
  */
 exports.createUser = async (req, res) => {
-  try {
-    // if (req.user.role !== "ADMIN") {
-    //   return res.status(403).json({ message: "Accès refusé" });
-    // }
+  const startTime = Date.now();
 
-    const {
-      nom,
-      prenom,
-      email,
-      telephone,
-      num_matricule,
-      // role,
-      droit,
-      fonction,
-    } = req.body;
+  try {
+    const { nom, prenom, email, telephone, num_matricule, droit, fonction } =
+      req.body;
+
+    logger.info("📝 Tentative de création d'un utilisateur", {
+      userId: req.user?.id,
+      body: { ...req.body, password: "[HIDDEN]" },
+    });
 
     const existingUser = await Agent.findOne({
       where: { [Op.or]: [{ email }, { telephone }] },
     });
 
     if (existingUser) {
+      logger.warn("⚠️ Email ou téléphone déjà utilisé", {
+        email,
+        telephone,
+        userId: req.user?.id,
+      });
       return res
         .status(400)
         .json({ message: "Email ou téléphone déjà utilisé." });
@@ -158,21 +158,36 @@ exports.createUser = async (req, res) => {
       email,
       telephone,
       num_matricule,
-      // role,
       password: hashedPassword,
       username: usernames,
       enregistrer_par_id: req.user.id,
       photo_profil: photoProfil,
-      droit_id: droit, // Mapping front 'droit' -> back 'droit_id'
-      fonction_id: fonction, // Mapping front 'fonction' -> back 'fonction_id'
+      droit_id: droit,
+      fonction_id: fonction,
     });
 
     // Email de bienvenue
     const message = `Bonjour ${prenom} ${nom},\n\nIdentifiant : ${usernames}\nMot de passe : ${passwordGenerated}\n`;
     await sendEmail(email, "Bienvenue sur la plateforme", message);
 
+    logger.info("✅ Utilisateur créé avec succès", {
+      userId: req.user?.id,
+      newUserId: newUser.id,
+      username: usernames,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logCreate(req, "agent", newUser);
+
     res.status(201).json({ message: "Utilisateur créé", user: newUser });
   } catch (err) {
+    logger.error("❌ Erreur création utilisateur:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: "Erreur création", error: err.message });
   }
 };
@@ -181,19 +196,58 @@ exports.createUser = async (req, res) => {
  * ✅ Récupérer tous les utilisateurs
  */
 exports.getUsers = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération de tous les utilisateurs", {
+      userId: req.user?.id,
+      query: req.query,
+    });
+
     const users = await Agent.findAll({
       attributes: { exclude: ["password"] },
       include: [
         { model: Droit, as: "droit", attributes: ["libelle"] },
-        fonctionInclude, // Populate Service/Division/Section
-        agentAccessInclude, // Populate accès avec hiérarchie complète
+        fonctionInclude,
+        agentAccessInclude,
       ],
     });
 
-    console.log(`✅ ${users.length} utilisateurs chargés avec leurs accès`);
+    logger.info("✅ Utilisateurs récupérés", {
+      count: users.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique pour les GET avec sidebar
+    if (req.headers["x-sidebar-navigation"] === "true") {
+      await HistoriqueService.log({
+        agent_id: req.user?.id || null,
+        action: "read",
+        resource: "agent",
+        resource_id: null,
+        resource_identifier: "liste des utilisateurs",
+        description: "Consultation de la liste des utilisateurs",
+        method: req.method,
+        path: req.originalUrl,
+        status: 200,
+        ip: req.ip,
+        user_agent: req.headers["user-agent"],
+        data: {
+          count: users.length,
+          duration: Date.now() - startTime,
+        },
+      });
+    }
+
     res.status(200).json(users);
   } catch (err) {
+    logger.error("❌ Erreur récupération utilisateurs:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
       .json({ message: "Erreur récupération", erreur: err.message });
@@ -204,20 +258,67 @@ exports.getUsers = async (req, res) => {
  * ✅ Récupérer un utilisateur par ID
  */
 exports.getUsersById = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const user = await Agent.findByPk(req.params.id, {
+    logger.debug("🔍 Recherche d'un utilisateur par ID", {
+      userId: id,
+      requestBy: req.user?.id,
+    });
+
+    const user = await Agent.findByPk(id, {
       attributes: { exclude: ["password"] },
       include: [
         { model: Agent, as: "createur", attributes: ["nom", "prenom"] },
         { model: Droit, as: "droit", attributes: ["id", "libelle"] },
         fonctionInclude,
-        agentAccessInclude, // Populate accès avec hiérarchie complète
+        agentAccessInclude,
       ],
     });
 
-    if (!user) return res.status(404).json({ message: "Non trouvé" });
+    if (!user) {
+      logger.warn("⚠️ Utilisateur non trouvé", {
+        userId: id,
+        requestBy: req.user?.id,
+      });
+      return res.status(404).json({ message: "Non trouvé" });
+    }
+
+    logger.info("✅ Utilisateur trouvé", {
+      userId: id,
+      nom: `${user.prenom} ${user.nom}`,
+      requestBy: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "read",
+      resource: "agent",
+      resource_id: user.id,
+      resource_identifier: `${user.prenom} ${user.nom} (${user.id})`,
+      description: `Consultation du profil de ${user.prenom} ${user.nom}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: {
+        duration: Date.now() - startTime,
+      },
+    });
+
     res.json(user);
   } catch (err) {
+    logger.error("❌ Erreur recherche utilisateur:", {
+      userId: id,
+      error: err.message,
+      stack: err.stack,
+      requestBy: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: err.message });
   }
 };
@@ -226,11 +327,29 @@ exports.getUsersById = async (req, res) => {
  * ✅ Mise à jour par ADMIN
  */
 exports.updateUserByAdmin = async (req, res) => {
-  try {
-    if (req.user.role !== "ADMIN")
-      return res.status(403).json({ message: "Accès refusé" });
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    const { id } = req.params;
+  try {
+    logger.info("📝 Tentative de mise à jour d'un utilisateur (admin)", {
+      targetUserId: id,
+      adminId: req.user?.id,
+      body: {
+        ...req.body,
+        password: req.body.password ? "[HIDDEN]" : undefined,
+      },
+    });
+
+    const oldUser = await Agent.findByPk(id);
+    if (!oldUser) {
+      logger.warn("⚠️ Utilisateur non trouvé pour mise à jour", {
+        targetUserId: id,
+        adminId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Non trouvé" });
+    }
+
+    const oldCopy = oldUser.toJSON();
     const payload = req.body;
 
     // Mapping des IDs provenant du frontend
@@ -243,42 +362,92 @@ exports.updateUserByAdmin = async (req, res) => {
       delete payload.fonction;
     }
 
-    const user = await Agent.findByPk(id);
-    if (!user) return res.status(404).json({ message: "Non trouvé" });
-
     // Vérification unicité si email/tel modifiés
-    if (payload.email && payload.email !== user.email) {
+    if (payload.email && payload.email !== oldUser.email) {
       const exist = await Agent.findOne({ where: { email: payload.email } });
-      if (exist) return res.status(400).json({ message: "Email utilisé" });
+      if (exist) {
+        logger.warn("⚠️ Email déjà utilisé", {
+          email: payload.email,
+          targetUserId: id,
+          adminId: req.user?.id,
+        });
+        return res.status(400).json({ message: "Email utilisé" });
+      }
+    }
+
+    if (payload.telephone && payload.telephone !== oldUser.telephone) {
+      const exist = await Agent.findOne({
+        where: { telephone: payload.telephone },
+      });
+      if (exist) {
+        logger.warn("⚠️ Téléphone déjà utilisé", {
+          telephone: payload.telephone,
+          targetUserId: id,
+          adminId: req.user?.id,
+        });
+        return res.status(400).json({ message: "Téléphone utilisé" });
+      }
     }
 
     if (payload.password)
       payload.password = await bcrypt.hash(payload.password, 10);
     if (req.file) payload.photo_profil = req.file.filename;
 
-    await user.update(payload);
-    const { password, ...safeUser } = user.toJSON();
+    await oldUser.update(payload);
+
+    const updatedUser = await Agent.findByPk(id);
+
+    logger.info("✅ Utilisateur mis à jour avec succès (admin)", {
+      targetUserId: id,
+      adminId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(req, "agent", oldCopy, updatedUser);
+
+    const { password, ...safeUser } = updatedUser.toJSON();
     res.json({ message: "Mis à jour", user: safeUser });
   } catch (err) {
+    logger.error("❌ Erreur mise à jour utilisateur (admin):", {
+      targetUserId: id,
+      error: err.message,
+      stack: err.stack,
+      adminId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: err.message });
   }
 };
 
 /**
- * ✅ Mise à jour par ADMIN
+ * ✅ Mise à jour du profil par l'utilisateur lui-même
  */
-
 exports.updateUserProfil = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
+    logger.info("📝 Tentative de mise à jour du profil", {
+      userId: id,
+      body: {
+        ...req.body,
+        password: req.body.password ? "[HIDDEN]" : undefined,
+      },
+    });
 
-    const user = await Agent.findByPk(id);
-    if (!user)
+    const oldUser = await Agent.findByPk(id);
+    if (!oldUser) {
+      logger.warn("⚠️ Utilisateur non trouvé pour mise à jour profil", {
+        userId: id,
+      });
       return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
 
+    const oldCopy = oldUser.toJSON();
     const payload = req.body;
 
-    // ✅ MAPPING ICI Par ce que dans le frontend c'est : droit et dans le backend c'est droit_id
+    // Mapping des IDs
     if (payload.droit !== undefined) {
       payload.droit_id = payload.droit;
       delete payload.droit;
@@ -292,17 +461,30 @@ exports.updateUserProfil = async (req, res) => {
       payload.photo_profil = req.file.filename;
     }
 
-    await user.update(payload);
-    console.log("🔎 UserHimSelfUpdate ID résolu :", user);
+    await oldUser.update(payload);
 
-    const { password, ...safeUser } = user.toJSON();
+    const updatedUser = await Agent.findByPk(id);
 
+    logger.info("✅ Profil mis à jour avec succès", {
+      userId: id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(req, "agent", oldCopy, updatedUser);
+
+    const { password, ...safeUser } = updatedUser.toJSON();
     res.json({
       message: "Profil mis à jour avec succès",
       user: safeUser,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("❌ Erreur mise à jour profil:", {
+      userId: id,
+      error: err.message,
+      stack: err.stack,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur mise à jour profil",
       error: err.message,
@@ -311,38 +493,76 @@ exports.updateUserProfil = async (req, res) => {
 };
 
 /**
- * ✅ Suppression
+ * ✅ Suppression d'un utilisateur
  */
 exports.deleteMembre = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    if (req.user.role !== "ADMIN")
-      return res.status(403).json({ message: "Interdit" });
-    const user = await Agent.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ message: "Introuvable" });
+    logger.info("🗑️ Tentative de suppression d'un utilisateur", {
+      targetUserId: id,
+      adminId: req.user?.id,
+    });
+
+    const user = await Agent.findByPk(id);
+    if (!user) {
+      logger.warn("⚠️ Utilisateur non trouvé pour suppression", {
+        targetUserId: id,
+        adminId: req.user?.id,
+      });
+      return res.status(404).json({ message: "Introuvable" });
+    }
 
     await user.destroy();
+
+    logger.info("✅ Utilisateur supprimé avec succès", {
+      targetUserId: id,
+      nom: `${user.prenom} ${user.nom}`,
+      adminId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "agent", user);
+
     res.json({ message: "Supprimé avec succès" });
   } catch (err) {
+    logger.error("❌ Erreur suppression utilisateur:", {
+      targetUserId: id,
+      error: err.message,
+      stack: err.stack,
+      adminId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: err.message });
   }
 };
 
+/**
+ * ✅ Récupérer le profil de l'utilisateur connecté
+ */
 exports.getMe = async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Token manquant" });
+  const startTime = Date.now();
 
-    console.log(token);
+  try {
+    logger.debug("🔍 Récupération du profil utilisateur connecté", {
+      userId: req.user?.id,
+    });
+
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      logger.warn("⚠️ Token manquant pour getMe");
+      return res.status(401).json({ message: "Token manquant" });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    console.log(decoded);
 
     const agent = await Agent.findByPk(decoded.id, {
       attributes: { exclude: ["password"] },
       include: [
         fonctionInclude,
-        agentAccessInclude, // Populate accès avec hiérarchie complète
+        agentAccessInclude,
         {
           model: Droit,
           as: "droit",
@@ -358,30 +578,104 @@ exports.getMe = async (req, res) => {
       ],
     });
 
-    console.log(agent);
+    if (!agent) {
+      logger.warn("⚠️ Agent non trouvé", { userId: decoded.id });
+      return res.status(404).json({ message: "Agent non trouvé" });
+    }
 
-    if (!agent) return res.status(404).json({ message: "Agent non trouvé" });
+    logger.info("✅ Profil utilisateur récupéré", {
+      userId: agent.id,
+      nom: `${agent.prenom} ${agent.nom}`,
+      duration: Date.now() - startTime,
+    });
 
     res.json(agent);
   } catch (err) {
-    console.error(err);
+    logger.error("❌ Erreur getMe:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
+/**
+ * ✅ Compter les membres (obsolète ?)
+ */
 exports.countMembres = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Comptage des membres", {
+      userId: req.user?.id,
+    });
+
     const count = await Agent.count({
       where: {
         role: { [Op.in]: ["MEMBRE", "MEMBRE_AUTHORIZE"] },
       },
     });
 
+    logger.info("✅ Comptage membres terminé", {
+      count,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json({ totalMembres: count });
   } catch (err) {
+    logger.error("❌ Erreur comptage membres:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur comptage membres",
       error: err.message,
     });
+  }
+};
+
+/**
+ * ✅ Récupérer les utilisateurs en ligne
+ */
+exports.getOnlineUsers = async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    logger.debug("🔍 Récupération des utilisateurs en ligne", {
+      userId: req.user?.id,
+    });
+
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+    const users = await Agent.findAll({
+      where: {
+        is_on_line: true,
+        last_activity: {
+          [Op.gte]: fiveMinutesAgo,
+        },
+      },
+      attributes: ["id", "nom", "prenom", "last_activity"],
+    });
+
+    logger.info("✅ Utilisateurs en ligne récupérés", {
+      count: users.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    res.json(users);
+  } catch (err) {
+    logger.error("❌ Erreur récupération utilisateurs en ligne:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+    res.status(500).json({ error: err.message });
   }
 };

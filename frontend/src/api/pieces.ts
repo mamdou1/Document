@@ -9,7 +9,7 @@ export const createPieces = async (
   return response.data.pieces || response.data;
 };
 
-export const getPieces = async (): Promise<{ pieces: Pieces[] }> => {
+export const getPieces = async (): Promise<Pieces[]> => {
   const response = await api.get("/pieces/");
   return response.data;
 };

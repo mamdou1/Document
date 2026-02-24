@@ -295,7 +295,7 @@ export default function DocumentTypeForm({
     try {
       await onSubmit({ code, nom });
       // On peut appeler onHide() ici si on veut fermer la modale après succès
-      refresh();
+      //refresh();
     } catch (error) {
       console.error(error);
     } finally {

@@ -221,36 +221,6 @@ export default function SalleForm({ visible, onHide, onSubmit, initial }: any) {
                   />
                 </div>
               </div>
-
-              {/* Boxes */}
-              <div className="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <label className="text-[10px] font-black text-emerald-800 flex items-center gap-1 uppercase">
-                  <BoxIcon size={12} /> Boxes / T
-                </label>
-                <InputNumber
-                  value={formData.nb_box}
-                  onValueChange={(e) =>
-                    setFormData({ ...formData, nb_box: e.value || 1 })
-                  }
-                  min={1}
-                  className="w-full"
-                  inputClassName="p-2 w-full text-center font-bold"
-                  showButtons
-                />
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] text-slate-400 font-bold uppercase">
-                    Sigle
-                  </span>
-                  <InputText
-                    value={formData.sigle_box}
-                    onChange={(e) =>
-                      setFormData({ ...formData, sigle_box: e.target.value })
-                    }
-                    className="p-2 text-xs text-center uppercase"
-                    placeholder="Ex: B"
-                  />
-                </div>
-              </div>
             </div>
           </div>
         )}

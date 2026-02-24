@@ -59,7 +59,14 @@
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const { Document, Pieces } = require("../models"); // ✅ IMPORT Pieces aussi
+const {
+  Document,
+  Pieces,
+  TypeDocument,
+  EntiteeUn,
+  EntiteeDeux,
+  EntiteeTrois,
+} = require("../models");
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -67,32 +74,79 @@ const storage = multer.diskStorage({
       const { documentId, pieceId } = req.params;
       const { upload_mode, piece_value_id } = req.body;
 
+      // 1. Récupérer le document
       const document = await Document.findByPk(documentId);
-
       if (!document) {
         return cb(new Error("Document introuvable"));
       }
 
-      // ✅ Récupérer le libellé de la pièce si pieceId est fourni
+      // 2. Récupérer le type de document
+      const typeDocument = await TypeDocument.findByPk(
+        document.type_document_id,
+      );
+      if (!typeDocument) {
+        return cb(new Error("Type de document introuvable"));
+      }
+
+      // 3. Récupérer les entités (déterminer laquelle est réellement utilisée)
+      let entiteeConcernee = null;
+      let titre = null;
+      let libelle = null;
+
+      // Priorité à la plus petite entité (entiteeTrois > entiteeDeux > entiteeUn)
+      if (typeDocument.entitee_trois_id) {
+        entiteeConcernee = await EntiteeTrois.findByPk(
+          typeDocument.entitee_trois_id,
+        );
+        titre = entiteeConcernee?.titre; // "Département", "Section", etc.
+        libelle = entiteeConcernee?.libelle; // "Département Informatique"
+        console.log("📁 Entité concernée: ENTITEE_TROIS");
+      } else if (typeDocument.entitee_deux_id) {
+        entiteeConcernee = await EntiteeDeux.findByPk(
+          typeDocument.entitee_deux_id,
+        );
+        titre = entiteeConcernee?.titre; // "Sous-direction", "Division", etc.
+        libelle = entiteeConcernee?.libelle; // "Sous-direction Finance"
+        console.log("📁 Entité concernée: ENTITEE_DEUX");
+      } else if (typeDocument.entitee_un_id) {
+        entiteeConcernee = await EntiteeUn.findByPk(typeDocument.entitee_un_id);
+        titre = entiteeConcernee?.titre; // "Direction"
+        libelle = entiteeConcernee?.libelle; // "Direction Administrative"
+        console.log("📁 Entité concernée: ENTITEE_UN");
+      }
+
+      // Valeurs par défaut si aucune entité trouvée
+      titre = titre || "ENTITEE_INCONNUE";
+      libelle = libelle || "LIBELLE_INCONNU";
+      const typeDocLibelle = typeDocument.nom || "TYPE_INCONNU";
+
+      console.log("📁 Titre:", titre);
+      console.log("📁 Libellé entité:", libelle);
+      console.log("📁 Type document:", typeDocLibelle);
+
+      // 4. Récupérer le libellé de la pièce si pieceId est fourni
       let pieceLibelle = "PIECE_INCONNUE";
       if (pieceId) {
         const piece = await Pieces.findByPk(pieceId);
         if (piece) {
-          // Nettoyer le libellé pour en faire un nom de dossier valide
           pieceLibelle = piece.libelle
-            .replace(/[^a-zA-Z0-9\s-]/g, "") // Enlever caractères spéciaux
-            .replace(/\s+/g, "_") // Remplacer espaces par _
+            .replace(/[^a-zA-Z0-9\s-]/g, "")
+            .replace(/\s+/g, "_")
             .toUpperCase()
-            .substring(0, 50); // Limiter la longueur
+            .substring(0, 50);
         }
       }
 
-      // Chemin de base pour le document
+      // 5. Construire le chemin selon l'arborescence souhaitée :
+      // fichiers -> [TITRE_ENTITE] -> [LIBELLE_ENTITE] -> [NOM_TYPE_DOCUMENT] -> DOC-[documentId]
       let uploadDir = path.join(
         process.cwd(),
         "uploads",
-        "documents",
-        `DOC-${documentId}`,
+        "fichiers",
+        titre, // "Département", "Section", "Direction"
+        libelle, // "Département Informatique", "Section Juridique"
+        typeDocLibelle, // "Rapport d'activité", "PV", "Bon d'achat"
+        `DOC-${documentId}`, // "DOC-29"
       );
 
       // MODE LOT UNIQUE
@@ -102,31 +156,26 @@ const storage = multer.diskStorage({
       // MODE INDIVIDUEL
       else {
         if (piece_value_id) {
-          // ✅ Fichier pour une métadonnée spécifique
           uploadDir = path.join(
             uploadDir,
             "PIECES",
-            pieceLibelle, // ✅ LIBELLÉ de la pièce
+            pieceLibelle,
             `META-${piece_value_id}`,
           );
         } else if (pieceId) {
-          // ✅ Fichier pour une pièce sans métadonnée spécifique
-          uploadDir = path.join(
-            uploadDir,
-            "PIECES",
-            pieceLibelle, // ✅ LIBELLÉ de la pièce
-          );
+          uploadDir = path.join(uploadDir, "PIECES", pieceLibelle);
         } else {
-          // Fallback
           uploadDir = path.join(uploadDir, "PIECES", "AUTRES");
         }
       }
 
-      // Création récursive du dossier
+      // 6. Créer le dossier
       fs.mkdirSync(uploadDir, { recursive: true });
+      console.log("✅ Dossier créé:", uploadDir);
 
       cb(null, uploadDir);
     } catch (err) {
+      console.error("❌ Erreur dans destination multer:", err);
       cb(err);
     }
   },
@@ -136,11 +185,10 @@ const storage = multer.diskStorage({
     const unique = Date.now();
     const ext = path.extname(file.originalname);
 
-    // Garder le nom original pour meilleure traçabilité
     const originalName = path
       .basename(file.originalname, ext)
-      .replace(/[^a-z0-9]/gi, "_") // Nettoyer les caractères spéciaux
-      .substring(0, 30); // Limiter la longueur
+      .replace(/[^a-z0-9]/gi, "_")
+      .substring(0, 30);
 
     cb(null, `${date}_${unique}_${originalName}${ext}`);
   },
@@ -153,7 +201,6 @@ const upload = multer({
     files: 10,
   },
   fileFilter: (req, file, cb) => {
-    // Accepter PDF, JPEG, PNG
     const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);

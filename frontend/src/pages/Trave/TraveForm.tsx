@@ -89,7 +89,7 @@ export default function TraveForm({
           <Dropdown
             value={formData.rayon_id}
             options={rayon}
-            optionLabel="libelle"
+            optionLabel="code"
             optionValue="id"
             placeholder={loadingRayon ? "Chargement..." : "Choisir une rayon"}
             className="w-full bg-emerald-50 border-emerald-200 rounded-xl text-left"

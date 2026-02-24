@@ -24,6 +24,17 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       },
 
+      is_on_line: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+
+      last_activity: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
       // genre: DataTypes.ENUM("HOMME", "FEMME"),
       // role: DataTypes.ENUM("ADMIN", "MEMBRE_AUTHORIZE", "MEMBRE"),
       code_verification: DataTypes.STRING,

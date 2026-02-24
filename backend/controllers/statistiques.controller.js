@@ -1,14 +1,8 @@
-const { sequelize, Op } = require("../models");
-const {
-  Agent,
-  Document,
-  TypeDocument,
-  EntiteeUn,
-  EntiteeDeux,
-  EntiteeTrois,
-  Fonction,
-  Droit,
-} = require("../models");
+// controllers/statistiques.controller.js
+const { sequelize } = require("../models");
+const { Agent, Document, TypeDocument } = require("../models");
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 // =============================================
 // 1. TOTAUX GLOBAUX
@@ -16,33 +10,87 @@ const {
 
 // ➤ Total des agents
 exports.getTotalAgents = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération du total des agents", {
+      userId: req.user?.id,
+    });
+
     const total = await Agent.count();
+
+    logger.info("✅ Total des agents récupéré", {
+      total,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json({ total });
   } catch (error) {
-    console.error("❌ Erreur getTotalAgents:", error);
+    logger.error("❌ Erreur getTotalAgents:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
 
 // ➤ Total des types de documents
 exports.getTotalTypesDocument = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération du total des types de documents", {
+      userId: req.user?.id,
+    });
+
     const total = await TypeDocument.count();
+
+    logger.info("✅ Total des types de documents récupéré", {
+      total,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json({ total });
   } catch (error) {
-    console.error("❌ Erreur getTotalTypesDocument:", error);
+    logger.error("❌ Erreur getTotalTypesDocument:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
 
 // ➤ Total des documents
 exports.getTotalDocuments = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération du total des documents", {
+      userId: req.user?.id,
+    });
+
     const total = await Document.count();
+
+    logger.info("✅ Total des documents récupéré", {
+      total,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json({ total });
   } catch (error) {
-    console.error("❌ Erreur getTotalDocuments:", error);
+    logger.error("❌ Erreur getTotalDocuments:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
@@ -52,162 +100,14 @@ exports.getTotalDocuments = async (req, res) => {
 // =============================================
 
 // ➤ Agents par EntiteeUn (Niveau 1)
-// exports.getAgentsByEntiteeUn = async (req, res) => {
-//   try {
-//     const result = await Agent.findAll({
-//       attributes: [
-//         [sequelize.col("fonction_details.entitee_un.id"), "entiteeId"],
-//         [
-//           sequelize.col("fonction_details.entitee_un.libelle"),
-//           "entiteeLibelle",
-//         ],
-//         [sequelize.fn("COUNT", sequelize.col("Agent.id")), "nombre"],
-//       ],
-//       include: [
-//         {
-//           model: Fonction,
-//           as: "fonction_details",
-//           attributes: [],
-//           include: [
-//             {
-//               model: EntiteeUn,
-//               as: "entitee_un",
-//               attributes: [],
-//             },
-//           ],
-//         },
-//       ],
-//       where: {
-//         "$fonction_details.entitee_un.id$": { [sequelize.Op.ne]: null },
-//       },
-//       group: ["fonction_details.entitee_un.id"],
-//       order: [[sequelize.literal("nombre"), "DESC"]],
-//       raw: true,
-//     });
-
-//     res.json(result);
-//   } catch (error) {
-//     console.error("❌ Erreur getAgentsByEntiteeUn:", error);
-//     res.status(500).json({ error: "Erreur serveur" });
-//   }
-// };
-
-// // ➤ Agents par EntiteeDeux (Niveau 2)
-// exports.getAgentsByEntiteeDeux = async (req, res) => {
-//   try {
-//     const result = await Agent.findAll({
-//       attributes: [
-//         [sequelize.col("fonction_details.entitee_deux.id"), "entiteeId"],
-//         [
-//           sequelize.col("fonction_details.entitee_deux.libelle"),
-//           "entiteeLibelle",
-//         ],
-//         [sequelize.fn("COUNT", sequelize.col("Agent.id")), "nombre"],
-//       ],
-//       include: [
-//         {
-//           model: Fonction,
-//           as: "fonction_details",
-//           attributes: [],
-//           include: [
-//             {
-//               model: EntiteeDeux,
-//               as: "entitee_deux",
-//               attributes: [],
-//             },
-//           ],
-//         },
-//       ],
-//       where: {
-//         "$fonction_details.entitee_deux.id$": { [sequelize.Op.ne]: null },
-//       },
-//       group: ["fonction_details.entitee_deux.id"],
-//       order: [[sequelize.literal("nombre"), "DESC"]],
-//       raw: true,
-//     });
-
-//     res.json(result);
-//   } catch (error) {
-//     console.error("❌ Erreur getAgentsByEntiteeDeux:", error);
-//     res.status(500).json({ error: "Erreur serveur" });
-//   }
-// };
-
-// // ➤ Agents par EntiteeTrois (Niveau 3)
-// exports.getAgentsByEntiteeTrois = async (req, res) => {
-//   try {
-//     const result = await Agent.findAll({
-//       attributes: [
-//         [sequelize.col("fonction_details.entitee_trois.id"), "entiteeId"],
-//         [
-//           sequelize.col("fonction_details.entitee_trois.libelle"),
-//           "entiteeLibelle",
-//         ],
-//         [sequelize.fn("COUNT", sequelize.col("Agent.id")), "nombre"],
-//       ],
-//       include: [
-//         {
-//           model: Fonction,
-//           as: "fonction_details",
-//           attributes: [],
-//           include: [
-//             {
-//               model: EntiteeTrois,
-//               as: "entitee_trois",
-//               attributes: [],
-//             },
-//           ],
-//         },
-//       ],
-//       where: {
-//         "$fonction_details.entitee_trois.id$": { [sequelize.Op.ne]: null },
-//       },
-//       group: ["fonction_details.entitee_trois.id"],
-//       order: [[sequelize.literal("nombre"), "DESC"]],
-//       raw: true,
-//     });
-
-//     res.json(result);
-//   } catch (error) {
-//     console.error("❌ Erreur getAgentsByEntiteeTrois:", error);
-//     res.status(500).json({ error: "Erreur serveur" });
-//   }
-// };
-
-// // ➤ Agents par structure (tous niveaux confondus)
-// exports.getAgentsByStructure = async (req, res) => {
-//   try {
-//     const result = await sequelize.query(
-//       `
-//       SELECT
-//         COALESCE(e3.libelle, e2.libelle, e1.libelle, 'Non assigné') as structureLibelle,
-//         COALESCE(e3.titre, e2.titre, e1.titre, 'Sans structure') as structureTitre,
-//         COUNT(a.id) as nombre
-//       FROM agents a
-//       LEFT JOIN fonctions f ON f.id = a.fonction_id
-//       LEFT JOIN entitee_trois e3 ON e3.id = f.entitee_trois_id
-//       LEFT JOIN entitee_deux e2 ON e2.id = f.entitee_deux_id
-//       LEFT JOIN entitee_un e1 ON e1.id = f.entitee_un_id
-//       GROUP BY structureLibelle, structureTitre
-//       ORDER BY nombre DESC
-//     `,
-//       { type: sequelize.QueryTypes.SELECT },
-//     );
-
-//     res.json(result);
-//   } catch (error) {
-//     console.error("❌ Erreur getAgentsByStructure:", error);
-//     res.status(500).json({ error: "Erreur serveur" });
-//   }
-// };
-
-// ➤ Agents par EntiteeUn (Niveau 1)
 exports.getAgentsByEntiteeUn = async (req, res) => {
-  try {
-    console.log("=".repeat(60));
-    console.log("🔍 getAgentsByEntiteeUn - Début de la requête");
+  const startTime = Date.now();
 
-    // ✅ SOLUTION 1: Utiliser une requête SQL brute avec le bon nom de table
+  try {
+    logger.debug("🔍 Récupération des agents par entité niveau 1", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -224,17 +124,33 @@ exports.getAgentsByEntiteeUn = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
-    console.log(`✅ Résultat: ${result.length} lignes`);
+    logger.info("✅ Agents par entité niveau 1 récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getAgentsByEntiteeUn:", error);
+    logger.error("❌ Erreur getAgentsByEntiteeUn:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur", details: error.message });
   }
 };
 
 // ➤ Agents par EntiteeDeux (Niveau 2)
 exports.getAgentsByEntiteeDeux = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération des agents par entité niveau 2", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -251,16 +167,33 @@ exports.getAgentsByEntiteeDeux = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
+    logger.info("✅ Agents par entité niveau 2 récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getAgentsByEntiteeDeux:", error);
+    logger.error("❌ Erreur getAgentsByEntiteeDeux:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
 
 // ➤ Agents par EntiteeTrois (Niveau 3)
 exports.getAgentsByEntiteeTrois = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération des agents par entité niveau 3", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -277,16 +210,33 @@ exports.getAgentsByEntiteeTrois = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
+    logger.info("✅ Agents par entité niveau 3 récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getAgentsByEntiteeTrois:", error);
+    logger.error("❌ Erreur getAgentsByEntiteeTrois:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
 
 // ➤ Agents par structure (tous niveaux confondus)
 exports.getAgentsByStructure = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération des agents par structure", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -304,9 +254,20 @@ exports.getAgentsByStructure = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
+    logger.info("✅ Agents par structure récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getAgentsByStructure:", error);
+    logger.error("❌ Erreur getAgentsByStructure:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
@@ -317,7 +278,13 @@ exports.getAgentsByStructure = async (req, res) => {
 
 // ➤ Documents par type
 exports.getDocumentsByType = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération des documents par type", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -332,16 +299,33 @@ exports.getDocumentsByType = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
+    logger.info("✅ Documents par type récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getDocumentsByType:", error);
+    logger.error("❌ Erreur getDocumentsByType:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
 
 // ➤ Documents créés par mois (derniers 12 mois)
 exports.getDocumentsByMonth = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération des documents par mois", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -356,16 +340,33 @@ exports.getDocumentsByMonth = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
+    logger.info("✅ Documents par mois récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getDocumentsByMonth:", error);
+    logger.error("❌ Erreur getDocumentsByMonth:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
 
 // ➤ Documents par structure (entité)
 exports.getDocumentsByStructure = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération des documents par structure", {
+      userId: req.user?.id,
+    });
+
     const result = await sequelize.query(
       `
       SELECT 
@@ -384,9 +385,20 @@ exports.getDocumentsByStructure = async (req, res) => {
       { type: sequelize.QueryTypes.SELECT },
     );
 
+    logger.info("✅ Documents par structure récupérés", {
+      count: result.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(result);
   } catch (error) {
-    console.error("❌ Erreur getDocumentsByStructure:", error);
+    logger.error("❌ Erreur getDocumentsByStructure:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ error: "Erreur serveur" });
   }
 };

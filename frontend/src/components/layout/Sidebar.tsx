@@ -31,7 +31,8 @@ import {
 import logo from "../../assets/digidoc1.png";
 import profil from "../../assets/homme.jpg";
 import { Link, useLocation } from "react-router-dom";
-import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { createContext, useContext, useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SidebarProps, SidebarContextType } from "../../interfaces/composant";
 import { useAuth } from "../../context/AuthContext";
 import { getAllEntiteeUn, getEntiteeUnTitre } from "../../api/entiteeUn";
@@ -59,12 +60,69 @@ export default function Sidebar({ children }: SidebarProps) {
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [docTypes, setDocTypes] = useState<TypeDocument[]>([]);
+  // ✅ QUERY POUR LES TYPES DE DOCUMENTS
+  const { data: docTypes = [] } = useQuery({
+    queryKey: ["typeDocuments"],
+    queryFn: async () => {
+      const res = await getTypeDocuments();
+      return res.typeDocument || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
-  const [entiteeUn, setEntiteeUn] = useState<any[]>([]);
-  const [entiteeDeux, setEntiteeDeux] = useState<any[]>([]);
-  const [entiteeTrois, setEntiteeTrois] = useState<any[]>([]);
-  const [loadingEntities, setLoadingEntities] = useState(false);
+  // ✅ QUERY POUR LES ENTITÉES UN
+  const { data: entiteeUn = [] } = useQuery({
+    queryKey: ["entiteeUn"],
+    queryFn: async () => {
+      const res = await getAllEntiteeUn();
+      return Array.isArray(res) ? res : res.entiteeUn || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // ✅ QUERY POUR LES ENTITÉES DEUX
+  const { data: entiteeDeux = [] } = useQuery({
+    queryKey: ["entiteeDeux"],
+    queryFn: async () => {
+      const res = await getAllEntiteeDeux();
+      return Array.isArray(res) ? res : res.entiteeDeux || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // ✅ QUERY POUR LES ENTITÉES TROIS
+  const { data: entiteeTrois = [] } = useQuery({
+    queryKey: ["entiteeTrois"],
+    queryFn: async () => {
+      const res = await getAllEntiteeTrois();
+      return Array.isArray(res) ? res : res.entiteeTrois || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  // ✅ QUERY POUR LES TITRES DYNAMIQUES
+  const { data: dynamicTitles = { titre1: "", titre2: "", titre3: "" } } =
+    useQuery({
+      queryKey: ["entiteeTitres"],
+      queryFn: async () => {
+        const [t1, t2, t3] = await Promise.all([
+          getEntiteeUnTitre(),
+          getEntiteeDeuxTitre(),
+          getEntiteeTroisTitre(),
+        ]);
+        return {
+          titre1: t1.titre || "Ministères",
+          titre2: t2.titre || "Directions",
+          titre3: t3.titre || "Services",
+        };
+      },
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    });
 
   // ✅ Fonction identique à DocumentTypeEntitee
   const isUserAdmin = (user: User | null): boolean => {
@@ -84,59 +142,6 @@ export default function Sidebar({ children }: SidebarProps) {
     );
   };
 
-  // ✅ CHARGER LES ENTITÉS POUR ADMIN
-  const loadEntities = async () => {
-    setLoadingEntities(true);
-    try {
-      const [resE1, resE2, resE3] = await Promise.all([
-        getAllEntiteeUn(),
-        getAllEntiteeDeux(),
-        getAllEntiteeTrois(),
-      ]);
-
-      const dataE1 = Array.isArray(resE1) ? resE1 : resE1.entiteeUn || [];
-      const dataE2 = Array.isArray(resE2) ? resE2 : resE2.entiteeDeux || [];
-      const dataE3 = Array.isArray(resE3) ? resE3 : resE3.entiteeTrois || [];
-
-      setEntiteeUn(dataE1);
-      setEntiteeDeux(dataE2);
-      setEntiteeTrois(dataE3);
-    } catch (error) {
-      console.error("❌ Erreur chargement entités:", error);
-    } finally {
-      setLoadingEntities(false);
-    }
-  };
-
-  // ✅ APPELEZ LA FONCTION POUR TOUS LES UTILISATEURS
-  useEffect(() => {
-    loadEntities(); // Plus de condition !
-  }, []);
-
-  // Charger les types de documents
-  useEffect(() => {
-    const fetchDocTypes = async () => {
-      try {
-        const res = await getTypeDocuments();
-        // ✅ Vérification que les IDs sont bien présents
-        const types = res.typeDocument || [];
-        if (types.length > 0) {
-          console.log("🔍 Exemple:", {
-            nom: types[0].nom,
-            entitee_un_id: types[0].entitee_un_id,
-            entitee_deux_id: types[0].entitee_deux_id,
-            entitee_trois_id: types[0].entitee_trois_id,
-          });
-        }
-        setDocTypes(types);
-      } catch (error) {
-        console.error("❌ Erreur types documents sidebar:", error);
-      }
-    };
-    fetchDocTypes();
-  }, []);
-
-  // ✅ MÊME LOGIQUE QUE DANS DOCUMENTTYPEENTITEE - VERSION STRICTE
   const hasAccessToDocument = (typeDoc: TypeDocument): boolean => {
     // ADMIN voit tout
     if (isUserAdmin(user)) return true;
@@ -209,33 +214,6 @@ export default function Sidebar({ children }: SidebarProps) {
     const filtered = docTypes.filter((doc) => hasAccessToDocument(doc));
     return filtered;
   }, [docTypes, user]);
-
-  // ✅ TITRES DYNAMIQUES (optionnel, si besoin dans sidebar)
-  const [dynamicTitles, setDynamicTitles] = useState({
-    titre1: "",
-    titre2: "",
-    titre3: "",
-  });
-
-  useEffect(() => {
-    const fetchTitles = async () => {
-      try {
-        const [t1, t2, t3] = await Promise.all([
-          getEntiteeUnTitre(),
-          getEntiteeDeuxTitre(),
-          getEntiteeTroisTitre(),
-        ]);
-        setDynamicTitles({
-          titre1: t1.titre || "Ministères",
-          titre2: t2.titre || "Directions",
-          titre3: t3.titre || "Services",
-        });
-      } catch (error) {
-        console.error("❌ Erreur chargement titres sidebar:", error);
-      }
-    };
-    fetchTitles();
-  }, []);
 
   const toggleTree = (label: string) => {
     setTreeOpen((prev) => {
@@ -411,6 +389,7 @@ export default function Sidebar({ children }: SidebarProps) {
               />
 
               {/* ================= ORGANIGRAMME ================= */}
+
               {(can("entiteeUn", "access") ||
                 can("entiteeDeux", "access") ||
                 can("entiteeTrois", "access")) && (
@@ -820,12 +799,13 @@ export default function Sidebar({ children }: SidebarProps) {
 function SidebarLink({ icon: Icon, text, to, active }: any) {
   const { expended } = useContext(SidebarContext);
 
+  const handleClick = () => {
+    // Stocker dans localStorage ou sessionStorage que l'utilisateur a cliqué
+    sessionStorage.setItem("sidebar_navigation", "true");
+  };
+
   return (
-    <Link
-      to={to}
-      className="block group"
-      onClick={() => sessionStorage.setItem("audit", "true")}
-    >
+    <Link to={to} className="block group" onClick={handleClick}>
       <li
         className={`flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 relative
         ${

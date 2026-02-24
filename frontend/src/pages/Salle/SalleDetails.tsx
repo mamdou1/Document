@@ -211,13 +211,18 @@ export default function SalleDetails({ visible, onHide, salle }: Props) {
             </div>
           ) : rayons.length > 0 ? (
             <Accordion
-              activeIndex={expandedRayons.map((_, index) => index)} // ✅ Convertir en indices
+              activeIndex={rayons
+                .map((rayon, index) =>
+                  expandedRayons.includes(rayon.id as string) ? index : null,
+                )
+                .filter((index): index is number => index !== null)}
+              //  Convertir en indices
               onTabChange={(e) => {
-                // ✅ Gérer le changement d'onglet
-                const newExpanded = e.index as number[];
-                setExpandedRayons(
-                  newExpanded.map((i) => rayons[i].id as string),
-                );
+                const indexes = Array.isArray(e.index) ? e.index : [e.index];
+
+                const ids = indexes.map((i) => rayons[i].id as string);
+
+                setExpandedRayons(ids);
               }}
               multiple
               className="custom-accordion"
@@ -226,10 +231,7 @@ export default function SalleDetails({ visible, onHide, salle }: Props) {
                 <AccordionTab
                   key={rayon.id}
                   header={
-                    <div
-                      className="flex items-center justify-between w-full"
-                      onClick={() => toggleRayon(rayon.id as string)}
-                    >
+                    <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
                           <Layers size={16} />

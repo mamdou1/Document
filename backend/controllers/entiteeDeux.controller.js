@@ -1,58 +1,62 @@
+// controllers/entiteeDeux.controller.js
 const { Fonction, EntiteeUn, EntiteeDeux, EntiteeTrois } = require("../models");
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 exports.createEntiteeDeux = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.info("📝 Tentative de création d'une entité de niveau 2", {
+      userId: req.user?.id,
+      body: req.body,
+    });
+
     // 1. Trouver le titre utilisé par les autres éléments
     const exemple = await EntiteeDeux.findOne({ attributes: ["titre"] });
-    const titreGlobal = exemple.titre;
+    const titreGlobal = exemple?.titre || "Défaut";
 
     // 2. Créer l'élément avec le titre récupéré
     const entitee_deux = await EntiteeDeux.create({
       ...req.body,
       titre: titreGlobal,
     });
-    console.log("Création réussie:", entitee_deux);
+
+    logger.info("✅ Entité de niveau 2 créée avec succès", {
+      entiteeId: entitee_deux.id,
+      libelle: entitee_deux.libelle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logCreate(req, "entiteeDeux", entitee_deux);
 
     res.status(201).json(entitee_deux);
   } catch (err) {
+    logger.error("❌ Erreur création entiteeDeux:", {
+      error: err.message,
+      stack: err.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
       .json({ message: "Erreur création entitee_deux", error: err.message });
   }
 };
 
-// exports.createEntiteeDeuxTitre = async (req, res) => {
-//   try {
-//     const { titre } = req.body;
-
-//     // Vérification basique
-//     if (!titre) {
-//       return res.status(400).json({ message: "le champs titre est requis" });
-//     }
-
-//     // Création
-//     const titres = await EntiteeDeux.create({
-//       titre,
-//     });
-
-//     res.status(201).json(titres);
-//   } catch (err) {
-//     console.error("❌ Erreur création titre:", err);
-//     res.status(500).json({
-//       message: "Erreur lors de la création du titre",
-//       error: err.message,
-//     });
-//   }
-// };
-
 exports.getAllEntiteeDeux = async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const entitee_deux = await EntiteeDeux.findAll({
       include: [
         {
           model: EntiteeUn,
-          as: "entitee_un", // correspond à l'association définie
-          attributes: ["id", "libelle"], // on peut limiter les colonnes
+          as: "entitee_un",
+          attributes: ["id", "libelle"],
         },
         {
           model: EntiteeTrois,
@@ -64,7 +68,6 @@ exports.getAllEntiteeDeux = async (req, res) => {
 
     res.json(entitee_deux);
   } catch (err) {
-    console.error("Erreur récupération entitee_deux:", err);
     res.status(500).json({
       message: "Erreur récupération entitee_deux",
       error: err.message,
@@ -73,28 +76,38 @@ exports.getAllEntiteeDeux = async (req, res) => {
 };
 
 exports.getEntiteeDeuxTitre = async (req, res) => {
-  try {
-    const entitee = await EntiteeDeux.findOne({ attributes: ["titre"] });
+  const startTime = Date.now();
 
-    if (!entitee) {
-      return res
-        .status(404)
-        .json({ message: "Aucun titre trouvé pour EntiteeDeux" });
-    }
+  try {
+
+    const entitee = await EntiteeDeux.findOne({ attributes: ["titre"] });
 
     res.json({ titre: entitee.titre });
   } catch (err) {
-    console.error("❌ Erreur getEntiteeDeuxTitre:", err);
     res.status(500).json({ message: err.message });
   }
 };
 
 exports.updateEntiteeDeuxTitre = async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const { titre } = req.body;
     if (!titre) {
+      logger.warn("⚠️ Tentative de mise à jour sans titre", {
+        userId: req.user?.id,
+      });
       return res.status(400).json({ message: "Le champ 'titre' est requis" });
     }
+
+    logger.info("📝 Tentative de mise à jour du titre global", {
+      userId: req.user?.id,
+      nouveauTitre: titre,
+    });
+
+    // Récupérer l'ancien titre pour l'historique
+    const oldTitre = await EntiteeDeux.findOne({ attributes: ["titre"] });
+    const oldValue = oldTitre ? oldTitre.titre : null;
 
     // Vérifier l'existence d'enregistrements
     const count = await EntiteeDeux.count();
@@ -106,6 +119,13 @@ exports.updateEntiteeDeuxTitre = async (req, res) => {
         code: "INIT",
         libelle: "Premier élément EntiteeDeux",
       });
+
+      logger.info("✅ Titre initial créé pour EntiteeDeux", {
+        titre,
+        userId: req.user?.id,
+        duration: Date.now() - startTime,
+      });
+
       return res.json({
         message: "Titre initial créé pour EntiteeDeux",
         titre,
@@ -115,24 +135,76 @@ exports.updateEntiteeDeuxTitre = async (req, res) => {
     // Mise à jour globale de la colonne titre
     await EntiteeDeux.update({ titre: titre }, { where: {} });
 
+    logger.info("✅ Titre global mis à jour avec succès", {
+      ancienTitre: oldValue,
+      nouveauTitre: titre,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "update",
+      resource: "entiteeDeux_titre",
+      resource_id: null,
+      resource_identifier: "titre global",
+      description: `Modification du titre global : ${oldValue || "null"} → ${titre}`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      old_data: { titre: oldValue },
+      new_data: { titre },
+      data: { duration: Date.now() - startTime },
+    });
+
     res.json({
       message: "Titre mis à jour pour tous les éléments de EntiteeDeux",
       titre,
     });
   } catch (err) {
-    console.error("❌ Erreur updateEntiteeDeuxTitre:", err);
+    logger.error("❌ Erreur updateEntiteeDeuxTitre:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: err.message });
   }
 };
 
-// Filtre : Récupère les entitee_deux d'un service spécifique
 exports.getEntiteeDeuxByEntiteeUn = async (req, res) => {
+  const startTime = Date.now();
+  const { entiteeUnId } = req.params;
+
   try {
-    const entitee_deux = await EntiteeDeux.findAll({
-      where: { entitee_un_id: req.params.entiteeUnId },
+    logger.debug("🔍 Récupération des entités niveau 2 par entité niveau 1", {
+      entiteeUnId,
+      userId: req.user?.id,
     });
+
+    const entitee_deux = await EntiteeDeux.findAll({
+      where: { entitee_un_id: entiteeUnId },
+    });
+
+    logger.info("✅ Entités niveau 2 récupérées", {
+      entiteeUnId,
+      count: entitee_deux.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(entitee_deux);
   } catch (err) {
+    logger.error("❌ Erreur getEntiteeDeuxByEntiteeUn:", {
+      entiteeUnId,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur récupération entitee_deux",
       error: err.message,
@@ -140,14 +212,36 @@ exports.getEntiteeDeuxByEntiteeUn = async (req, res) => {
   }
 };
 
-// Récupère les fonctions liées à cette division [cite: 3, 6]
 exports.getFunctionsByEntiteeDeux = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    const fonctions = await Fonction.findAll({
-      where: { entitee_deux_id: req.params.id },
+    logger.debug("🔍 Récupération des fonctions d'une entité niveau 2", {
+      entiteeId: id,
+      userId: req.user?.id,
     });
+
+    const fonctions = await Fonction.findAll({
+      where: { entitee_deux_id: id },
+    });
+
+    logger.info("✅ Fonctions récupérées", {
+      entiteeId: id,
+      count: fonctions.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(fonctions);
   } catch (err) {
+    logger.error("❌ Erreur getFunctionsByEntiteeDeux:", {
+      entiteeId: id,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
       .json({ message: "Erreur récupération fonctions", error: err.message });
@@ -155,23 +249,54 @@ exports.getFunctionsByEntiteeDeux = async (req, res) => {
 };
 
 exports.updateEntiteeDeux = async (req, res) => {
+  const startTime = Date.now();
+  const { id } = req.params;
+
   try {
-    console.log("Payload reçu:", req.body);
-    const { id } = req.params;
-    const payload = req.body;
-    const ent = await EntiteeDeux.findByPk(id);
+    logger.info("📝 Tentative de modification d'une entité niveau 2", {
+      entiteeId: id,
+      userId: req.user?.id,
+      body: req.body,
+    });
 
-    if (!ent)
+    const oldEntitee = await EntiteeDeux.findByPk(id);
+    if (!oldEntitee) {
+      logger.warn("⚠️ Entité niveau 2 non trouvée", {
+        entiteeId: id,
+        userId: req.user?.id,
+      });
       return res.status(404).json({ message: "entitee_deux non trouvé" });
-    await ent.update(payload);
+    }
 
-    console.log("Payload reçu:", ent);
+    const oldCopy = oldEntitee.toJSON();
+    const payload = req.body;
+
+    await oldEntitee.update(payload);
 
     const updated = await EntiteeDeux.findByPk(id, {
       include: [{ model: EntiteeUn, as: "entitee_un" }],
     });
+
+    logger.info("✅ Entité niveau 2 modifiée avec succès", {
+      entiteeId: id,
+      libelle: updated.libelle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(req, "entiteeDeux", oldCopy, updated);
+
     res.status(200).json(updated);
   } catch (err) {
+    logger.error("❌ Erreur updateEntiteeDeux:", {
+      entiteeId: id,
+      error: err.message,
+      stack: err.stack,
+      body: req.body,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
       .json({ message: "Erreur mise à jour entitee_deux", error: err.message });
@@ -179,18 +304,47 @@ exports.updateEntiteeDeux = async (req, res) => {
 };
 
 exports.deleteEntiteeDeux = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const ent = await EntiteeDeux.findByPk(id);
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    if (!ent)
+  try {
+    logger.info("🗑️ Tentative de suppression d'une entité niveau 2", {
+      entiteeId: id,
+      userId: req.user?.id,
+    });
+
+    const ent = await EntiteeDeux.findByPk(id);
+    if (!ent) {
+      logger.warn("⚠️ Entité niveau 2 non trouvée pour suppression", {
+        entiteeId: id,
+        userId: req.user?.id,
+      });
       return res.status(404).json({ message: "entitee_deux non trouvé" });
+    }
 
     await ent.destroy();
+
+    logger.info("✅ Entité niveau 2 supprimée avec succès", {
+      entiteeId: id,
+      libelle: ent.libelle,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "entiteeDeux", ent);
+
     res.status(200).json({ message: "entitee_deux supprimé" });
   } catch (err) {
+    logger.error("❌ Erreur deleteEntiteeDeux:", {
+      entiteeId: id,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res
       .status(500)
-      .json({ message: "Erreur supprision entitee_deux", error: err.message });
+      .json({ message: "Erreur suppression entitee_deux", error: err.message });
   }
 };

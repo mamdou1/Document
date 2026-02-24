@@ -62,6 +62,31 @@ export default function UserDetails({
     }
   }, [user]);
 
+  const formatLastActivity = (date?: string) => {
+    if (!date) return "Inconnue";
+
+    const now = new Date();
+    const last = new Date(date);
+    const diffMs = now.getTime() - last.getTime();
+
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHour = Math.floor(diffMs / 3600000);
+    const diffDay = Math.floor(diffMs / 86400000);
+
+    if (diffMin < 1) return "À l'instant";
+    if (diffMin < 60) return `Il y a ${diffMin} min`;
+    if (diffHour < 24) return `Il y a ${diffHour} h`;
+    if (diffDay < 7) return `Il y a ${diffDay} jour(s)`;
+
+    return (
+      last.toLocaleDateString("fr-FR") +
+      " à " +
+      last.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+    );
+  };
+
+  const isOnline = user?.is_on_line === true;
+
   // ✅ GROUPER PAR NIVEAU (UN, DEUX, TROIS)
   const groupedByNiveau = useMemo(() => {
     const groups = {
@@ -258,8 +283,12 @@ export default function UserDetails({
                 className="w-24 h-24 rounded-2xl border-4 border-white shadow-md object-cover"
                 alt={`${user.prenom} ${user.nom}`}
               />
-              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1.5 rounded-lg shadow-sm">
-                <Shield size={14} />
+              <div
+                className={`absolute -bottom-1 -right-1 text-white p-1.5 rounded-lg shadow-sm ${
+                  isOnline ? "bg-green-500" : "bg-slate-400"
+                }`}
+              >
+                <span className="w-2 h-2 block bg-white rounded-full"></span>
               </div>
             </div>
             <h2 className="mt-3 text-lg font-bold text-emerald-900 uppercase tracking-tight">
@@ -270,6 +299,23 @@ export default function UserDetails({
                 ? user.droit
                 : user.droit?.libelle}
             </span>
+            <div className="flex flex-col items-center mt-2 gap-1">
+              {/* Statut */}
+              <span
+                className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase ${
+                  isOnline
+                    ? "bg-green-100 text-green-700"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                ● {isOnline ? "En ligne" : "Hors ligne"}
+              </span>
+
+              {/* Dernière activité */}
+              <span className="text-[10px] text-slate-400 font-medium">
+                Dernière activité : {formatLastActivity(user.last_activity)}
+              </span>
+            </div>
           </div>
 
           {/* Grille d'infos principales */}

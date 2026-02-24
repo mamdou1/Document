@@ -5,6 +5,7 @@ const {
   authorizePermission,
 } = require("../middlewares/authorizePermission.middleware");
 const upload = require("../middlewares/ulpoadDocument.middleware");
+const historiqueMiddleware = require("../middlewares/historiqueLogger.middleware");
 
 // =============================================
 // 1. ROUTES SPÉCIFIQUES (avec mots-clés) - EN PREMIER !
@@ -25,6 +26,14 @@ router.post(
   authorizePermission("document", "create"),
   upload.array("files", 10),
   ctrl.uploadDocumentFiles,
+);
+
+router.post(
+  "/:documentId/document-type/:documentTypeId/lot-unique/files-with-pieces",
+  verifyToken,
+  authorizePermission("document", "update"),
+  upload.array("files", 10),
+  ctrl.uploadLotUniqueWithPieces,
 );
 
 // ✅ PIÈCE INDIVIDUELLE - POST

@@ -1,0 +1,163 @@
+2026-02-24 08:46:47 [INFO] HISTORIQUE {"agent_id":1,"action":"login","resource":"auth/connexion","method":"POST","path":"/api/auth/connexion","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
+2026-02-24 08:46:47 [INFO] ✅ Profil utilisateur récupéré {"userId":1,"nom":"Mamadou Diouma","duration":160}
+2026-02-24 08:46:49 [INFO] ✅ Types de documents récupérés {"count":17,"userId":1,"duration":46}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"typeDocument","resource_id":null,"resource_identifier":"liste des types de documents","description":"Consultation de la liste des types de documents","method":"GET","path":"/api/types-documents","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":17,"duration":47}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":30}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":31}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":27}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":27}}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":12}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":24}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":25}}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":8}
+2026-02-24 08:46:49 [INFO] ✅ Total des agents récupéré {"total":5,"userId":1,"duration":23}
+2026-02-24 08:46:49 [INFO] ✅ Total des types de documents récupéré {"total":17,"userId":1,"duration":18}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":16}
+2026-02-24 08:46:49 [INFO] ✅ Total des documents récupéré {"total":15,"userId":1,"duration":23}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":18}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":20}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":21}}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":21}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":15}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":16}}
+2026-02-24 08:46:49 [INFO] ✅ Total des types de documents récupéré {"total":17,"userId":1,"duration":8}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":24}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":25}}
+2026-02-24 08:46:49 [INFO] ✅ Total des agents récupéré {"total":5,"userId":1,"duration":13}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":8}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":5}
+2026-02-24 08:46:49 [INFO] ✅ Total des documents récupéré {"total":15,"userId":1,"duration":42}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":19}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":14}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":16}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":31}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":37}}
+2026-02-24 08:46:49 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":29}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":23}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":29}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":9}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":11}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":3}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":4}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":7}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":7}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":4}
+2026-02-24 08:46:49 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":5}}
+2026-02-24 08:46:49 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":3}
+2026-02-24 08:46:50 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":5}}
+2026-02-24 08:46:50 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":65}
+2026-02-24 08:46:50 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":66}}
+2026-02-24 08:46:50 [INFO] ✅ Agents par structure récupérés {"count":3,"userId":1,"duration":65}
+2026-02-24 08:46:50 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":1,"userId":1,"duration":30}
+2026-02-24 08:46:50 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":1,"duration":22}
+2026-02-24 08:46:50 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":1,"duration":17}
+2026-02-24 08:46:50 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":1,"duration":13}
+2026-02-24 08:46:50 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":1,"userId":1,"duration":6}
+2026-02-24 08:46:50 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":1,"duration":11}
+2026-02-24 08:46:50 [INFO] ✅ Agents par structure récupérés {"count":3,"userId":1,"duration":4}
+2026-02-24 08:46:50 [INFO] ✅ Documents par mois récupérés {"count":2,"userId":1,"duration":15}
+2026-02-24 08:46:50 [INFO] ✅ Documents par type récupérés {"count":9,"userId":1,"duration":17}
+2026-02-24 08:46:50 [INFO] ✅ Documents par structure récupérés {"count":4,"userId":1,"duration":9}
+2026-02-24 08:46:50 [INFO] ✅ Documents par type récupérés {"count":9,"userId":1,"duration":15}
+2026-02-24 08:46:50 [INFO] ✅ Documents par mois récupérés {"count":2,"userId":1,"duration":12}
+2026-02-24 08:46:50 [INFO] ✅ Documents par structure récupérés {"count":4,"userId":1,"duration":6}
+2026-02-24 08:47:24 [INFO] ✅ Logger initialisé avec succès 
+2026-02-24 08:47:36 [INFO] HISTORIQUE {"agent_id":1,"action":"login","resource":"auth/connexion","method":"POST","path":"/api/auth/connexion","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
+2026-02-24 08:47:36 [INFO] ✅ Profil utilisateur récupéré {"userId":1,"nom":"Mamadou Diouma","duration":99}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":29}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":30}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":21}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":21}}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":17}
+2026-02-24 08:47:38 [INFO] ✅ Types de documents récupérés {"count":17,"userId":1,"duration":32}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"typeDocument","resource_id":null,"resource_identifier":"liste des types de documents","description":"Consultation de la liste des types de documents","method":"GET","path":"/api/types-documents","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":17,"duration":32}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":53}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":54}}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":5}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":10}
+2026-02-24 08:47:38 [INFO] ✅ Total des types de documents récupéré {"total":17,"userId":1,"duration":10}
+2026-02-24 08:47:38 [INFO] ✅ Total des agents récupéré {"total":5,"userId":1,"duration":15}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":17}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":8}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":7}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":9}}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":9}
+2026-02-24 08:47:38 [INFO] ✅ Total des documents récupéré {"total":15,"userId":1,"duration":34}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":6}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":7}}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":4}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":13}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":14}}
+2026-02-24 08:47:38 [INFO] ✅ Total des types de documents récupéré {"total":17,"userId":1,"duration":12}
+2026-02-24 08:47:38 [INFO] ✅ Total des agents récupéré {"total":5,"userId":1,"duration":14}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":11}
+2026-02-24 08:47:38 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":7}
+2026-02-24 08:47:38 [INFO] ✅ Total des documents récupéré {"total":15,"userId":1,"duration":10}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":9}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":10}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":8}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":9}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":6}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":7}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":3}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":4}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":3}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":5}}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":8}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":8}}
+2026-02-24 08:47:38 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":1,"duration":44}
+2026-02-24 08:47:38 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":1,"userId":1,"duration":12}
+2026-02-24 08:47:38 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":1,"duration":24}
+2026-02-24 08:47:38 [INFO] ✅ Agents par structure récupérés {"count":3,"userId":1,"duration":22}
+2026-02-24 08:47:38 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":8}
+2026-02-24 08:47:38 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":8}}
+2026-02-24 08:47:39 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":12}
+2026-02-24 08:47:39 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":12}}
+2026-02-24 08:47:39 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":7}
+2026-02-24 08:47:39 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":7}}
+2026-02-24 08:47:39 [INFO] ✅ Documents par structure récupérés {"count":4,"userId":1,"duration":6}
+2026-02-24 08:47:39 [INFO] ✅ Documents par mois récupérés {"count":2,"userId":1,"duration":3}
+2026-02-24 08:47:39 [INFO] ✅ Documents par type récupérés {"count":9,"userId":1,"duration":2}
+2026-02-24 08:47:39 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":1,"duration":11}
+2026-02-24 08:47:39 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":1,"userId":1,"duration":9}
+2026-02-24 08:47:39 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":1,"duration":5}
+2026-02-24 08:47:39 [INFO] ✅ Agents par structure récupérés {"count":3,"userId":1,"duration":3}
+2026-02-24 08:47:39 [INFO] ✅ Documents par type récupérés {"count":9,"userId":1,"duration":6}
+2026-02-24 08:47:39 [INFO] ✅ Documents par mois récupérés {"count":2,"userId":1,"duration":4}
+2026-02-24 08:47:39 [INFO] ✅ Documents par structure récupérés {"count":4,"userId":1,"duration":3}
+2026-02-24 08:49:34 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":7}
+2026-02-24 08:49:34 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":46}
+2026-02-24 08:49:34 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":49}}
+2026-02-24 08:49:35 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":51}
+2026-02-24 08:49:35 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":50}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":31}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":39}}
+2026-02-24 08:49:35 [INFO] ✅ Historique récupéré {"count":10,"total":988,"userId":1,"duration":183}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":58}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":65}}
+2026-02-24 08:49:35 [INFO] ✅ Titre des entités de niveau 1 récupéré {"titre":"Direction","userId":1,"duration":24}
+2026-02-24 08:49:35 [INFO] ✅ Titre des entités de niveau 2 récupéré {"titre":"Service","userId":1,"duration":22}
+2026-02-24 08:49:35 [INFO] ✅ Titre des entités de niveau 3 récupéré {"titre":"Département","userId":1,"duration":32}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":21}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":22}}
+2026-02-24 08:49:35 [INFO] ✅ Historique récupéré {"count":10,"total":992,"userId":1,"duration":20}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":18}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":19}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":16}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":17}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":8}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":9}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":10}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":11}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":10}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":11}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 2 récupérées {"count":12,"userId":1,"duration":9}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeDeux","resource_id":null,"resource_identifier":"liste des entités niveau 2","description":"Consultation de la liste des entités de niveau 2","method":"GET","path":"/api/entiteeDeux/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":12,"duration":10}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 1 récupérées {"count":9,"userId":1,"duration":8}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeUn","resource_id":null,"resource_identifier":"liste des entités niveau 1","description":"Consultation de la liste des entités de niveau 1","method":"GET","path":"/api/entiteeUn/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":9,"duration":9}}
+2026-02-24 08:49:35 [INFO] ✅ Entités de niveau 3 récupérées {"count":3,"userId":1,"duration":9}
+2026-02-24 08:49:35 [INFO] HISTORIQUE {"agent_id":1,"action":"read","resource":"entiteeTrois","resource_id":null,"resource_identifier":"liste des entités niveau 3","description":"Consultation de la liste des entités de niveau 3","method":"GET","path":"/api/entiteeTrois/","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36","data":{"count":3,"duration":10}}
+2026-02-24 08:49:41 [INFO] ✅ Historique récupéré {"count":10,"total":1000,"userId":1,"duration":8}
+2026-02-24 08:49:49 [INFO] ✅ Historique récupéré {"count":10,"total":1000,"userId":1,"duration":7}
+2026-02-24 08:49:53 [INFO] ✅ Historique récupéré {"count":10,"total":1000,"userId":1,"duration":9}
+2026-02-24 08:50:06 [INFO] ✅ Historique récupéré {"count":10,"total":1000,"userId":1,"duration":16}

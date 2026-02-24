@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../components/layout/Layoutt";
 import SiteDetails from "./SiteDetails";
 import SiteForm from "./SiteForm";
@@ -8,7 +8,6 @@ import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import Pagination from "../../components/layout/Pagination";
-import { getSites, createSite, updateSite, deleteSite } from "../../api/site";
 import {
   Plus,
   Search,
@@ -17,63 +16,61 @@ import {
   Trash2,
   Hash,
   MapPinned,
+  XCircle,
 } from "lucide-react";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useSites,
+  useCreateSite,
+  useUpdateSite,
+  useDeleteSite,
+} from "../../hooks/useSites";
+
 export default function SitePage() {
-  const [allSite, setAllSite] = useState<Site[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par useSites
+  const { data: allSite = [], isLoading, error, refetch } = useSites();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateSite();
+  const updateMutation = useUpdateSite();
+  const deleteMutation = useDeleteSite();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<Site | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState<Partial<Site> | null>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const fetchSites = async () => {
-    setLoading(true);
-    try {
-      const data = await getSites();
-      setAllSite(Array.isArray(data) ? data : data.salle || []);
-    } catch (err) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Chargement échoué",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ PLUS BESOIN DE fetchSites() NI DE useEffect !
 
-  useEffect(() => {
-    fetchSites();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer handleAction
   const handleAction = async (payload: any) => {
     try {
       if (editing?.id) {
-        const updated = await updateSite(editing.id, payload);
-        setAllSite((prev) =>
-          prev.map((s) => (s.id === updated.id ? updated : s)),
-        );
+        await updateMutation.mutateAsync({
+          id: String(editing.id),
+          data: payload,
+        });
         toast.current?.show({
           severity: "success",
           summary: "Succès",
-          detail: "Site mise à jour",
+          detail: "Site mis à jour",
         });
       } else {
-        const saved = await createSite(payload);
-        setAllSite((prev) => [saved, ...prev]);
+        await createMutation.mutateAsync(payload);
         toast.current?.show({
           severity: "success",
           summary: "Succès",
-          detail: "Site créée",
+          detail: "Site créé",
         });
       }
       setFormVisible(false);
-      fetchSites();
     } catch (err) {
       toast.current?.show({
         severity: "error",
@@ -83,33 +80,26 @@ export default function SitePage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
       message:
         "Voulez-vous supprimer ce site définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
-
-      // --- Personnalisation des labels ---
+      icon: "pi pi-info-circle",
       acceptLabel: "Supprimer",
       rejectLabel: "Annuler",
-
-      // --- Styling des boutons ---
-      // Ajout de classes de mise en page (flexbox) et de style
       acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
       rejectClassName:
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-
-      // --- Style du dialogue lui-même (optionnel) ---
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteSite(id);
-          setAllSite((prev) => prev.filter((s) => s.id !== id));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
-            detail: "Site retirée",
+            detail: "Site retiré",
           });
         } catch (err) {
           toast.current?.show({
@@ -122,6 +112,7 @@ export default function SitePage() {
     });
   };
 
+  // Filtrage et pagination (inchangés)
   const filtered = allSite.filter((s) =>
     `${s.nom} ${s.adresse}`.toLowerCase().includes(query.toLowerCase()),
   );
@@ -131,11 +122,38 @@ export default function SitePage() {
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 5: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header */}
+      {/* Header (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
@@ -161,7 +179,7 @@ export default function SitePage() {
         />
       </div>
 
-      {/* Search */}
+      {/* Search (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex justify-between items-center">
         <div className="relative group max-w-md w-full">
           <Search
@@ -177,7 +195,7 @@ export default function SitePage() {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Table Section (inchangé) */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -197,21 +215,16 @@ export default function SitePage() {
                   setDetailsVisible(true);
                 }}
               >
-                {/* Nom */}
                 <td className="px-6 py-4">
                   <span className="text-sm font-bold text-slate-700">
                     {s.nom}
                   </span>
                 </td>
-
-                {/* Adresse stylisée comme un "Code" */}
                 <td className="px-6 py-4">
                   <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-bold text-xs border border-emerald-100 flex items-center gap-1 w-fit">
                     <Hash size={12} /> {s.adresse}
                   </span>
                 </td>
-
-                {/* Actions */}
                 <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-2">
                     <button
@@ -248,7 +261,7 @@ export default function SitePage() {
           </tbody>
         </table>
 
-        {!loading && filtered.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <div className="p-20 text-center">
             <MapPinned size={48} className="mx-auto text-slate-200 mb-4" />
             <p className="text-slate-500 font-medium">Aucun site trouvé</p>
@@ -265,6 +278,7 @@ export default function SitePage() {
         />
       </div>
 
+      {/* Modals (inchangés) */}
       <SiteForm
         visible={formVisible}
         onHide={() => setFormVisible(false)}

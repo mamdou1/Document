@@ -7,6 +7,13 @@ import { getMetaById } from "../../api/metaField";
 import { Toast } from "primereact/toast";
 import { uploadDocumentFile } from "../../api/ulpoald";
 
+// ✅ Définir le type correctement
+interface DocumentPayload {
+  type_document_id: number | null;
+  values: Array<{ id: number; value: string }>;
+  id?: number;
+}
+
 export default function DocumentForm({
   visible,
   onHide,
@@ -30,10 +37,10 @@ export default function DocumentForm({
       setDocumentType_id(editingDoc.type_document_id);
 
       // 2. Charger les valeurs existantes
-      const initialValues: Record<string, any> = {}; // ✅ Typage explicite
+      const initialValues: Record<string, any> = {};
       if (editingDoc.values) {
         editingDoc.values.forEach((v: any) => {
-          initialValues[v.meta_field_id] = v.value; // ✅ Plus d'erreur
+          initialValues[v.meta_field_id] = v.value;
         });
       }
       setValues(initialValues);
@@ -43,7 +50,6 @@ export default function DocumentForm({
   // Effet pour initialiser le type sélectionné depuis les props
   useEffect(() => {
     if (selectedTypeId && !editingDoc) {
-      // ✅ Seulement en mode création
       setDocumentType_id(selectedTypeId);
     }
   }, [selectedTypeId, editingDoc]);
@@ -54,7 +60,7 @@ export default function DocumentForm({
       getMetaById(String(documentType_id)).then((res) => {
         setMetaFields(res);
         if (!editingDoc) {
-          setValues({}); // Reset seulement en création
+          setValues({});
         }
       });
     } else {
@@ -77,30 +83,36 @@ export default function DocumentForm({
     }
 
     try {
-      // ✅ Définir le type du payload
-      interface DocumentPayload {
-        type_document_id: number | null;
-        values: Record<string, any>;
-        id?: number | string; // Optionnel pour l'édition
+      // ✅ Construire le payload avec le bon format
+      const valuesArray = [];
+
+      if (editingDoc?.values) {
+        // En mode édition, on utilise les IDs existants
+        for (const existingValue of editingDoc.values) {
+          if (values[existingValue.meta_field_id] !== undefined) {
+            valuesArray.push({
+              id: existingValue.id,
+              value: values[existingValue.meta_field_id],
+            });
+          }
+        }
       }
 
-      // 1️⃣ Créer ou modifier le document
+      // ✅ Le payload a maintenant la bonne structure
       const payload: DocumentPayload = {
         type_document_id: documentType_id,
-        values: Object.fromEntries(
-          Object.entries(values).filter(([_, v]) => !(v instanceof File)),
-        ),
+        values: valuesArray,
       };
 
-      // Si on est en mode édition, ajouter l'ID
+      // ✅ Ajouter l'id si on est en mode édition
       if (editingDoc?.id) {
-        payload.id = editingDoc.id; // ✅ Plus d'erreur
+        payload.id = editingDoc.id; // ← Plus d'erreur TypeScript
       }
 
       const result = await onSubmit(payload);
       console.log("✅ Document sauvegardé:", result);
 
-      // 2️⃣ Uploader les fichiers séparément (uniquement pour les nouveaux fichiers)
+      // Uploader les fichiers séparément
       for (const [fieldId, value] of Object.entries(values)) {
         if (value instanceof File) {
           const docId = editingDoc?.id || result.id;
@@ -175,7 +187,7 @@ export default function DocumentForm({
               placeholder="Sélectionner..."
               className="w-full bg-white border-emerald-100 rounded-xl shadow-sm"
               filter
-              disabled={!!editingDoc} // Désactiver en mode édition
+              disabled={!!editingDoc}
             />
           </div>
 

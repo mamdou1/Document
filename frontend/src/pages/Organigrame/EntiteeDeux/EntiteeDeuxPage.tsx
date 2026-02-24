@@ -1,23 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../../components/layout/Layoutt";
 import EntiteeDeuxDetails from "./EntiteeDeuxDetails";
 import EntiteeDeuxForm from "./EntiteeDeuxForm";
 import EntiteeDeuxAjoutFonction from "./EntiteeDeuxAjoutFonction";
 import { EntiteeDeux, EntiteeUn, EntiteeTrois } from "../../../interfaces";
 import { confirmDialog } from "primereact/confirmdialog";
-import {
-  getAllEntiteeDeux,
-  createEntiteeDeux,
-  updateEntiteeDeuxById,
-  deleteEntiteeDeuxById,
-} from "../../../api/entiteeDeux";
-import { getAllEntiteeUn } from "../../../api/entiteeUn";
-import {
-  createEntiteeTrois,
-  getEntiteeTroisByEntiteeDeux,
-  updateEntiteeTroisById,
-} from "../../../api/entiteeTrois";
-import { getFunctionsByEntiteeDeux } from "../../../api/entiteeDeux";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import Pagination from "../../../components/layout/Pagination";
@@ -35,32 +22,77 @@ import {
   ChevronRight,
   GitMerge,
   Briefcase,
-  Calendar,
+  XCircle,
 } from "lucide-react";
 import EntiteeTroisForm from "../EntiteeTrois/EntiteeTroisForm";
 import EntiteeTroisAjoutFonction from "../EntiteeTrois/EntiteeTroisAjoutFonction";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useEntiteeDeux,
+  useCreateEntiteeDeux,
+  useUpdateEntiteeDeux,
+  useDeleteEntiteeDeux,
+} from "../../../hooks/useEntiteeDeux";
+
+import {
+  useEntiteeTrois,
+  useCreateEntiteeTrois,
+  useUpdateEntiteeTrois,
+} from "../../../hooks/useEntiteeTrois";
+
+import { useEntiteeUn } from "../../../hooks/useEntiteeUn";
+import { getEntiteeTroisByEntiteeDeux } from "../../../api/entiteeTrois";
+import { getFunctionsByEntiteeDeux } from "../../../api/entiteeDeux";
+
 export default function EntiteeDeuxPage() {
-  const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
-  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
-  const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par les hooks
+  const {
+    data: allEntiteeDeux = [],
+    isLoading: isLoadingDeux,
+    error: errorDeux,
+    refetch: refetchDeux,
+  } = useEntiteeDeux();
+
+  const {
+    data: allEntiteeUn = [],
+    isLoading: isLoadingUn,
+    error: errorUn,
+    refetch: refetchUn,
+  } = useEntiteeUn();
+
+  const {
+    data: allEntiteeTrois = [],
+    isLoading: isLoadingTrois,
+    error: errorTrois,
+    refetch: refetchTrois,
+  } = useEntiteeTrois();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createDeuxMutation = useCreateEntiteeDeux();
+  const updateDeuxMutation = useUpdateEntiteeDeux();
+  const deleteDeuxMutation = useDeleteEntiteeDeux();
+  const createTroisMutation = useCreateEntiteeTrois();
+  const updateTroisMutation = useUpdateEntiteeTrois();
+
+  // États UI
   const [selected, setSelected] = useState<EntiteeDeux | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Partial<EntiteeDeux> | null>(null);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   // États pour les accordéons
   const [expandedEntitee, setExpandedEntitee] = useState<number | null>(null);
-  const [entiteeTrois, setEntiteeTrois] = useState<
+  const [entiteeTroisMap, setEntiteeTroisMap] = useState<
     Record<number, EntiteeTrois[]>
   >({});
-  const [fonctions, setFonctions] = useState<Record<number, any[]>>({});
+  const [fonctionsMap, setFonctionsMap] = useState<Record<number, any[]>>({});
   const [expandedSections, setExpandedSections] = useState<
     Record<number, boolean>
   >({});
@@ -73,43 +105,19 @@ export default function EntiteeDeuxPage() {
     useState<EntiteeTrois | null>(null);
   const [isEditingTrois, setIsEditingTrois] = useState(false);
 
-  const fetchEntiteeDeux = async () => {
-    setLoading(true);
-    try {
-      const [div, serv] = await Promise.all([
-        getAllEntiteeDeux(),
-        getAllEntiteeUn(),
-      ]);
-      setAllEntiteeDeux(Array.isArray(div) ? div : []);
-      setAllEntiteeUn(Array.isArray(serv) ? serv : []);
-    } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Chargement échoué",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEntiteeDeux();
-  }, []);
-
-  // Charger les détails d'une entiteeDeux quand on l'ouvre
+  // ✅ Charger les détails d'une entiteeDeux quand on l'ouvre
   const loadEntiteeDetails = async (entiteeId: number) => {
     try {
       // Charger les sections (EntiteeTrois)
       const secData = await getEntiteeTroisByEntiteeDeux(entiteeId);
-      setEntiteeTrois((prev) => ({
+      setEntiteeTroisMap((prev) => ({
         ...prev,
         [entiteeId]: Array.isArray(secData) ? secData : [],
       }));
 
       // Charger les fonctions
       const funcData = await getFunctionsByEntiteeDeux(entiteeId);
-      setFonctions((prev) => ({
+      setFonctionsMap((prev) => ({
         ...prev,
         [entiteeId]: funcData || [],
       }));
@@ -136,13 +144,14 @@ export default function EntiteeDeuxPage() {
     }));
   };
 
+  // ✅ ÉTAPE 3: Remplacer les handlers
   const onEdit = async (payload: Partial<EntiteeDeux>) => {
     if (!editing?.id) return;
     try {
-      const updated = await updateEntiteeDeuxById(editing.id, payload);
-      setAllEntiteeDeux((s) =>
-        s.map((it) => (it.id === updated.id ? updated : it)),
-      );
+      await updateDeuxMutation.mutateAsync({
+        id: editing.id,
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Mis à jour",
@@ -154,7 +163,7 @@ export default function EntiteeDeuxPage() {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de mise à jour",
+        detail: err?.response?.data?.message || "Échec de mise à jour",
       });
     }
   };
@@ -172,10 +181,7 @@ export default function EntiteeDeuxPage() {
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteEntiteeDeuxById(id);
-          setAllEntiteeDeux((s) =>
-            s.filter((x) => Number(x.id) !== Number(id)),
-          );
+          await deleteDeuxMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
@@ -185,7 +191,7 @@ export default function EntiteeDeuxPage() {
           toast.current?.show({
             severity: "error",
             summary: "Erreur",
-            detail: "Suppression impossible",
+            detail: err?.response?.data?.message || "Suppression impossible",
           });
         }
       },
@@ -194,37 +200,36 @@ export default function EntiteeDeuxPage() {
 
   const onCreate = async (payload: Partial<EntiteeDeux>) => {
     try {
-      const saved = await createEntiteeDeux(payload);
-      setAllEntiteeDeux((s) => [saved, ...s]);
+      await createDeuxMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
         detail: "Élément créé",
       });
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de création",
+        detail: err?.response?.data?.message || "Échec de création",
       });
     }
   };
 
   const onCreateTrois = async (payload: Partial<EntiteeTrois>) => {
     try {
-      const saved = await createEntiteeTrois(payload);
-      setAllEntiteeTrois((s) => [saved, ...s]);
+      await createTroisMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: `${allEntiteeTrois[0]?.titre} créé`,
+        detail: `${allEntiteeTrois[0]?.titre || "Section"} créé`,
       });
-      //setFormVisible(false);
+      setFormTroisVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de création",
+        detail: err?.response?.data?.message || "Échec de création",
       });
     }
   };
@@ -232,10 +237,10 @@ export default function EntiteeDeuxPage() {
   const onEditTrois = async (payload: Partial<EntiteeTrois>) => {
     if (!editingTrois?.id) return;
     try {
-      const updated = await updateEntiteeTroisById(editingTrois.id, payload);
-      setAllEntiteeTrois((s) =>
-        s.map((it) => (it.id === updated.id ? updated : it)),
-      );
+      await updateTroisMutation.mutateAsync({
+        id: editingTrois.id,
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Mis à jour",
@@ -247,11 +252,12 @@ export default function EntiteeDeuxPage() {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de mise à jour",
+        detail: err?.response?.data?.message || "Échec de mise à jour",
       });
     }
   };
 
+  // Filtrage et pagination
   const filtered = allEntiteeDeux.filter((s) => {
     const isPopulated = s.code !== null && s.libelle !== null;
     if (!isPopulated) return false;
@@ -262,6 +268,40 @@ export default function EntiteeDeuxPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
+
+  // ✅ ÉTAPE 4: Gérer les états de chargement/erreur
+  const isLoading = isLoadingDeux || isLoadingUn || isLoadingTrois;
+  const error = errorDeux || errorUn || errorTrois;
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => {
+              refetchDeux();
+              refetchUn();
+              refetchTrois();
+            }}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -275,10 +315,11 @@ export default function EntiteeDeuxPage() {
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-              {allEntiteeDeux[0]?.titre || "Chargement..."}
+              {allEntiteeDeux[0]?.titre || "Entité 2"}
             </h1>
             <p className="text-slate-500 font-medium">
-              Gestion des {allEntiteeDeux[0]?.titre?.toLowerCase()}s
+              Gestion des{" "}
+              {allEntiteeDeux[0]?.titre?.toLowerCase() || "divisions"}s
             </p>
           </div>
         </div>
@@ -286,7 +327,10 @@ export default function EntiteeDeuxPage() {
           label={`Nouveau ${allEntiteeDeux[0]?.titre || "Élément"}`}
           icon={<Plus size={20} className="mr-2" />}
           className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all"
-          onClick={() => setFormVisible(true)}
+          onClick={() => {
+            setEditing(null);
+            setFormVisible(true);
+          }}
         />
       </div>
 
@@ -314,8 +358,8 @@ export default function EntiteeDeuxPage() {
             const parentUn = allEntiteeUn.find(
               (un) => un.id === entitee.entitee_un_id,
             );
-            const entiteeSections = entiteeTrois[entitee.id] || [];
-            const entiteeFonctions = fonctions[entitee.id] || [];
+            const entiteeSections = entiteeTroisMap[entitee.id] || [];
+            const entiteeFonctions = fonctionsMap[entitee.id] || [];
 
             return (
               <div
@@ -326,7 +370,7 @@ export default function EntiteeDeuxPage() {
                     : "border-slate-100"
                 }`}
               >
-                {/* HEADER DE L'ENTITEE (clic pour déplier) */}
+                {/* HEADER DE L'ENTITEE */}
                 <div
                   onClick={() => toggleEntitee(entitee)}
                   className={`w-full flex items-center justify-between p-5 transition-all cursor-pointer ${
@@ -373,7 +417,6 @@ export default function EntiteeDeuxPage() {
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* BOUTON EYE - Ouvre les détails */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -386,7 +429,6 @@ export default function EntiteeDeuxPage() {
                       <Eye size={18} />
                     </button>
 
-                    {/* BOUTON AJOUTER FONCTION */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -399,7 +441,6 @@ export default function EntiteeDeuxPage() {
                       <PlusCircle size={18} />
                     </button>
 
-                    {/* BOUTON MODIFIER */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -412,7 +453,6 @@ export default function EntiteeDeuxPage() {
                       <Pencil size={18} />
                     </button>
 
-                    {/* BOUTON SUPPRIMER */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -424,7 +464,6 @@ export default function EntiteeDeuxPage() {
                       <Trash2 size={18} />
                     </button>
 
-                    {/* FLECHE DÉPLI/REPLI */}
                     {isExpanded ? (
                       <ChevronDown
                         size={20}
@@ -436,17 +475,16 @@ export default function EntiteeDeuxPage() {
                   </div>
                 </div>
 
-                {/* CONTENU DÉPLIÉ (Sections et Fonctions) */}
+                {/* CONTENU DÉPLIÉ */}
                 {isExpanded && (
                   <div className="border-t border-slate-100 p-5 space-y-6 bg-slate-50/30">
-                    {/* SECTION SECTIONS (EntiteeTrois) */}
-                    <div className=" space-y-3">
+                    {/* SECTION SECTIONS */}
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
                           <GitMerge size={14} className="text-emerald-500" />
                           Sections rattachées ({entiteeSections.length})
                         </h4>
-                        {/* Bouton Nouvelle section */}
                         <Button
                           onClick={(e) => {
                             setEditingTrois({ entitee_deux_id: entitee.id });
@@ -455,7 +493,7 @@ export default function EntiteeDeuxPage() {
                             e.stopPropagation();
                           }}
                           className="flex items-center gap-2 px-4 py-2.5 text-orange-600 font-bold bg-orange-50 hover:bg-orange-600 hover:text-white rounded-xl transition-all border-none shadow-sm hover:shadow-md"
-                          tooltip={`Ajouter une nouvelle ${entitee.titre || "section"}`}
+                          tooltip={`Ajouter une nouvelle section`}
                           tooltipOptions={{ position: "top" }}
                         >
                           <PlusCircle size={16} />
@@ -464,6 +502,7 @@ export default function EntiteeDeuxPage() {
                           </span>
                         </Button>
                       </div>
+
                       {entiteeSections.length > 0 ? (
                         <div className="space-y-2">
                           {entiteeSections.map((section) => (
@@ -515,25 +554,24 @@ export default function EntiteeDeuxPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3 flex-shrink-0">
-                                  {/* Bouton Ajouter fonction */}
                                   <Button
                                     onClick={(e) => {
-                                      // Ici on passe l'entité parente, pas la division
                                       setIsEditingTrois(true);
-                                      setEditingTrois(section); // ou un état spécifique pour la création
+                                      setEditingTrois(section);
                                       setFormTroisVisible(true);
                                       e.stopPropagation();
                                     }}
                                     className="flex items-center gap-2 p-2 text-blue-600 font-bold bg-blue-50 hover:bg-blue-600 hover:text-white rounded-full transition-all border-none shadow-sm hover:shadow-md"
-                                    tooltip={`Modifier cet(te) ${entitee.titre || "division"}`}
+                                    tooltip={`Modifier cette section`}
                                     tooltipOptions={{ position: "top" }}
                                   >
                                     <Pencil size={16} />
                                   </Button>
                                   <Button
                                     onClick={(e) => {
-                                      e.stopPropagation();
+                                      setSelectedEntiteeTrois(section);
                                       setAjoutFonctionTroisVisible(true);
+                                      e.stopPropagation();
                                     }}
                                     className="flex items-center gap-2 px-4 py-2.5 text-emerald-600 font-bold bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border-none shadow-sm hover:shadow-md min-w-[120px] justify-center"
                                     tooltip="Ajouter une fonction"
@@ -544,7 +582,6 @@ export default function EntiteeDeuxPage() {
                                     </span>
                                   </Button>
 
-                                  {/* Flèche d'expansion */}
                                   {expandedSections[section.id] ? (
                                     <ChevronDown
                                       size={18}
@@ -559,14 +596,14 @@ export default function EntiteeDeuxPage() {
                                 </div>
                               </div>
 
-                              {/* CONTENU SECTION (Fonctions) */}
+                              {/* CONTENU SECTION */}
                               {expandedSections[section.id] && (
                                 <div className="border-t border-slate-100 p-4 bg-slate-50/30 ml-12">
-                                  {fonctions[entitee.id]
-                                    ?.filter(
+                                  {(fonctionsMap[entitee.id] || [])
+                                    .filter(
                                       (f) => f.entitee_trois_id === section.id,
                                     )
-                                    .map((f, idx) => (
+                                    .map((f) => (
                                       <div
                                         key={f.id}
                                         className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 hover:border-emerald-200 transition-all mb-2 last:mb-0"
@@ -601,7 +638,7 @@ export default function EntiteeDeuxPage() {
                                       </div>
                                     ))}
 
-                                  {fonctions[entitee.id]?.filter(
+                                  {(fonctionsMap[entitee.id] || []).filter(
                                     (f) => f.entitee_trois_id === section.id,
                                   ).length === 0 && (
                                     <p className="text-xs text-slate-400 italic text-center py-2">
@@ -647,6 +684,7 @@ export default function EntiteeDeuxPage() {
         />
       </div>
 
+      {/* Modals */}
       <EntiteeDeuxForm
         visible={formVisible}
         onHide={() => {
@@ -654,12 +692,12 @@ export default function EntiteeDeuxPage() {
           setEditing(null);
         }}
         onSubmit={editing ? onEdit : onCreate}
-        refresh={fetchEntiteeDeux}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || undefined}
         title={
           editing
-            ? `Modifier ${allEntiteeDeux[0]?.titre}`
-            : `Créer ${allEntiteeDeux[0]?.titre}`
+            ? `Modifier ${allEntiteeDeux[0]?.titre || "division"}`
+            : `Créer ${allEntiteeDeux[0]?.titre || "division"}`
         }
         entiteeUn={allEntiteeUn}
       />
@@ -698,25 +736,24 @@ export default function EntiteeDeuxPage() {
           setIsEditingTrois(false);
         }}
         onSubmit={isEditingTrois ? onEditTrois : onCreateTrois}
-        refresh={fetchEntiteeDeux}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editingTrois || undefined}
         title={
           isEditingTrois
-            ? "Modifier la structutre"
-            : "Créer un nouvelle structure"
+            ? "Modifier la structure"
+            : "Créer une nouvelle structure"
         }
         entiteeDeux={allEntiteeDeux}
       />
+
       <EntiteeTroisAjoutFonction
         visible={ajoutFonctionTroisVisible}
         onHide={() => setAjoutFonctionTroisVisible(false)}
         entiteeTrois={selectedEntiteeTrois}
         onSuccess={() => {
           if (selectedEntiteeTrois) {
-            // Recharger les détails de l'entité parente
             loadEntiteeDetails(selectedEntiteeTrois.entitee_deux_id);
           }
-          // ✅ Afficher le toast de succès
           toast.current?.show({
             severity: "success",
             summary: "Succès",

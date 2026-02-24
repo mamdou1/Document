@@ -20,15 +20,8 @@ import {
   Building2,
   GitMerge,
   Pencil,
+  XCircle,
 } from "lucide-react";
-import { getMetaById } from "../../api/metaField";
-import {
-  getDocuments,
-  createDocument,
-  deleteDocument,
-  updateDocument,
-} from "../../api/document";
-import { getTypeDocuments } from "../../api/typeDocument";
 import { Dropdown } from "primereact/dropdown";
 import Pagination from "../../components/layout/Pagination";
 import api from "../../api/axios";
@@ -37,10 +30,17 @@ import UploadPreview from "./UploadPreview";
 import { TypeDocument, Document } from "../../interfaces";
 import DocumentUploadPieces from "./DocumentUploadPieces";
 import DocumentDisponiblePieces from "./DocumentDisponiblePieces";
-import { getAllEntiteeUn } from "../../api/entiteeUn";
-import { getAllEntiteeDeux } from "../../api/entiteeDeux";
-import { getAllEntiteeTrois } from "../../api/entiteeTrois";
 import { useAuth } from "../../context/AuthContext";
+
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useInitialData,
+  useDocumentsByType,
+  useMetaFieldsByType,
+  useCreateDocument,
+  useUpdateDocument,
+  useDeleteDocument,
+} from "../../hooks/useDocuments";
 
 // Interfaces pour les entités
 interface Entitee {
@@ -54,39 +54,52 @@ interface Entitee {
 
 export default function DocumentPage() {
   const { user } = useAuth();
-  const [docs, setDocs] = useState<any[]>([]);
-  const [types, setTypes] = useState<TypeDocument[]>([]);
-  const [entitees, setEntitees] = useState<Entitee[]>([]);
+  const toast = useRef<Toast>(null);
+  const location = useLocation();
+
+  // ✅ ÉTAT 1: Remplacer les useState multiples par useInitialData
+  const {
+    documents: allDocs = [],
+    types = [],
+    entitees = [],
+    isLoading,
+    error,
+    refetch,
+  } = useInitialData();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateDocument();
+  const updateMutation = useUpdateDocument();
+  const deleteMutation = useDeleteDocument();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<any>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [typeCurrentPage, setTypeCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const typeItemsPerPage = 5;
-  const toast = useRef<Toast>(null);
   const [documentType_id, setDocumentType_id] = useState<number | null>(null);
-  const [metaFields, setMetaFields] = useState<any[]>([]);
   const [filteredTypes, setFilteredTypes] = useState<TypeDocument[]>([]);
 
   // États pour les accordéons imbriqués
   const [expandedEntitee, setExpandedEntitee] = useState<number | null>(null);
   const [expandedType, setExpandedType] = useState<number | null>(null);
-  const [documentsByType, setDocumentsByType] = useState<Record<number, any[]>>(
-    {},
-  );
-  const [loadingDocs, setLoadingDocs] = useState(false);
 
   const [tempFile, setTempFile] = useState<File | null>(null);
   const [targetDocId, setTargetDocId] = useState<string | null>(null);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [ajoutVisible, setAjoutVisible] = useState(false);
   const [disponibleVisible, setDisponibleVisible] = useState(false);
-  const location = useLocation();
   const [selectedNiveau, setSelectedNiveau] = useState<string | null>(null);
   const [editingDoc, setEditingDoc] = useState<Partial<Document> | null>(null);
   const [pendingTypeId, setPendingTypeId] = useState<number | null>(null);
+
+  // ✅ ÉTAT 3: Requêtes conditionnelles avec TanStack Query
+  const { data: typeDocuments = [] } = useDocumentsByType(documentType_id);
+  const { data: metaFields = [] } = useMetaFieldsByType(
+    documentType_id || expandedType || null,
+  );
 
   useEffect(() => {
     if (formVisible && pendingTypeId) {
@@ -96,7 +109,7 @@ export default function DocumentPage() {
   }, [formVisible, pendingTypeId]);
 
   // =============================================
-  // FONCTIONS UTILITAIRES POUR LES ACCÈS
+  // FONCTIONS UTILITAIRES POUR LES ACCÈS (inchangées)
   // =============================================
 
   const isUserAdmin = (): boolean => {
@@ -127,7 +140,6 @@ export default function DocumentPage() {
       trois: new Set<number>(),
     };
 
-    // Entité de la fonction
     if (user.fonction_details?.entitee_un?.id) {
       ids.un.add(user.fonction_details.entitee_un.id);
     }
@@ -138,7 +150,6 @@ export default function DocumentPage() {
       ids.trois.add(user.fonction_details.entitee_trois.id);
     }
 
-    // Entités des agent_access
     user.agent_access?.forEach((access) => {
       if (access.entitee_un?.id) ids.un.add(access.entitee_un.id);
       if (access.entitee_deux?.id) ids.deux.add(access.entitee_deux.id);
@@ -197,44 +208,7 @@ export default function DocumentPage() {
     });
   };
 
-  // Charger toutes les données
-  const load = async () => {
-    try {
-      const [resDocs, resTypes, resE1, resE2, resE3] = await Promise.all([
-        getDocuments(),
-        getTypeDocuments(),
-        getAllEntiteeUn(),
-        getAllEntiteeDeux(),
-        getAllEntiteeTrois(),
-      ]);
-
-      setDocs(resDocs);
-      setTypes(resTypes.typeDocument);
-
-      // Fusionner toutes les entités
-      const allEntitees: Entitee[] = [
-        ...(Array.isArray(resE1) ? resE1 : []).map((e: any) => ({
-          ...e,
-          type: "un" as const,
-        })),
-        ...(Array.isArray(resE2) ? resE2 : []).map((e: any) => ({
-          ...e,
-          type: "deux" as const,
-        })),
-        ...(Array.isArray(resE3) ? resE3 : []).map((e: any) => ({
-          ...e,
-          type: "trois" as const,
-        })),
-      ];
-      setEntitees(allEntitees);
-    } catch (error) {
-      console.error("❌ Erreur chargement:", error);
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
+  // ✅ PLUS BESOIN DE LA FONCTION load() NI DE useEffect !
 
   // LIRE LE PARAMÈTRE D'URL
   useEffect(() => {
@@ -244,19 +218,14 @@ export default function DocumentPage() {
     const niveaux = params.get("niveaux");
 
     if (typeId) {
-      // Cas 2.2 : Affichage direct des documents du type
       setDocumentType_id(Number(typeId));
       setSelectedNiveau(null);
-      loadDocumentsByType(Number(typeId));
     } else if (entitee) {
-      // Cas 2.1 : Affichage par niveau
       setSelectedNiveau(entitee);
 
-      // Récupérer les types accessibles pour ce niveau
       let filtered: TypeDocument[] = [];
 
       if (isUserAdmin()) {
-        // Admin voit tous les types du niveau
         filtered = types.filter((t) => {
           if (entitee === "un") return t.entitee_un_id !== null;
           if (entitee === "deux") return t.entitee_deux_id !== null;
@@ -264,12 +233,10 @@ export default function DocumentPage() {
           return false;
         });
       } else if (hasAdditionalAccess()) {
-        // Utilisateur avec accès supplémentaires
         filtered = getAccessibleTypesForNiveau(
           entitee as "un" | "deux" | "trois",
         );
       } else {
-        // Utilisateur sans accès supplémentaires - ne devrait pas arriver ici car cas 2.2 déjà traité
         filtered = [];
       }
 
@@ -277,7 +244,7 @@ export default function DocumentPage() {
     }
   }, [location.search, types]);
 
-  // Ajoutez cette fonction vers la ligne ~380, après handleDelete
+  // ✅ ÉTAPE 4: Remplacer onEdit
   const onEdit = async (payload: any) => {
     if (!editingDoc?.id) {
       console.error("❌ Aucun document sélectionné pour modification");
@@ -285,25 +252,10 @@ export default function DocumentPage() {
     }
 
     try {
-      // ✅ Convertir l'ID en string si nécessaire
-      const documentId = String(editingDoc.id);
-      const updated = await updateDocument(documentId, payload);
-
-      // Mettre à jour la liste des documents
-      setDocs((prevDocs) =>
-        prevDocs.map((doc) => (doc.id === updated.id ? updated : doc)),
-      );
-
-      // Mettre à jour également documentsByType si nécessaire
-      if (documentType_id) {
-        setDocumentsByType((prev) => ({
-          ...prev,
-          [documentType_id]:
-            prev[documentType_id]?.map((doc) =>
-              doc.id === updated.id ? updated : doc,
-            ) || [],
-        }));
-      }
+      await updateMutation.mutateAsync({
+        id: String(editingDoc.id),
+        data: payload,
+      });
 
       toast.current?.show({
         severity: "success",
@@ -325,14 +277,50 @@ export default function DocumentPage() {
     }
   };
 
+  // ✅ ÉTAPE 5: Remplacer handleSubmit
+  const handleSubmit = async (payload: any) => {
+    try {
+      await createMutation.mutateAsync(payload);
+      setFormVisible(false);
+      toast.current?.show({
+        severity: "success",
+        summary: "Succès",
+        detail: "Document archivé avec succès",
+      });
+    } catch (e) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail: "Impossible de créer le document",
+      });
+    }
+  };
+
+  // ✅ ÉTAPE 6: Remplacer handleDelete
+  const handleDelete = (id: string) => {
+    confirmDialog({
+      message: "Voulez-vous supprimer ce document définitivement ?",
+      header: "Confirmation",
+      icon: "pi pi-info-circle",
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+      style: { width: "450px" },
+      accept: async () => {
+        await deleteMutation.mutateAsync(id);
+        toast.current?.show({ severity: "success", summary: "Supprimé" });
+      },
+    });
+  };
+
   // FILTRER LES ENTITÉS PAR NIVEAU SÉLECTIONNÉ
   const filteredEntitees = useMemo(() => {
     if (!selectedNiveau) return [];
 
-    // D'abord, filtrer par niveau
     let entiteesDuNiveau = entitees.filter((e) => e.type === selectedNiveau);
 
-    // Si l'utilisateur a des accès supplémentaires, filtrer uniquement les entités accessibles
     if (hasAdditionalAccess() && !isUserAdmin()) {
       const accessibleIds = getUserAccessibleEntityIds();
       const targetSet =
@@ -360,26 +348,6 @@ export default function DocumentPage() {
     return grouped;
   }, [filteredTypes, types]);
 
-  // Charger les documents d'un type
-  const loadDocumentsByType = async (typeId: number) => {
-    if (documentsByType[typeId]) return;
-
-    setLoadingDocs(true);
-    try {
-      const res = await getDocuments();
-      const filtered = res.filter((d: any) => d.type_document_id === typeId);
-      setDocumentsByType((prev) => ({ ...prev, [typeId]: filtered }));
-
-      // Charger les metaFields pour ce type
-      const meta = await getMetaById(String(typeId));
-      setMetaFields(meta);
-    } catch (error) {
-      console.error("❌ Erreur chargement documents:", error);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
-
   const toggleEntitee = (entiteeId: number) => {
     setExpandedEntitee(expandedEntitee === entiteeId ? null : entiteeId);
     setExpandedType(null);
@@ -390,46 +358,8 @@ export default function DocumentPage() {
       setExpandedType(null);
     } else {
       setExpandedType(typeId);
-      await loadDocumentsByType(typeId);
+      setDocumentType_id(typeId);
     }
-  };
-
-  const handleSubmit = async (payload: any) => {
-    try {
-      const cr = await createDocument(payload);
-      setDocs((s) => [cr, ...s]);
-      setFormVisible(false);
-      toast.current?.show({
-        severity: "success",
-        summary: "Succès",
-        detail: "Document archivé avec succès",
-      });
-    } catch (e) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de créer le document",
-      });
-    }
-  };
-
-  const handleDelete = (id: string) => {
-    confirmDialog({
-      message: "Voulez-vous supprimer ce document définitivement ?",
-      header: "Confirmation",
-      icon: "pi pi-info-circle",
-      acceptLabel: "Supprimer",
-      rejectLabel: "Annuler",
-      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
-      rejectClassName:
-        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-      style: { width: "450px" },
-      accept: async () => {
-        await deleteDocument(id);
-        setDocs((s) => s.filter((x) => String(x.id) !== String(id)));
-        toast.current?.show({ severity: "success", summary: "Supprimé" });
-      },
-    });
   };
 
   const confirmUpload = async () => {
@@ -448,24 +378,46 @@ export default function DocumentPage() {
       });
       setPreviewVisible(false);
       setTempFile(null);
-      load();
+      refetch();
     } catch (err) {
       toast.current?.show({ severity: "error", summary: "Échec de l'envoi" });
     }
   };
 
+  // ✅ ÉTAPE 7: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   // Déterminer ce qu'il faut afficher
   const getDisplayContent = () => {
     const params = new URLSearchParams(location.search);
     const typeId = params.get("typeId");
-    const entitee = params.get("entitee");
 
-    // ===== CAS 2.2 : Utilisateur sans accès supplémentaires =====
-    // Affichage direct des documents du type sélectionné
+    // ===== CAS 2.2 : Affichage direct des documents du type sélectionné
     if (typeId) {
-      const typeDocuments = documentsByType[Number(typeId)] || [];
-
-      // État vide
       if (typeDocuments.length === 0) {
         return (
           <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-100">
@@ -487,7 +439,6 @@ export default function DocumentPage() {
         );
       }
 
-      // Pagination
       const paginatedDocs = typeDocuments.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage,
@@ -495,23 +446,6 @@ export default function DocumentPage() {
 
       return (
         <div className="space-y-4">
-          {/* En-tête avec bouton Nouveau document */}
-          {/* <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-emerald-800">
-              Documents du type sélectionné
-            </h2>
-            <Button
-              label="Nouveau document"
-              icon={<Plus size={16} />}
-              onClick={() => {
-                setDocumentType_id(Number(typeId));
-                setFormVisible(true);
-              }}
-              className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm"
-            />
-          </div> */}
-
-          {/* Tableau des documents avec métadonnées */}
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -592,7 +526,7 @@ export default function DocumentPage() {
                           <CloudDownload size={18} />
                         </button>
                         <button
-                          onClick={() => handleDelete(doc.id)}
+                          onClick={() => handleDelete(String(doc.id))}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         >
                           <Trash2 size={18} />
@@ -605,7 +539,6 @@ export default function DocumentPage() {
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="mt-4 flex justify-center">
             <Pagination
               currentPage={currentPage}
@@ -618,8 +551,7 @@ export default function DocumentPage() {
       );
     }
 
-    // ===== CAS 1 : ADMIN ou Utilisateur avec accès supplémentaires =====
-    // Affichage par entité avec accordéons
+    // ===== CAS 1 : ADMIN ou Utilisateur avec accès supplémentaires
     if (selectedNiveau) {
       return (
         <div className="space-y-4">
@@ -711,9 +643,10 @@ export default function DocumentPage() {
                         {entiteeTypes.length > 0 ? (
                           entiteeTypes.map((type) => {
                             const isTypeExpanded = expandedType === type.id;
-                            const typeDocuments =
-                              documentsByType[type.id] || [];
-                            const paginatedDocs = typeDocuments.slice(
+                            const typeDocs = allDocs.filter(
+                              (d) => d.type_document_id === type.id,
+                            );
+                            const paginatedDocs = typeDocs.slice(
                               (currentPage - 1) * itemsPerPage,
                               currentPage * itemsPerPage,
                             );
@@ -762,7 +695,7 @@ export default function DocumentPage() {
                                         </span>
                                       </div>
                                       <p className="text-[10px] text-slate-500">
-                                        {typeDocuments.length} document(s)
+                                        {typeDocs.length} document(s)
                                       </p>
                                     </div>
                                   </div>
@@ -770,7 +703,7 @@ export default function DocumentPage() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setPendingTypeId(type.id); // ✅ Stocker l'ID avant d'ouvrir
+                                        setPendingTypeId(type.id);
                                         setEditingDoc(null);
                                         setFormVisible(true);
                                       }}
@@ -796,7 +729,7 @@ export default function DocumentPage() {
                                 {/* TABLEAU DES DOCUMENTS */}
                                 {isTypeExpanded && (
                                   <div className="border-t border-slate-100 p-4 bg-slate-50/30">
-                                    {typeDocuments.length > 0 ? (
+                                    {typeDocs.length > 0 ? (
                                       <>
                                         <div className="overflow-x-auto">
                                           <table className="w-full text-left border-collapse">
@@ -866,11 +799,10 @@ export default function DocumentPage() {
                                                         e.stopPropagation()
                                                       }
                                                     >
-                                                      {/* AJOUTEZ CE BOUTON MODIFIER */}
                                                       <button
                                                         onClick={(e) => {
                                                           e.stopPropagation();
-                                                          setEditingDoc(doc); // ✅ Document complet
+                                                          setEditingDoc(doc);
                                                           setPendingTypeId(
                                                             type.id,
                                                           );
@@ -882,7 +814,6 @@ export default function DocumentPage() {
                                                         <Pencil size={18} />
                                                       </button>
 
-                                                      {/* Boutons existants */}
                                                       <button
                                                         onClick={(e) => {
                                                           setSelected(doc);
@@ -911,7 +842,9 @@ export default function DocumentPage() {
                                                       </button>
                                                       <button
                                                         onClick={() =>
-                                                          handleDelete(doc.id)
+                                                          handleDelete(
+                                                            String(doc.id),
+                                                          )
                                                         }
                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                                       >
@@ -925,12 +858,11 @@ export default function DocumentPage() {
                                           </table>
                                         </div>
 
-                                        {/* Pagination */}
                                         <div className="mt-4 flex justify-center">
                                           <Pagination
                                             currentPage={currentPage}
                                             itemsPerPage={itemsPerPage}
-                                            totalItems={typeDocuments.length}
+                                            totalItems={typeDocs.length}
                                             onPageChange={setCurrentPage}
                                           />
                                         </div>
@@ -990,7 +922,6 @@ export default function DocumentPage() {
       );
     }
 
-    // Aucune sélection
     return (
       <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-100">
         <div className="inline-flex p-4 bg-slate-50 rounded-full text-slate-300 mb-4">
@@ -1057,11 +988,11 @@ export default function DocumentPage() {
           setFormVisible(false);
           setEditingDoc(null);
         }}
-        onSubmit={editingDoc ? onEdit : handleSubmit} // ✅ Choisir la bonne fonction
-        refresh={load}
+        onSubmit={editingDoc ? onEdit : handleSubmit}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         documentType={types}
         selectedTypeId={documentType_id}
-        editingDoc={editingDoc} // ✅ Passer le document à éditer
+        editingDoc={editingDoc}
       />
       <DocumentDetails
         visible={detailsVisible}
@@ -1081,6 +1012,7 @@ export default function DocumentPage() {
         visible={ajoutVisible}
         onHide={() => setAjoutVisible(false)}
         document={selected}
+        onSuccess={() => refetch()} // ✅ Recharger après upload
       />
       <DocumentDisponiblePieces
         visible={disponibleVisible}

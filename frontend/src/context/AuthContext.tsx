@@ -3,14 +3,6 @@ import api from "../api/axios";
 import type { User } from "../interfaces";
 import type { InscriptionPayload } from "../interfaces";
 
-// interface AuthContextValue {
-//   user: User | null;
-//   loading: boolean;
-//   login: (phone: string, password: string) => Promise<void>;
-//   logout: () => void;
-//   inscription: (data: InscriptionPayload) => Promise<void>;
-// }
-
 export interface AuthContextValue {
   user: User | null;
   loading: boolean;
@@ -29,12 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setloading] = useState<boolean>(true);
   const [permissions, setPermissions] = useState<string[]>([]);
-
-  // useEffect(() => {
-  //   const stored = localStorage.getItem("user");
-  //   if (stored) setUser(JSON.parse(stored));
-  //   setloading(false);
-  // }, []);
 
   const can = (resource: string, action?: string) => {
     if (!permissions.length) return false;
@@ -80,10 +66,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // localStorage.setItem("user", JSON.stringify(me.data));
   };
 
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    setUser(null);
+  const logout = async () => {
+    try {
+      await api.post("/auth/deconnexion");
+    } catch (err) {
+      console.error("Erreur logout backend:", err);
+    } finally {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("permissions");
+
+      setUser(null);
+      setPermissions([]);
+    }
   };
 
   const inscription = async (data: InscriptionPayload) => {

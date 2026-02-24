@@ -3,7 +3,17 @@ import Layout from "../../components/layout/Layoutt";
 import { Toast } from "primereact/toast";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
-import { Search, Layers, FileText, Building2, GitMerge } from "lucide-react";
+import {
+  Search,
+  Layers,
+  FileText,
+  Building2,
+  GitMerge,
+  Eye,
+  Pencil,
+  Trash2,
+  CloudDownload,
+} from "lucide-react";
 import { getMetaById } from "../../api/metaField";
 import { getDocuments } from "../../api/document";
 import { getTypeDocuments } from "../../api/typeDocument";
@@ -22,6 +32,8 @@ import {
   getAllEntiteeTrois,
   getEntiteeTroisTitre,
 } from "../../api/entiteeTrois";
+import DocumentDetails from "../Document/DocumentDetails";
+import RechercheUploadPieces from "./RechercheUploadPieces";
 
 export default function Recherche() {
   const { user } = useAuth();
@@ -40,6 +52,10 @@ export default function Recherche() {
   const [filteredTypesByEntitee, setFilteredTypesByEntitee] = useState<
     TypeDocument[]
   >([]);
+
+  const [selected, setSelected] = useState<any>(null);
+  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [ajoutVisible, setAjoutVisible] = useState(false);
 
   // Titres dynamiques
   const [titres, setTitres] = useState<{
@@ -552,6 +568,9 @@ export default function Recherche() {
                   {m.label}
                 </th>
               ))}
+              <th className="p-5 text-[11px] font-black text-emerald-800 uppercase w-24">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-emerald-50">
@@ -559,7 +578,11 @@ export default function Recherche() {
               paginated.map((d) => (
                 <tr
                   key={d.id}
-                  className="hover:bg-emerald-50/40 transition-colors"
+                  onClick={() => {
+                    setSelected(d);
+                    setDetailsVisible(true);
+                  }}
+                  className="cursor-pointer hover:bg-emerald-50/40 transition-colors"
                 >
                   <td className="p-5">
                     <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">
@@ -579,6 +602,34 @@ export default function Recherche() {
                       </td>
                     );
                   })}
+                  <td
+                    className="px-6 py-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelected(d);
+                          setDetailsVisible(true);
+                        }}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        title="Voir détails"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          setSelected(d);
+                          setAjoutVisible(true);
+                          e.stopPropagation();
+                        }}
+                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                        title="Chargement des fichiers"
+                      >
+                        <CloudDownload size={18} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
           </tbody>
@@ -603,6 +654,17 @@ export default function Recherche() {
         itemsPerPage={itemsPerPage}
         totalItems={filtered.length}
         onPageChange={setCurrentPage}
+      />
+      <DocumentDetails
+        visible={detailsVisible}
+        onHide={() => setDetailsVisible(false)}
+        doc={selected}
+      />
+      <RechercheUploadPieces
+        visible={ajoutVisible}
+        onHide={() => setAjoutVisible(false)}
+        document={selected}
+        onSuccess={() => {}} // ✅ Recharger après upload
       />
     </Layout>
   );

@@ -132,14 +132,39 @@ export default function PiecesMetaForm({
     if (!piece?.id) return;
 
     try {
+      // ✅ Vérifier s'il existe déjà un champ de type "file"
+      const hasFileField = fields.some((field) => field.type === "file");
+
+      // ✅ Préparer tous les champs à sauvegarder
+      let fieldsToSave = [...fields];
+
+      // ✅ Si aucun champ "file" n'existe, en ajouter un automatiquement
+      if (!hasFileField) {
+        const defaultFileField = {
+          id: "temp-file-" + Date.now(),
+          label: "Fichier",
+          type: "file",
+          required: true,
+          name: "fichier",
+        };
+        fieldsToSave.push(defaultFileField);
+
+        toast.current?.show({
+          severity: "info",
+          summary: "Champ ajouté automatiquement",
+          detail: "Un champ 'Fichier' obligatoire a été ajouté",
+          life: 3000,
+        });
+      }
+
       // Traiter chaque champ
-      for (const field of fields) {
+      for (const field of fieldsToSave) {
         const payload = {
           name: field.label.toLowerCase().replace(/\s+/g, "_"),
           label: field.label,
           field_type: field.type,
           required: field.required,
-          position: fields.indexOf(field),
+          position: fieldsToSave.indexOf(field),
         };
 
         if (field.id && !String(field.id).startsWith("temp-")) {
@@ -154,7 +179,9 @@ export default function PiecesMetaForm({
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: "Métadonnées enregistrées avec succès",
+        detail: hasFileField
+          ? "Métadonnées enregistrées avec succès"
+          : "Métadonnées enregistrées avec un champ Fichier automatique",
       });
 
       if (refresh) refresh();

@@ -4,12 +4,6 @@ import DroitDetails from "./DroitDetails";
 import DroitForm from "./DroitForm";
 import DroitPermissionForm from "./DroitPermissionForm";
 import type { Droit } from "../../interfaces";
-import {
-  getDroits,
-  createDroit,
-  updateDroitById,
-  deleteDroitById,
-} from "../../api/droit";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { confirmDialog } from "primereact/confirmdialog";
@@ -22,55 +16,52 @@ import {
   Trash2,
   CalendarDays,
   ShieldCheck,
+  XCircle,
 } from "lucide-react";
 import { Boxes } from "lucide-react";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useDroits,
+  useCreateDroit,
+  useUpdateDroit,
+  useDeleteDroit,
+} from "../../hooks/useDroits";
+
 export default function DroitPage() {
-  const [allDroits, setAllDroits] = useState<Droit[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par useDroits
+  const { data: allDroits = [], isLoading, error, refetch } = useDroits();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateDroit();
+  const updateMutation = useUpdateDroit();
+  const deleteMutation = useDeleteDroit();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<Droit | null>(null);
-  const [loading, setLoading] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [editing, setEditing] = useState<Partial<Droit> | null>(null);
-  const toast = useRef<Toast>(null);
-
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-
   const [permissionModal, setPermissionModal] = useState(false);
   const [selectedDroitId, setSelectedDroitId] = useState<number | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const data = await getDroits();
-      setAllDroits(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de charger les droits",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ PLUS BESOIN DE LA FONCTION load() NI DE useEffect !
 
-  useEffect(() => {
-    load();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer onCreate
   const onCreate = async (payload: Partial<Droit>) => {
     try {
-      const saved = await createDroit(payload);
-      setAllDroits((s) => [saved, ...s]);
+      await createMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
         detail: "Droit créé avec succès",
       });
-      //setFormVisible(false);
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
@@ -80,11 +71,14 @@ export default function DroitPage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer onEdit
   const onEdit = async (payload: Partial<Droit>) => {
     if (!editing || !editing.id) return;
     try {
-      const updated = await updateDroitById(editing.id, payload);
-      setAllDroits((s) => s.map((e) => (e.id === updated.id ? updated : e)));
+      await updateMutation.mutateAsync({
+        id: String(editing.id),
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Mis à jour",
@@ -101,29 +95,22 @@ export default function DroitPage() {
     }
   };
 
+  // ✅ ÉTAPE 5: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
       message:
         "Voulez-vous supprimer ce profil définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
-
-      // --- Personnalisation des labels ---
+      icon: "pi pi-info-circle",
       acceptLabel: "Supprimer",
       rejectLabel: "Annuler",
-
-      // --- Styling des boutons ---
-      // Ajout de classes de mise en page (flexbox) et de style
       acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
       rejectClassName:
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-
-      // --- Style du dialogue lui-même (optionnel) ---
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteDroitById(id);
-          setAllDroits((s) => s.filter((x) => x.id !== id));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
@@ -140,8 +127,9 @@ export default function DroitPage() {
     });
   };
 
+  // Filtrer et paginer (inchangé)
   const filtered = allDroits.filter((d) =>
-    String(d.libelle).includes(query.trim()),
+    String(d.libelle).toLowerCase().includes(query.toLowerCase().trim()),
   );
 
   const paginated = filtered.slice(
@@ -149,11 +137,38 @@ export default function DroitPage() {
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 6: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header de Page */}
+      {/* Header de Page (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -184,7 +199,7 @@ export default function DroitPage() {
         </Button>
       </div>
 
-      {/* Barre d'outils / Filtres */}
+      {/* Barre d'outils / Filtres (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex items-center">
         <div className="relative flex-1 max-w-md">
           <Search
@@ -200,7 +215,7 @@ export default function DroitPage() {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Table Section (inchangé) */}
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="min-w-full border-collapse">
           <thead>
@@ -277,7 +292,10 @@ export default function DroitPage() {
                         <ShieldCheck size={18} />
                       </button>
                       <button
-                        onClick={() => handleDelete(dr.id!)}
+                        onClick={(e) => {
+                          handleDelete(dr.id!);
+                          e.stopPropagation();
+                        }}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                         title="Supprimer"
                       >
@@ -301,7 +319,7 @@ export default function DroitPage() {
         </table>
       </div>
 
-      {/* Pagination Container */}
+      {/* Pagination Container (inchangé) */}
       <div className="mt-6 flex justify-center">
         <Pagination
           currentPage={currentPage}
@@ -311,12 +329,12 @@ export default function DroitPage() {
         />
       </div>
 
-      {/* Modals */}
+      {/* Modals (inchangés) */}
       <DroitForm
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
-        //refresh={load}
+        //refresh={load} // ✅ PLUS BESOIN de refresh !
         initial={editing || undefined}
         title={
           editing
@@ -334,7 +352,10 @@ export default function DroitPage() {
       <DroitPermissionForm
         visible={permissionModal}
         droitId={selectedDroitId}
-        onHide={() => setPermissionModal(false)}
+        onHide={() => {
+          setPermissionModal(false);
+          refetch(); // ✅ Recharger après modification des permissions
+        }}
       />
     </Layout>
   );

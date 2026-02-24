@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
-//const userController = require("../controllers/user.controller");
 const { verifyToken } = require("../middlewares/auth.middleware");
-// const { authorizeRoles } = require("../middlewares/role.middleware");
 const {
   authorizePermission,
 } = require("../middlewares/authorizePermission.middleware");
@@ -15,6 +13,7 @@ const {
   countMembres,
   getMe,
   deleteMembre,
+  getOnlineUsers,
 } = require("../controllers/user.controller");
 const upload = require("../middlewares/upload.middleware");
 
@@ -22,22 +21,14 @@ router.post(
   "/",
   verifyToken,
   authorizePermission("agent", "create"),
-  //authorizeRoles("ADMIN"),
   upload.single("photoProfil"),
   createUser,
 );
-router.get(
-  "/",
-  verifyToken,
-  authorizePermission("agent", "read"),
-  //authorizeRoles("ADMIN", "RECEPTIONNISTE"),
-  getUsers,
-);
+router.get("/", verifyToken, authorizePermission("agent", "read"), getUsers);
 router.get(
   "/totalMembre",
   verifyToken,
   authorizePermission("exercice", "read"),
-  //authorizeRoles("ADMIN"),
   countMembres,
 );
 router.get("/me", verifyToken, getMe);
@@ -65,11 +56,14 @@ router.delete(
   "/:id",
   verifyToken,
   authorizePermission("agent", "delete"),
-  //authorizeRoles("ADMIN"),
   deleteMembre,
 );
 
-// Déconnexion
-//router.post("/logout", verifyToken, userController.logout);
+router.get(
+  "/online",
+  verifyToken,
+  authorizePermission("agent", "read"),
+  getOnlineUsers,
+);
 
 module.exports = router;

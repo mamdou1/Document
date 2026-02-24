@@ -7,7 +7,7 @@ export const getAllEntiteeUn = async (): Promise<{
   entiteeUn: EntiteeUn[];
 }> => {
   try {
-    const response = await api.get(`${API_URL}/`);
+    const response = await api.get(`${API_URL}/`, { audit: true });
     return response.data;
   } catch (error: any) {
     console.error("❌ Erreur getAllEntiteeUn:", error);

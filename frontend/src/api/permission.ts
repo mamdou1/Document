@@ -10,10 +10,12 @@ export const getPermissionsByDroitId = async (droitId: number) => {
   return response.data.Permissions || []; // Retourne directement les permissions
 };
 
-export const updateDroitPermissions = (
+export const updateDroitPermissions = async (
   droitId: number,
   permissionIds: number[],
-) =>
-  api.put(`/droitPermission/${droitId}/permissions`, {
+) => {
+  const response = await api.put(`/droitPermission/${droitId}/permissions`, {
     permissions: permissionIds,
   });
+  return response.data;
+};

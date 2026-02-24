@@ -23,33 +23,56 @@ import {
   FileText,
 } from "lucide-react";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
 import {
-  getTypeDocuments,
-  createTypeDocument,
-  updateTypeDocument,
-  deleteTypeDocument,
-  addPiecesToTypeDocument,
-} from "../../api/typeDocument";
+  useInitialData,
+  useCreateTypeDocument,
+  useUpdateTypeDocument,
+  useDeleteTypeDocument,
+  useAddPiecesToTypeDocument,
+  useCreateMetaField,
+  useUpdateMetaField,
+  useMultipleAffectation,
+} from "../../hooks/useTypeDocuments";
+
 import {
   TypeDocument,
   AddPiecesToTypeDocumentPayload,
   Pieces,
   User,
 } from "../../interfaces";
-import { createMetaField, updateMetaField } from "../../api/metaField";
-import TypeDocumentAjoutPieces from "./TypeDocumentAjoutPieces";
-import { getPieces } from "../../api/pieces";
 import { Dropdown } from "primereact/dropdown";
-import { getAllEntiteeUn } from "../../api/entiteeUn";
-import { getAllEntiteeDeux } from "../../api/entiteeDeux";
-import { getAllEntiteeTrois } from "../../api/entiteeTrois";
+import TypeDocumentAjoutPieces from "./TypeDocumentAjoutPieces";
 import DocumentTypeAffectAndForm from "./DocumentTypeAffectAndForm";
 import { useAuth } from "../../context/AuthContext";
 
 export default function DocumentTypeEntitee() {
   const { user } = useAuth();
-  const [types, setTypes] = useState<TypeDocument[]>([]);
-  const [pieces, setPieces] = useState<Pieces[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer les useState multiples par useInitialData
+  const {
+    types = [],
+    pieces = [],
+    entiteeUn = [],
+    entiteeDeux = [],
+    entiteeTrois = [],
+    optionsEntites = [],
+    isLoading,
+    error,
+    refetch,
+  } = useInitialData();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateTypeDocument();
+  const updateMutation = useUpdateTypeDocument();
+  const deleteMutation = useDeleteTypeDocument();
+  const addPiecesMutation = useAddPiecesToTypeDocument();
+  const createMetaMutation = useCreateMetaField();
+  const updateMetaMutation = useUpdateMetaField();
+  const multipleAffectationMutation = useMultipleAffectation();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
   const [formVisible, setFormVisible] = useState(false);
@@ -57,84 +80,24 @@ export default function DocumentTypeEntitee() {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [metaVisible, setMetaVisible] = useState(false);
   const [query, setQuery] = useState("");
-  const toast = useRef<Toast>(null);
   const [formPiecesVisible, setFormPiecesVisible] = useState(false);
   const [selectedTypeDoc, setSelectedTypeDoc] = useState<string | null>(null);
-  const [optionsEntites, setOptionsEntites] = useState<
-    { label: string; value: any }[]
-  >([]);
   const [selectedAccordionStructure, setSelectedAccordionStructure] = useState<{
     label: string;
     value: string;
   } | null>(null);
-
   const [expandedStructure, setExpandedStructure] = useState<string | null>(
     null,
   );
 
-  const [rawE1, setRawE1] = useState<any[]>([]);
-  const [rawE2, setRawE2] = useState<any[]>([]);
-  const [rawE3, setRawE3] = useState<any[]>([]);
+  // ✅ PLUS BESOIN DE LA FONCTION load() NI DE useEffect !
 
-  const load = async () => {
-    try {
-      const [resTy, resP, resE1, resE2, resE3] = await Promise.all([
-        getTypeDocuments(),
-        getPieces(),
-        getAllEntiteeUn(),
-        getAllEntiteeDeux(),
-        getAllEntiteeTrois(),
-      ]);
-
-      const typesData = resTy.typeDocument || resTy;
-      setTypes(Array.isArray(typesData) ? typesData : []);
-      setPieces(Array.isArray(resP) ? resP : []);
-
-      const dataE1 = Array.isArray(resE1) ? resE1 : resE1.entiteeUn || [];
-      const dataE2 = Array.isArray(resE2) ? resE2 : resE2.entiteeDeux || [];
-      const dataE3 = Array.isArray(resE3) ? resE3 : resE3.entiteeTrois || [];
-
-      setRawE1(dataE1);
-      setRawE2(dataE2);
-      setRawE3(dataE3);
-
-      const allOptions = [
-        { label: "Tous les profils", value: null },
-        ...dataE1.map((x: any) => ({
-          label: `🏢 ${x.libelle}`,
-          value: String(x.id),
-        })),
-        ...dataE2.map((x: any) => ({
-          label: `📂 ${x.libelle}`,
-          value: `E2-${x.id}`,
-        })),
-        ...dataE3.map((x: any) => ({
-          label: `📄 ${x.libelle}`,
-          value: `E3-${x.id}`,
-        })),
-      ];
-      setOptionsEntites(allOptions);
-    } catch (err) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Chargement échoué",
-      });
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
-
+  // Fonctions utilitaires (inchangées)
   const isUserAdmin = (user: User | null): boolean => {
     if (!user) return false;
-
     const droitLibelle =
       typeof user.droit === "object" ? user.droit?.libelle : user.droit;
-
     if (!droitLibelle) return false;
-
     const libelle = droitLibelle.toString().toLowerCase();
     return (
       libelle.includes("admin") ||
@@ -174,11 +137,9 @@ export default function DocumentTypeEntitee() {
     if (typeDoc.entitee_trois_id) {
       return userEntityIds.trois.has(typeDoc.entitee_trois_id);
     }
-
     if (typeDoc.entitee_deux_id && !typeDoc.entitee_trois_id) {
       return userEntityIds.deux.has(typeDoc.entitee_deux_id);
     }
-
     if (
       typeDoc.entitee_un_id &&
       !typeDoc.entitee_deux_id &&
@@ -186,17 +147,13 @@ export default function DocumentTypeEntitee() {
     ) {
       return userEntityIds.un.has(typeDoc.entitee_un_id);
     }
-
     return false;
   };
 
   const hasAccessToStructure = (structureName: string): boolean => {
     const isAdmin = isUserAdmin(user);
     if (isAdmin) return true;
-
-    if (structureName === "Type de documents non assignés") {
-      return false;
-    }
+    if (structureName === "Type de documents non assignés") return false;
 
     const userEntityIds = {
       un: new Set<number>(),
@@ -216,10 +173,6 @@ export default function DocumentTypeEntitee() {
         userEntityIds.trois.add(access.entitee_trois.id);
     });
 
-    if (structureName === "Direction Administratif") {
-      return userEntityIds.un.has(2);
-    }
-
     const foundInOptions = optionsEntites.find((opt) =>
       opt.label?.includes(structureName),
     );
@@ -235,7 +188,6 @@ export default function DocumentTypeEntitee() {
         if (prefix === "E3") return userEntityIds.trois.has(numId);
       }
     }
-
     return false;
   };
 
@@ -316,10 +268,14 @@ export default function DocumentTypeEntitee() {
 
   const groupedTypes = getGroupedData();
 
+  // ✅ ÉTAPE 3: Remplacer handleSubmit
   const handleSubmit = async (formData: { code: string; nom: string }) => {
     try {
       if (editing?.id) {
-        await updateTypeDocument(editing.id, formData);
+        await updateMutation.mutateAsync({
+          id: String(editing.id),
+          data: formData,
+        });
         toast.current?.show({ severity: "success", summary: "Mis à jour" });
       } else {
         let payload: any = { ...formData };
@@ -329,13 +285,13 @@ export default function DocumentTypeEntitee() {
             selectedTypeDoc.replace("E2-", "").replace("E3-", ""),
           );
 
-          const n1 = rawE1.find(
+          const n1 = entiteeUn.find(
             (x) => x.id === cleanId && !selectedTypeDoc.includes("E"),
           );
-          const n2 = rawE2.find(
+          const n2 = entiteeDeux.find(
             (x) => x.id === cleanId && selectedTypeDoc.includes("E2"),
           );
-          const n3 = rawE3.find(
+          const n3 = entiteeTrois.find(
             (x) => x.id === cleanId && selectedTypeDoc.includes("E3"),
           );
 
@@ -345,14 +301,16 @@ export default function DocumentTypeEntitee() {
             payload.entitee_un_id = n2.entitee_un_id;
             payload.entitee_deux_id = n2.id;
           } else if (n3) {
-            const parentN2 = rawE2.find((x) => x.id === n3.entitee_deux_id);
+            const parentN2 = entiteeDeux.find(
+              (x) => x.id === n3.entitee_deux_id,
+            );
             payload.entitee_un_id = parentN2?.entitee_un_id;
             payload.entitee_deux_id = n3.entitee_deux_id;
             payload.entitee_trois_id = n3.id;
           }
         }
 
-        await createTypeDocument(payload);
+        await createMutation.mutateAsync(payload);
         toast.current?.show({
           severity: "success",
           summary: "Créé avec succès",
@@ -362,13 +320,14 @@ export default function DocumentTypeEntitee() {
         });
       }
 
-      await load();
+      // ✅ PLUS BESOIN DE load() ! TanStack Query recharge automatiquement
       setFormVisible(false);
     } catch (error) {
       toast.current?.show({ severity: "error", summary: "Erreur" });
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer handleDelete
   const handleDelete = (id: string) => {
     confirmDialog({
       message:
@@ -382,54 +341,63 @@ export default function DocumentTypeEntitee() {
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
       style: { width: "450px" },
       accept: async () => {
-        await deleteTypeDocument(id);
-        setTypes((s) => s.filter((x) => String(x.id) !== String(id)));
+        await deleteMutation.mutateAsync(id);
+        // ✅ PLUS BESOIN de setTypes manuel !
         toast.current?.show({ severity: "success", summary: "Supprimé" });
       },
     });
   };
 
+  // ✅ ÉTAPE 5: Remplacer handleMetaSubmit
   const handleMetaSubmit = async (fieldsPayload: any[]) => {
     if (!selected?.id) return;
     try {
       for (const field of fieldsPayload) {
-        field.id
-          ? await updateMetaField(field.id, field)
-          : await createMetaField(selected.id, field);
+        if (field.id) {
+          await updateMetaMutation.mutateAsync({ id: field.id, field });
+        } else {
+          await createMetaMutation.mutateAsync({
+            typeId: selected.id,
+            field,
+          });
+        }
       }
       toast.current?.show({
         severity: "success",
         summary: "Métadonnées à jour",
       });
-      load();
+      // ✅ RECHARGE AUTOMATIQUE !
     } catch (error) {
       toast.current?.show({ severity: "error", summary: "Erreur" });
     }
   };
 
+  // ✅ ÉTAPE 6: Remplacer onAddPieces
   const onAddPieces = async (
     typeId: string,
     payload: AddPiecesToTypeDocumentPayload,
   ) => {
     try {
-      await addPiecesToTypeDocument(typeId, payload);
+      await addPiecesMutation.mutateAsync({ typeId, payload });
       toast.current?.show({ severity: "success", summary: "Pièces ajoutées" });
-      load();
       setFormPiecesVisible(false);
     } catch (err) {
       /* erreur */
     }
   };
 
+  // ✅ ÉTAPE 7: Remplacer handleAffectationSubmit
   const handleAffectationSubmit = async (payload: any) => {
     try {
       if (selected?.id) {
-        await updateTypeDocument(selected.id, payload);
+        await updateMutation.mutateAsync({
+          id: String(selected.id),
+          data: payload,
+        });
         toast.current?.show({
           severity: "success",
           summary: "Affectation mise à jour",
         });
-        await load();
         setAffectationFormVisible(false);
       }
     } catch (error) {
@@ -437,6 +405,7 @@ export default function DocumentTypeEntitee() {
     }
   };
 
+  // ✅ ÉTAPE 8: Remplacer handleMultipleAffectation
   const handleMultipleAffectation = async (typeIds: string[]) => {
     try {
       if (!selectedTypeDoc) return;
@@ -451,33 +420,30 @@ export default function DocumentTypeEntitee() {
       const targetId = Number(rawId);
 
       if (prefix === "E1") {
-        const n1 = rawE1.find((x) => x.id === targetId);
+        const n1 = entiteeUn.find((x) => x.id === targetId);
         if (n1) structureData.entitee_un_id = n1.id;
       } else if (prefix === "E2") {
-        const n2 = rawE2.find((x) => x.id === targetId);
+        const n2 = entiteeDeux.find((x) => x.id === targetId);
         if (n2) {
           structureData.entitee_un_id = n2.entitee_un_id;
           structureData.entitee_deux_id = n2.id;
         }
       } else if (prefix === "E3") {
-        const n3 = rawE3.find((x) => x.id === targetId);
+        const n3 = entiteeTrois.find((x) => x.id === targetId);
         if (n3) {
-          const parentN2 = rawE2.find((x) => x.id === n3.entitee_deux_id);
+          const parentN2 = entiteeDeux.find((x) => x.id === n3.entitee_deux_id);
           structureData.entitee_un_id = parentN2?.entitee_un_id;
           structureData.entitee_deux_id = n3.entitee_deux_id;
           structureData.entitee_trois_id = n3.id;
         }
       }
 
-      await Promise.all(
-        typeIds.map((id) => updateTypeDocument(id, structureData)),
-      );
+      await multipleAffectationMutation.mutateAsync({ typeIds, structureData });
 
       toast.current?.show({
         severity: "success",
         summary: "Affectation réussie",
       });
-      await load();
     } catch (error) {
       console.error("Erreur affectation:", error);
     }
@@ -497,20 +463,49 @@ export default function DocumentTypeEntitee() {
           opt.label?.includes(`📄 ${structureName}`),
       );
 
-      if (foundOption) {
+      // ✅ Vérifier que foundOption existe ET que value n'est pas null
+      if (foundOption && foundOption.value !== null) {
         setSelectedAccordionStructure({
           label: foundOption.label,
-          value: foundOption.value,
+          value: foundOption.value, // ✅ Maintenant value est string
         });
         setSelectedTypeDoc(foundOption.value);
       }
     }
   };
 
+  // ✅ ÉTAPE 9: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
+      {/* Header (inchangé) */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
@@ -531,6 +526,7 @@ export default function DocumentTypeEntitee() {
         />
       </div>
 
+      {/* Barre de recherche et filtre (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4">
         <div className="flex-1 min-w-[300px] relative">
           <Search
@@ -555,6 +551,7 @@ export default function DocumentTypeEntitee() {
         />
       </div>
 
+      {/* Liste des types (inchangée) */}
       <div className="space-y-4">
         {Object.entries(groupedTypes).length > 0 ? (
           Object.entries(groupedTypes)
@@ -761,6 +758,7 @@ export default function DocumentTypeEntitee() {
         )}
       </div>
 
+      {/* Modals (inchangés) */}
       <DocumentTypeDetails
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}

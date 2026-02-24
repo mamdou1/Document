@@ -48,7 +48,13 @@
 
 //   next();
 // };
+// middlewares/historiqueLogger.middleware.js
+
+// middlewares/historiqueLogger.middleware.js
+
+// middlewares/historiqueLogger.middleware.js
 const HistoriqueService = require("../services/historique.service");
+const logger = require("../config/logger.config"); // ← AJOUTEZ CECI
 
 const mapAction = (method) => {
   switch (method) {
@@ -69,10 +75,18 @@ const mapAction = (method) => {
 
 module.exports = (req, res, next) => {
   const start = Date.now();
+  const originalJson = res.json;
+  let responseData = null;
+
+  res.json = function (data) {
+    responseData = data;
+    return originalJson.call(this, data);
+  };
 
   res.on("finish", async () => {
+    if (res.statusCode === 304) return;
+
     try {
-      if (res.statusCode >= 400) return;
       if (req.originalUrl.includes("/auth")) return;
 
       const user = req.user || null;
@@ -80,13 +94,47 @@ module.exports = (req, res, next) => {
 
       if (action === "other") return;
 
-      // ✅ Ignore les GET sauf s'ils sont marqués audit
-      if (action === "read" && !req.headers["x-audit"]) return;
+      // ✅ SEULS LES GET DE SIDEBAR OU AVEC ID SONT LOGUÉS
+      if (req.method === "GET") {
+        const isSidebarNavigation =
+          req.headers["x-sidebar-navigation"] === "true";
+        const hasId = !!req.params.id;
 
-      await HistoriqueService.log({
+        // Log détaillé
+        logger.debug("🔍 GET DÉTECTÉ:", {
+          url: req.originalUrl,
+          method: req.method,
+          params: req.params,
+          hasId,
+          isSidebarNavigation,
+          headers: req.headers,
+        });
+
+        if (!isSidebarNavigation && !hasId) {
+          logger.debug("⏭️ GET ignoré - SORTIE ANTICIPÉE:", req.originalUrl);
+          return; // Sortie anticipée
+        } else {
+          logger.debug("✅ GET accepté - SERA LOGUÉ:", {
+            url: req.originalUrl,
+            raison: isSidebarNavigation ? "sidebar" : "a un ID",
+          });
+        }
+      }
+
+      const segments = req.originalUrl.split("/").filter(Boolean);
+      let resource = "system";
+
+      for (const segment of segments) {
+        if (segment !== "api" && !/^\d+$/.test(segment)) {
+          resource = segment;
+          break;
+        }
+      }
+
+      const logData = {
         agent_id: user?.id || null,
         action,
-        resource: req.baseUrl.split("/")[2] || "system",
+        resource,
         resource_id: req.params?.id || null,
         method: req.method,
         path: req.originalUrl,
@@ -95,10 +143,18 @@ module.exports = (req, res, next) => {
         user_agent: req.headers["user-agent"],
         data: {
           duration: Date.now() - start,
+          query: req.query,
+          params: req.params,
         },
-      });
+      };
+
+      if (action === "read" && req.params.id) {
+        logData.description = `Consultation de ${resource} #${req.params.id}`;
+      }
+
+      await HistoriqueService.log(logData);
     } catch (e) {
-      console.error("❌ Historique middleware error:", e.message);
+      logger.error("❌ Historique middleware error:", e.message);
     }
   });
 

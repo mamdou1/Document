@@ -1,14 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../components/layout/Layoutt";
 import PiecesForm from "./PiecesForm";
 import PiecesDetails from "./PiecesDetails";
 import type { Pieces } from "../../interfaces";
-import {
-  getPieces,
-  createPieces,
-  updatedPieces,
-  deletePieceById,
-} from "../../api/pieces";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
@@ -22,57 +16,57 @@ import {
   FileStack,
   Trash2,
   Settings,
+  XCircle,
 } from "lucide-react";
 import { confirmDialog } from "primereact/confirmdialog";
 import PiecesMetaForm from "./PiecesMetaForm";
 
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  usePieces,
+  useCreatePiece,
+  useUpdatePiece,
+  useDeletePiece,
+} from "../../hooks/usePieces";
+
 export default function PiecesPage() {
-  const [allPieces, setAllPieces] = useState<Pieces[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par usePieces
+  const { data: allPieces = [], isLoading, error, refetch } = usePieces();
+
+  console.log("🔍 isLoading:", isLoading);
+  console.log("🔍 error:", error);
+  console.log("🔍 allPieces:", allPieces);
+  console.log("🔍 allPieces length:", allPieces.length);
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreatePiece();
+  const updateMutation = useUpdatePiece();
+  const deleteMutation = useDeletePiece();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<Pieces | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState<Partial<Pieces> | null>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [metaVisible, setMetaVisible] = useState(false);
-  // --- NOUVEAUX ÉTATS POUR LE FILTRE ---
 
-  const affichage = async () => {
-    setLoading(true);
-    try {
-      const p = await getPieces();
-      setAllPieces(Array.isArray(p) ? p : []);
+  // ✅ PLUS BESOIN DE affichage() NI DE useEffect !
 
-      // console.log("Les pièces:", p);
-      // console.log("diviSIon: ", div);
-    } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de charger",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    affichage();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer onCreate
   const onCreate = async (payload: Partial<Pieces>) => {
     try {
-      const saved = await createPieces(payload);
-      setAllPieces((s) => [saved, ...s]);
+      await createMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: "Pièce de pièce créée",
+        detail: "Pièce créée avec succès",
       });
-      //setFormVisible(false);
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
@@ -82,11 +76,14 @@ export default function PiecesPage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer onEdit
   const onEdit = async (payload: Partial<Pieces>) => {
     if (!editing || !editing.id) return;
     try {
-      const update = await updatedPieces(payload, editing.id);
-      setAllPieces((s) => s.map((g) => (g.id === update.id ? update : g)));
+      await updateMutation.mutateAsync({
+        id: String(editing.id),
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Succès",
@@ -102,20 +99,27 @@ export default function PiecesPage() {
       });
     }
   };
+
+  // ✅ ÉTAPE 5: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
-      message: "Voulez-vous supprimer cet pieces définitivement ?",
+      message:
+        "Voulez-vous supprimer cette pièce définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger",
+      icon: "pi pi-info-circle",
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+      style: { width: "450px" },
       accept: async () => {
         try {
-          await deletePieceById(id);
-          setAllPieces((s) => s.filter((x) => Number(x.id) !== Number(id)));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
-            detail: "Pieces supprimé",
+            detail: "Pièce supprimée",
           });
         } catch (err: any) {
           toast.current?.show({
@@ -128,25 +132,50 @@ export default function PiecesPage() {
     });
   };
 
-  // --- LOGIQUE DE FILTRAGE UNIFIÉE ---
+  // Filtrage et pagination (inchangés)
   const filteredData = allPieces.filter((p) => {
-    // AJOUTE LE "return" CI-DESSOUS
     return `${p.code_pieces} ${p.libelle}`
       .toLowerCase()
       .includes(query.toLowerCase());
   });
 
-  // Utilise filteredData pour la pagination
   const paginated = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 6: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header */}
+      {/* Header (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
@@ -172,7 +201,7 @@ export default function PiecesPage() {
         />
       </div>
 
-      {/* Recherche et Filtre */}
+      {/* Recherche et Filtre (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative group max-w-md w-full">
           <Search
@@ -186,12 +215,12 @@ export default function PiecesPage() {
             onChange={(e) => {
               setQuery(e.target.value);
               setCurrentPage(1);
-            }} // Reset page on search
+            }}
           />
         </div>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau (inchangé) */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -273,20 +302,6 @@ export default function PiecesPage() {
             ))}
           </tbody>
         </table>
-
-        {loading && (
-          <div className="p-12 text-center animate-pulse text-emerald-400 font-medium">
-            Chargement des données en cours...
-          </div>
-        )}
-        {!loading && filteredData.length === 0 && (
-          <div className="p-16 text-center border-t border-slate-50">
-            <FileStack size={48} className="mx-auto text-slate-200 mb-4" />
-            <p className="text-slate-400 italic">
-              Aucune pièce ne correspond à votre recherche
-            </p>
-          </div>
-        )}
       </div>
 
       <div className="mt-6">
@@ -298,11 +313,12 @@ export default function PiecesPage() {
         />
       </div>
 
+      {/* Modals (inchangés) */}
       <PiecesForm
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
-        refresh={affichage}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || {}}
         title={
           editing ? "Modifier le type de pièce" : "Ajouter un nouveau type"
@@ -318,8 +334,8 @@ export default function PiecesPage() {
       <PiecesMetaForm
         visible={metaVisible}
         onHide={() => setMetaVisible(false)}
-        piece={selected} // ✅ Nouveau prop "piece"
-        refresh={affichage}
+        piece={selected}
+        refresh={() => refetch()} // ✅ Utiliser refetch
       />
     </Layout>
   );

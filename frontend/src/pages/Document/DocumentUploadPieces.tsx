@@ -27,6 +27,7 @@ import {
   Plus,
   Trash2,
   Pencil,
+  CheckSquare,
 } from "lucide-react";
 import type {
   Document,
@@ -42,6 +43,7 @@ import {
   uploadPieceFile,
 } from "../../api/pieceValue";
 import { confirmDialog } from "primereact/confirmdialog";
+import { Checkbox } from "primereact/checkbox";
 
 type Props = {
   visible: boolean;
@@ -49,17 +51,6 @@ type Props = {
   document: Document | null;
   onSuccess?: () => void;
 };
-
-// type ModeChargement = "INDIVIDUEL" | "LOT_UNIQUE";
-
-// interface PieceRecord {
-//   id?: number;
-//   rowId?: number;
-//   valueIds: Record<string, number>;
-//   values: Record<string, any>;
-//   files?: any[];
-//   createdAt?: string;
-// }
 
 export default function DocumentUploadPieces({
   visible,
@@ -119,6 +110,9 @@ export default function DocumentUploadPieces({
     fieldId?: number | null;
   }>({ visible: false, url: null, isPreview: false });
 
+  const [lotPiecesSelection, setLotPiecesSelection] = useState<number[]>([]);
+  const [showLotPieceSelector, setShowLotPieceSelector] = useState(false);
+
   /* ================= CHARGEMENT INITIAL ================= */
   useEffect(() => {
     if (!document) {
@@ -163,54 +157,6 @@ export default function DocumentUploadPieces({
   };
 
   /* ================= CHARGEMENT DES ENREGISTREMENTS ================= */
-  // const loadAllPieceRecords = async () => {
-  //   if (!document) return;
-
-  //   try {
-  //     const values = await getPieceValuesByDocument(document.id);
-  //     console.log("📦 Valeurs brutes:", values);
-
-  //     const recordsByPiece: Record<number, Record<number, PieceRecord>> = {};
-
-  //     values.forEach((value) => {
-  //       const pieceId = value.piece_id;
-  //       const rowId = value.row_id || value.id;
-
-  //       if (!recordsByPiece[pieceId]) {
-  //         recordsByPiece[pieceId] = {};
-  //       }
-
-  //       if (!recordsByPiece[pieceId][rowId]) {
-  //         recordsByPiece[pieceId][rowId] = {
-  //           id: rowId,
-  //           rowId: rowId,
-  //           values: {},
-  //           files: [],
-  //           createdAt: value.createdAt,
-  //         };
-  //       }
-
-  //       recordsByPiece[pieceId][rowId].values[value.piece_meta_field_id] =
-  //         value.value;
-
-  //       if (value.file) {
-  //         recordsByPiece[pieceId][rowId].files?.push(value.file);
-  //       }
-  //     });
-
-  //     const finalRecords: Record<number, PieceRecord[]> = {};
-  //     Object.keys(recordsByPiece).forEach((pieceId) => {
-  //       finalRecords[parseInt(pieceId)] = Object.values(
-  //         recordsByPiece[parseInt(pieceId)],
-  //       );
-  //     });
-
-  //     console.log("✅ Enregistrements groupés par row_id:", finalRecords);
-  //     setPieceRecords(finalRecords);
-  //   } catch (error) {
-  //     console.error("Erreur chargement enregistrements:", error);
-  //   }
-  // };
 
   const loadAllPieceRecords = async () => {
     if (!document) return;
@@ -276,6 +222,141 @@ export default function DocumentUploadPieces({
     } catch (error) {
       console.error("Erreur chargement fichiers lot:", error);
     }
+  };
+
+  /* ================= COMPOSANT DE SELECTION DES PIECES LOT_UNIQUE ================= */
+  const LotPieceSelector = ({
+    pieces,
+    selectedPieces,
+    onTogglePiece,
+    onClose,
+    onConfirm,
+  }: {
+    pieces: any[];
+    selectedPieces: number[];
+    onTogglePiece: (pieceId: number) => void;
+    onClose: () => void;
+    onConfirm: () => void;
+  }) => {
+    const [expandedDivisions, setExpandedDivisions] = useState<
+      Record<string, boolean>
+    >({});
+
+    const toggleDivision = (division: string) => {
+      setExpandedDivisions((prev) => ({
+        ...prev,
+        [division]: !prev[division],
+      }));
+    };
+
+    // Grouper uniquement les pièces filtrées
+    const groupedPieces = pieces.reduce((acc: any, item: any) => {
+      const divisionObj = item.division || item.piece?.division;
+      const divLibelle = divisionObj?.libelle || "AUTRES PIECES";
+
+      if (!acc[divLibelle]) {
+        acc[divLibelle] = [];
+      }
+      acc[divLibelle].push(item);
+      return acc;
+    }, {});
+
+    // Vérifier s'il y a des pièces à afficher
+    const hasPieces = Object.keys(groupedPieces).length > 0;
+
+    return (
+      <div className="bg-white rounded-xl border border-emerald-200 p-4 mb-4">
+        <h4 className="text-sm font-bold text-emerald-700 mb-3 flex items-center gap-2">
+          <CheckSquare size={16} />
+          Voulez-vous associer des pièces à ce lot ?
+        </h4>
+        <p className="text-xs text-slate-500 mb-4">
+          Cochez les pièces qui sont incluses dans ce document.
+          {pieces.length === 0 && (
+            <span className="block mt-2 text-amber-600 font-medium">
+              ℹ️ Toutes les pièces sont déjà disponibles pour ce document.
+            </span>
+          )}
+        </p>
+
+        {hasPieces ? (
+          <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-2">
+            {Object.entries(groupedPieces).map(
+              ([division, pieces]: [string, any]) => {
+                const isExpanded = expandedDivisions[division] ?? true;
+
+                return (
+                  <div
+                    key={division}
+                    className="mb-2 border border-slate-100 rounded-lg overflow-hidden"
+                  >
+                    <div
+                      onClick={() => toggleDivision(division)}
+                      className="bg-slate-50 p-2 flex items-center justify-between cursor-pointer"
+                    >
+                      <span className="text-xs font-bold uppercase text-slate-600">
+                        {division}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      )}
+                    </div>
+
+                    {isExpanded && (
+                      <div className="p-2 space-y-2">
+                        {pieces.map((p: any) => (
+                          <div
+                            key={p.id}
+                            className="flex items-center gap-2 p-1"
+                          >
+                            <Checkbox
+                              checked={selectedPieces.includes(p.id)}
+                              onChange={() => onTogglePiece(p.id)}
+                              className="border border-emerald-400"
+                            />
+                            <span className="text-sm">{p.libelle}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-4 bg-slate-50 rounded-lg">
+            <p className="text-sm text-slate-500">
+              Aucune pièce non disponible
+            </p>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 mt-4">
+          <Button
+            label="Annuler"
+            onClick={onClose}
+            className="bg-slate-100 text-slate-600 border-none text-sm py-2 px-4"
+          />
+          <Button
+            label="Confirmer la sélection"
+            onClick={onConfirm}
+            className="bg-emerald-600 text-white border-none text-sm py-2 px-4"
+            disabled={!hasPieces} // Désactiver s'il n'y a pas de pièces
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const toggleLotPieceSelection = (pieceId: number) => {
+    setLotPiecesSelection((prev) =>
+      prev.includes(pieceId)
+        ? prev.filter((id) => id !== pieceId)
+        : [...prev, pieceId],
+    );
   };
 
   /* ================= DÉTECTION DU MODE ================= */
@@ -596,9 +677,15 @@ export default function DocumentUploadPieces({
   const handleSelectLotFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files?.[0];
     if (!files) return;
-    setSelectedFiles((prev) => ({ ...prev, LOT_UNIQUE: files }));
+
+    setSelectedLotFile(files);
     setPreviewOpen({ LOT_UNIQUE: true });
 
+    // Réinitialiser la sélection
+    setLotPiecesSelection([]);
+    setShowLotPieceSelector(true);
+
+    // Ouvrir la prévisualisation
     setViewer({
       visible: true,
       url: URL.createObjectURL(files),
@@ -675,9 +762,13 @@ export default function DocumentUploadPieces({
     formData.append("files", selectedLotFile);
     formData.append("upload_mode", "LOT_UNIQUE");
 
+    if (lotPiecesSelection.length > 0) {
+      formData.append("piece_ids", JSON.stringify(lotPiecesSelection));
+    }
+
     try {
       await api.post(
-        `/documents/${document.id}/document-type/${document.type_document_id}/lot-unique/files`,
+        `/documents/${document.id}/document-type/${document.type_document_id}/lot-unique/files-with-pieces`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } },
       );
@@ -685,14 +776,22 @@ export default function DocumentUploadPieces({
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: "Dossier complet enregistré",
+        detail:
+          lotPiecesSelection.length > 0
+            ? `Dossier enregistré et ${lotPiecesSelection.length} pièce(s) marquée(s) comme disponible(s)`
+            : "Dossier complet enregistré",
       });
+
+      // ✅ Recharger les données du document pour mettre à jour les disponibilités
+      if (onSuccess) {
+        await onSuccess(); // Si onSuccess recharge le document
+      }
 
       await loadLotUniqueFiles();
       setSelectedLotFile(null);
+      setLotPiecesSelection([]);
+      setShowLotPieceSelector(false);
       handleCancelPreview();
-
-      if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Erreur upload lot:", error);
       toast.current?.show({
@@ -928,6 +1027,23 @@ export default function DocumentUploadPieces({
                   </label>
                 </div>
 
+                {/* ✅ NOUVEAU : Sélecteur de pièces pour LOT_UNIQUE */}
+                {showLotPieceSelector && selectedLotFile && (
+                  <LotPieceSelector
+                    pieces={piecesState}
+                    selectedPieces={lotPiecesSelection}
+                    onTogglePiece={toggleLotPieceSelection}
+                    onClose={() => {
+                      setShowLotPieceSelector(false);
+                      setLotPiecesSelection([]);
+                    }}
+                    onConfirm={() => {
+                      setShowLotPieceSelector(false);
+                      // Les pièces sont déjà dans lotPiecesSelection
+                    }}
+                  />
+                )}
+
                 {lotFiles.length > 0 && (
                   <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
                     <h4 className="text-xs font-bold text-slate-500 mb-3">
@@ -939,7 +1055,7 @@ export default function DocumentUploadPieces({
                         className="flex items-center justify-between p-3 bg-slate-50 rounded-xl mb-2"
                       >
                         <span className="text-sm truncate flex-1">
-                          {f.original_name}
+                          {f.new_file_name || f.original_name}
                         </span>
                         {/* <button
                           className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -1352,7 +1468,8 @@ export default function DocumentUploadPieces({
                                                     className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-100"
                                                   >
                                                     <span className="text-xs truncate flex-1">
-                                                      {f.original_name}
+                                                      {f.new_file_name ||
+                                                        f.original_name}
                                                     </span>
                                                     <button
                                                       onClick={(e) => {

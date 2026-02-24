@@ -6,17 +6,29 @@ const {
   EntiteeDeux,
   EntiteeTrois,
 } = require("../models");
+const logger = require("../config/logger.config");
+const HistoriqueService = require("../services/historique.service");
 
 /**
  * Crée un ou plusieurs accès pour un agent
  * Accepte un objet ou un tableau d'objets
  */
 exports.grant = async (req, res) => {
+  const startTime = Date.now();
+
   try {
     const payloads = req.body;
 
+    logger.info("📝 Tentative d'ajout d'accès pour agent(s)", {
+      userId: req.user?.id,
+      count: Array.isArray(payloads) ? payloads.length : 1,
+    });
+
     // Vérifier que c'est un tableau
     if (!Array.isArray(payloads)) {
+      logger.warn("⚠️ Payload doit être un tableau", {
+        userId: req.user?.id,
+      });
       return res
         .status(400)
         .json({ message: "Le payload doit être un tableau" });
@@ -25,12 +37,20 @@ exports.grant = async (req, res) => {
     // Valider chaque payload
     for (const p of payloads) {
       if (!p.agent_id) {
+        logger.warn("⚠️ agent_id manquant", {
+          payload: p,
+          userId: req.user?.id,
+        });
         return res.status(400).json({
           message: "agent_id est requis pour chaque accès",
         });
       }
 
       if (!p.entitee_un_id && !p.entitee_deux_id && !p.entitee_trois_id) {
+        logger.warn("⚠️ Aucune entité spécifiée", {
+          payload: p,
+          userId: req.user?.id,
+        });
         return res.status(400).json({
           message:
             "Au moins une entité (UN, DEUX, TROIS) est requise par accès",
@@ -76,9 +96,25 @@ exports.grant = async (req, res) => {
       ],
     });
 
+    logger.info("✅ Accès ajoutés avec succès", {
+      count: created.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    for (const access of created) {
+      await HistoriqueService.logCreate(req, "agentEntiteeAccess", access);
+    }
+
     res.status(201).json(created);
   } catch (err) {
-    console.error("❌ Erreur grant access:", err);
+    logger.error("❌ Erreur grant access:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       message: "Erreur serveur",
       error: err.message,
@@ -88,8 +124,14 @@ exports.grant = async (req, res) => {
 
 // Récupérer les accès d'un agent
 exports.agentAccesById = async (req, res) => {
+  const startTime = Date.now();
+  const { agentId } = req.params;
+
   try {
-    const { agentId } = req.params;
+    logger.debug("🔍 Récupération des accès d'un agent", {
+      agentId,
+      userId: req.user?.id,
+    });
 
     const rows = await AgentEntiteeAccess.findAll({
       where: { agent_id: agentId },
@@ -116,32 +158,51 @@ exports.agentAccesById = async (req, res) => {
       ],
     });
 
+    logger.info("✅ Accès de l'agent récupérés", {
+      agentId,
+      count: rows.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
     res.json(rows);
   } catch (err) {
-    console.error("Erreur récupération accès:", err);
+    logger.error("❌ Erreur récupération accès agent:", {
+      agentId,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
 // Révoquer un accès
 exports.revoke = async (req, res) => {
-  try {
-    const { id } = req.params;
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    // 🔍 LOG 2 : Vérifier si l'ID est valide
+  try {
+    logger.info("🗑️ Tentative de révocation d'un accès", {
+      accessId: id,
+      userId: req.user?.id,
+    });
+
     if (!id) {
-      console.error("❌ REVOKE - ID manquant !");
+      logger.warn("⚠️ ID manquant pour révocation", {
+        userId: req.user?.id,
+      });
       return res.status(400).json({ message: "ID requis" });
     }
 
-    // 🔍 LOG 3 : Rechercher l'enregistrement avant suppression
     const access = await AgentEntiteeAccess.findByPk(id);
 
     if (!access) {
-      console.error(`❌ REVOKE - Accès ID ${id} non trouvé dans la base`);
-      console.log(
-        "🔍 Vérifiez que l'ID existe dans la table agent_entitee_access",
-      );
+      logger.warn("⚠️ Accès non trouvé pour révocation", {
+        accessId: id,
+        userId: req.user?.id,
+      });
       return res.status(404).json({
         success: false,
         message: "Accès non trouvé",
@@ -149,27 +210,17 @@ exports.revoke = async (req, res) => {
       });
     }
 
-    console.log("✅ REVOKE - Accès trouvé:", {
-      id: access.id,
-      agent_id: access.agent_id,
-      entitee_un_id: access.entitee_un_id,
-      entitee_deux_id: access.entitee_deux_id,
-      entitee_trois_id: access.entitee_trois_id,
-      created_at: access.created_at,
-    });
+    const accessCopy = access.toJSON();
 
-    // 🔍 LOG 4 : Tentative de suppression
-    console.log(`🗑️ REVOKE - Suppression de l'accès ID ${id}...`);
     const deleted = await AgentEntiteeAccess.destroy({
       where: { id },
     });
 
-    // 🔍 LOG 5 : Vérifier le résultat de la suppression
-    console.log(`📊 REVOKE - Résultat destroy:`, deleted);
-    console.log(`📊 REVOKE - ${deleted} ligne(s) supprimée(s)`);
-
     if (deleted === 0) {
-      console.warn(`⚠️ REVOKE - Aucune ligne supprimée pour ID ${id}`);
+      logger.warn("⚠️ Aucun accès supprimé", {
+        accessId: id,
+        userId: req.user?.id,
+      });
       return res.status(404).json({
         success: false,
         message: "Aucun accès supprimé",
@@ -177,9 +228,15 @@ exports.revoke = async (req, res) => {
       });
     }
 
-    // ✅ LOG 6 : Succès
-    console.log(`✅ REVOKE - Accès ID ${id} révoqué avec succès !`);
-    console.log("=".repeat(50));
+    logger.info("✅ Accès révoqué avec succès", {
+      accessId: id,
+      agentId: access.agent_id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logDelete(req, "agentEntiteeAccess", accessCopy);
 
     res.json({
       success: true,
@@ -188,8 +245,13 @@ exports.revoke = async (req, res) => {
       id: id,
     });
   } catch (err) {
-    console.error("=".repeat(50));
-
+    logger.error("❌ Erreur révocation accès:", {
+      accessId: id,
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la révocation",
@@ -200,30 +262,53 @@ exports.revoke = async (req, res) => {
 
 // Mettre à jour un accès
 exports.update = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { agent_id, entitee_un_id, entitee_deux_id, entitee_trois_id } =
-      req.body;
+  const startTime = Date.now();
+  const { id } = req.params;
 
-    const row = await AgentEntiteeAccess.findByPk(id);
-    if (!row) {
+  try {
+    logger.info("📝 Tentative de mise à jour d'un accès", {
+      accessId: id,
+      userId: req.user?.id,
+      body: req.body,
+    });
+
+    const oldAccess = await AgentEntiteeAccess.findByPk(id);
+    if (!oldAccess) {
+      logger.warn("⚠️ Accès non trouvé pour mise à jour", {
+        accessId: id,
+        userId: req.user?.id,
+      });
       return res.status(404).json({ message: "Accès introuvable" });
     }
 
+    const oldCopy = oldAccess.toJSON();
+    const { agent_id, entitee_un_id, entitee_deux_id, entitee_trois_id } =
+      req.body;
+
     // Mise à jour
-    if (agent_id !== undefined) row.agent_id = agent_id;
-    if (entitee_un_id !== undefined) row.entitee_un_id = entitee_un_id;
-    if (entitee_deux_id !== undefined) row.entitee_deux_id = entitee_deux_id;
-    if (entitee_trois_id !== undefined) row.entitee_trois_id = entitee_trois_id;
+    if (agent_id !== undefined) oldAccess.agent_id = agent_id;
+    if (entitee_un_id !== undefined) oldAccess.entitee_un_id = entitee_un_id;
+    if (entitee_deux_id !== undefined)
+      oldAccess.entitee_deux_id = entitee_deux_id;
+    if (entitee_trois_id !== undefined)
+      oldAccess.entitee_trois_id = entitee_trois_id;
 
     // Validation: au moins une entité
-    if (!row.entitee_un_id && !row.entitee_deux_id && !row.entitee_trois_id) {
+    if (
+      !oldAccess.entitee_un_id &&
+      !oldAccess.entitee_deux_id &&
+      !oldAccess.entitee_trois_id
+    ) {
+      logger.warn("⚠️ Aucune entité spécifiée pour mise à jour", {
+        accessId: id,
+        userId: req.user?.id,
+      });
       return res.status(400).json({
         message: "Au moins une entité doit être spécifiée",
       });
     }
 
-    await row.save();
+    await oldAccess.save();
 
     // Recharger avec les associations
     const updated = await AgentEntiteeAccess.findByPk(id, {
@@ -248,16 +333,43 @@ exports.update = async (req, res) => {
       ],
     });
 
+    logger.info("✅ Accès mis à jour avec succès", {
+      accessId: id,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique
+    await HistoriqueService.logUpdate(
+      req,
+      "agentEntiteeAccess",
+      oldCopy,
+      updated,
+    );
+
     res.json(updated);
   } catch (error) {
-    console.error("❌ Erreur update:", error);
+    logger.error("❌ Erreur mise à jour accès:", {
+      accessId: id,
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: "Erreur lors de la mise à jour" });
   }
 };
 
 // Lister tous les accès
 exports.list = async (req, res) => {
+  const startTime = Date.now();
+
   try {
+    logger.debug("🔍 Récupération de tous les accès", {
+      userId: req.user?.id,
+      query: req.query,
+    });
+
     const data = await AgentEntiteeAccess.findAll({
       include: [
         { model: Agent, as: "agent" },
@@ -280,9 +392,42 @@ exports.list = async (req, res) => {
         },
       ],
     });
+
+    logger.info("✅ Tous les accès récupérés", {
+      count: data.length,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    // Journalisation dans l'historique pour les GET avec sidebar
+    if (req.headers["x-sidebar-navigation"] === "true") {
+      await HistoriqueService.log({
+        agent_id: req.user?.id || null,
+        action: "read",
+        resource: "agentEntiteeAccess",
+        resource_id: null,
+        resource_identifier: "liste des accès",
+        description: "Consultation de la liste des accès",
+        method: req.method,
+        path: req.originalUrl,
+        status: 200,
+        ip: req.ip,
+        user_agent: req.headers["user-agent"],
+        data: {
+          count: data.length,
+          duration: Date.now() - startTime,
+        },
+      });
+    }
+
     res.json(data);
   } catch (err) {
-    console.error("Erreur list:", err);
+    logger.error("❌ Erreur list accès:", {
+      error: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
     res.status(500).json({ message: "Erreur serveur" });
   }
 };

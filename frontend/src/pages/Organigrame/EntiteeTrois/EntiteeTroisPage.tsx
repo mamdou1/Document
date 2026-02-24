@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../../components/layout/Layoutt";
 import EntiteeTroisDetails from "./EntiteeTroisDetails";
 import EntiteeTroisForm from "./EntiteeTroisForm";
@@ -10,13 +10,6 @@ import Pagination from "../../../components/layout/Pagination";
 import { InputText } from "primereact/inputtext";
 import { confirmDialog } from "primereact/confirmdialog";
 import {
-  getAllEntiteeTrois,
-  createEntiteeTrois,
-  updateEntiteeTroisById,
-  deleteEntiteeTroisById,
-} from "../../../api/entiteeTrois";
-import { getAllEntiteeDeux } from "../../../api/entiteeDeux";
-import {
   GitMerge,
   Plus,
   Search,
@@ -25,55 +18,62 @@ import {
   Layers,
   Trash2,
   Pencil,
+  XCircle,
 } from "lucide-react";
 
-export default function EntiteeTroisPage() {
-  const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
-  const [selected, setSelected] = useState<EntiteeTrois | null>(null);
-  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  useEntiteeTrois,
+  useCreateEntiteeTrois,
+  useUpdateEntiteeTrois,
+  useDeleteEntiteeTrois,
+} from "../../../hooks/useEntiteeTrois";
 
+import { useEntiteeDeux } from "../../../hooks/useEntiteeDeux";
+
+export default function EntiteeTroisPage() {
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par les hooks
+  const {
+    data: allEntiteeTrois = [],
+    isLoading: isLoadingTrois,
+    error: errorTrois,
+    refetch: refetchTrois,
+  } = useEntiteeTrois();
+
+  const {
+    data: allEntiteeDeux = [],
+    isLoading: isLoadingDeux,
+    error: errorDeux,
+    refetch: refetchDeux,
+  } = useEntiteeDeux();
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreateEntiteeTrois();
+  const updateMutation = useUpdateEntiteeTrois();
+  const deleteMutation = useDeleteEntiteeTrois();
+
+  // États UI
+  const [selected, setSelected] = useState<EntiteeTrois | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<Partial<EntiteeTrois> | null>(null);
-
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const fetchEntiteeTrois = async () => {
-    setLoading(true);
-    try {
-      const [sec, div] = await Promise.all([
-        getAllEntiteeTrois(),
-        getAllEntiteeDeux(),
-      ]);
-      setAllEntiteeTrois(Array.isArray(sec) ? sec : []);
-      setAllEntiteeDeux(Array.isArray(div) ? div : []);
-    } catch (err) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Chargement échoué",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ PLUS BESOIN DE fetchEntiteeTrois() NI DE useEffect !
 
-  useEffect(() => {
-    fetchEntiteeTrois();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer les handlers
   const onEdit = async (payload: Partial<EntiteeTrois>) => {
     if (!editing?.id) return;
     try {
-      const updated = await updateEntiteeTroisById(editing.id, payload);
-      setAllEntiteeTrois((s) =>
-        s.map((it) => (it.id === updated.id ? updated : it)),
-      );
+      await updateMutation.mutateAsync({
+        id: editing.id,
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Mis à jour",
@@ -85,35 +85,25 @@ export default function EntiteeTroisPage() {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de mise à jour",
+        detail: err?.response?.data?.message || "Échec de mise à jour",
       });
     }
   };
 
   const handleDelete = async (id: string) => {
     confirmDialog({
-      message: `Voulez-vous supprimer ${allEntiteeTrois[0]?.titre} définitivement cet élément ? Cette action est irréversible.`,
+      message: `Voulez-vous supprimer ${allEntiteeTrois[0]?.titre || "cet élément"} définitivement ? Cette action est irréversible.`,
       header: "Confirmation",
-      icon: "pi pi-info-circle", // Icône plus neutre, ou gardez pi-exclamation-triangle
-
-      // --- Personnalisation des labels ---
+      icon: "pi pi-info-circle",
       acceptLabel: "Supprimer",
       rejectLabel: "Annuler",
-
-      // --- Styling des boutons ---
-      // Ajout de classes de mise en page (flexbox) et de style
       acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
       rejectClassName:
         "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
-
-      // --- Style du dialogue lui-même (optionnel) ---
       style: { width: "450px" },
       accept: async () => {
         try {
-          await deleteEntiteeTroisById(id);
-          setAllEntiteeTrois((s) =>
-            s.filter((x) => Number(x.id) !== Number(id)),
-          );
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
@@ -123,7 +113,7 @@ export default function EntiteeTroisPage() {
           toast.current?.show({
             severity: "error",
             summary: "Erreur",
-            detail: "Suppression impossible",
+            detail: err?.response?.data?.message || "Suppression impossible",
           });
         }
       },
@@ -132,33 +122,26 @@ export default function EntiteeTroisPage() {
 
   const onCreate = async (payload: Partial<EntiteeTrois>) => {
     try {
-      const saved = await createEntiteeTrois(payload);
-      setAllEntiteeTrois((s) => [saved, ...s]);
+      await createMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: `${allEntiteeTrois[0]?.titre} créé`,
+        detail: `${allEntiteeTrois[0]?.titre || "Élément"} créé`,
       });
-      //setFormVisible(false);
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
         summary: "Erreur",
-        detail: "Échec de création",
+        detail: err?.response?.data?.message || "Échec de création",
       });
     }
   };
 
-  // Filtrage :
-  // 1. On exclut les éléments où le code ET le libellé sont absents (null ou vide)
-  // 2. On applique la recherche sur le libellé
+  // Filtrage
   const filtered = allEntiteeTrois.filter((s) => {
-    // Vérifie si l'élément est valide (a au moins un code ou un libellé)
     const isPopulated = s.code !== null && s.libelle !== null;
-
     if (!isPopulated) return false;
-
-    // Applique la recherche textuelle
     return (s.libelle || s.code || "")
       .toLowerCase()
       .includes(query.toLowerCase());
@@ -169,10 +152,44 @@ export default function EntiteeTroisPage() {
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 4: Gérer les états de chargement/erreur
+  const isLoading = isLoadingTrois || isLoadingDeux;
+  const error = errorTrois || errorDeux;
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => {
+              refetchTrois();
+              refetchDeux();
+            }}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-emerald-500 p-3 rounded-2xl text-white shadow-lg shadow-orange-100">
@@ -180,7 +197,7 @@ export default function EntiteeTroisPage() {
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-              {allEntiteeTrois[0]?.titre}
+              {allEntiteeTrois[0]?.titre || "Sections"}
             </h1>
             <p className="text-slate-500 font-medium">
               Gestion des unités de base
@@ -188,13 +205,17 @@ export default function EntiteeTroisPage() {
           </div>
         </div>
         <Button
-          label={`Nouvelle ${allEntiteeTrois[0]?.titre} `}
+          label={`Nouvelle ${allEntiteeTrois[0]?.titre || "section"}`}
           icon={<Plus size={20} className="mr-2" />}
           className="bg-emerald-500 hover:bg-emerald-600 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all"
-          onClick={() => setFormVisible(true)}
+          onClick={() => {
+            setEditing(null);
+            setFormVisible(true);
+          }}
         />
       </div>
 
+      {/* Search */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <div className="relative group max-w-md">
           <Search
@@ -203,22 +224,27 @@ export default function EntiteeTroisPage() {
           />
           <InputText
             className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-orange-500/10 outline-none"
-            placeholder={`Rechercher une ${allEntiteeTrois[0]?.titre} ...`}
+            placeholder={`Rechercher une ${allEntiteeTrois[0]?.titre || "section"} ...`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
       </div>
 
+      {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest">
-              <th className="px-6 py-4">Code {allEntiteeTrois[0]?.titre} </th>
               <th className="px-6 py-4">
-                Unité / {allEntiteeTrois[0]?.titre}{" "}
+                Code {allEntiteeTrois[0]?.titre || "section"}
               </th>
-              <th className="px-6 py-4">{allEntiteeDeux[0]?.titre} Parente</th>
+              <th className="px-6 py-4">
+                Unité / {allEntiteeTrois[0]?.titre || "section"}
+              </th>
+              <th className="px-6 py-4">
+                {allEntiteeDeux[0]?.titre || "Division"} Parente
+              </th>
               <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -247,6 +273,7 @@ export default function EntiteeTroisPage() {
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
                         setSelected(d);
                         setDetailsVisible(true);
                       }}
@@ -256,31 +283,31 @@ export default function EntiteeTroisPage() {
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
                         setSelected(d);
                         setAjoutFonctionVisible(true);
-                        e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg"
+                      className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
                       title="Ajouter une fonction"
                     >
                       <PlusCircle size={18} />
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
                         setEditing(d);
                         setFormVisible(true);
-                        e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                     >
                       <Pencil size={18} />
                     </button>
                     <button
                       onClick={(e) => {
-                        handleDelete(String(d.id)!);
                         e.stopPropagation();
+                        handleDelete(String(d.id)!);
                       }}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -292,27 +319,39 @@ export default function EntiteeTroisPage() {
         </table>
       </div>
 
-      <Pagination
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={filtered.length}
-        onPageChange={setCurrentPage}
-      />
+      <div className="mt-6 flex justify-center">
+        <Pagination
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={filtered.length}
+          onPageChange={setCurrentPage}
+        />
+      </div>
+
+      {/* Modals */}
       <EntiteeTroisForm
         visible={formVisible}
-        onHide={() => setFormVisible(false)}
+        onHide={() => {
+          setFormVisible(false);
+          setEditing(null);
+        }}
         onSubmit={editing ? onEdit : onCreate}
-        refresh={fetchEntiteeTrois}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || undefined}
-        title={editing ? "Modifier le division" : "Créer un nouveau division"}
+        title={editing ? "Modifier la section" : "Créer une nouvelle section"}
         entiteeDeux={allEntiteeDeux}
       />
+
       <EntiteeTroisAjoutFonction
         visible={ajoutFonctionVisible}
         onHide={() => setAjoutFonctionVisible(false)}
         entiteeTrois={selected}
-        refresh={fetchEntiteeTrois}
+        refresh={() => {
+          refetchTrois();
+          refetchDeux();
+        }}
       />
+
       <EntiteeTroisDetails
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}
