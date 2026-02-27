@@ -254,29 +254,35 @@ export default function Recherche() {
   }, []);
 
   // Options pour le premier dropdown (niveaux)
+  // Options pour le premier dropdown (niveaux) - MODIFIÉ
   const niveauOptions = useMemo(() => {
     const options = [];
 
     // Admin voit tous les niveaux avec titre
     if (isUserAdmin(user)) {
-      if (titres.niveau1) options.push({ label: titres.niveau1, value: "un" });
-      if (titres.niveau2)
+      // ✅ Vérification explicite que le titre existe et n'est pas vide
+      if (titres.niveau1 && titres.niveau1.trim() !== "") {
+        options.push({ label: titres.niveau1, value: "un" });
+      }
+      if (titres.niveau2 && titres.niveau2.trim() !== "") {
         options.push({ label: titres.niveau2, value: "deux" });
-      if (titres.niveau3)
+      }
+      if (titres.niveau3 && titres.niveau3.trim() !== "") {
         options.push({ label: titres.niveau3, value: "trois" });
+      }
       return options;
     }
 
-    // Non-admin : vérifier les accès
+    // Non-admin : vérifier les accès ET l'existence du titre
     const ids = getUserAccessibleEntityIds(user);
 
-    if (ids.un.size > 0 && titres.niveau1) {
+    if (ids.un.size > 0 && titres.niveau1 && titres.niveau1.trim() !== "") {
       options.push({ label: titres.niveau1, value: "un" });
     }
-    if (ids.deux.size > 0 && titres.niveau2) {
+    if (ids.deux.size > 0 && titres.niveau2 && titres.niveau2.trim() !== "") {
       options.push({ label: titres.niveau2, value: "deux" });
     }
-    if (ids.trois.size > 0 && titres.niveau3) {
+    if (ids.trois.size > 0 && titres.niveau3 && titres.niveau3.trim() !== "") {
       options.push({ label: titres.niveau3, value: "trois" });
     }
 

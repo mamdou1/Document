@@ -26,6 +26,7 @@ import ChangePassword from "../pages/Auth/ChangePassword";
 import SendEmail from "../pages/Auth/SendEmail";
 import VerifyEmail from "../pages/Auth/VerifyEmail";
 import UpdatePassword from "../pages/Auth/UpdatePassword";
+import FonctionPage from "../pages/Fonction/FonctionPage";
 
 // 🔥FIX ICI🔥
 const PrivateRoute: React.FC<{ children: ReactElement }> = ({ children }) => {
@@ -220,6 +221,14 @@ export default function AppRouter() {
         element={
           <PrivateRoute>
             <ChangePassword />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fonction"
+        element={
+          <PrivateRoute>
+            <FonctionPage />
           </PrivateRoute>
         }
       />

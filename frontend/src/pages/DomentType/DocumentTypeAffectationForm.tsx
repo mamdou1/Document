@@ -6,6 +6,7 @@ import { Building2, Layers, GitMerge, Save } from "lucide-react";
 import { getAllEntiteeUn } from "../../api/entiteeUn";
 import { getEntiteeDeuxByEntiteeUn } from "../../api/entiteeDeux";
 import { getEntiteeTroisByEntiteeDeux } from "../../api/entiteeTrois";
+import type { EntiteeUn, EntiteeDeux, EntiteeTrois } from "../../interfaces";
 
 export default function DocumentTypeAffectationForm({
   visible,
@@ -21,14 +22,34 @@ export default function DocumentTypeAffectationForm({
     number | undefined
   >();
 
-  const [allEntiteeUn, setAllEntiteeUn] = useState<any[]>([]);
-  const [allEntiteeDeux, setAllEntiteeDeux] = useState<any[]>([]);
-  const [allEntiteeTrois, setAllEntiteeTrois] = useState<any[]>([]);
+  // ✅ Typage explicite des états
+  const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
+  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
+  const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
+
+  // ✅ Vérifier si les titres existent pour chaque niveau
+  const [titreUn, setTitreUn] = useState<string>("Entité Niveau 1");
+  const [titreDeux, setTitreDeux] = useState<string>("Entité Niveau 2");
+  const [titreTrois, setTitreTrois] = useState<string>("Entité Niveau 3");
+
+  // ✅ Variables pour vérifier l'existence des titres - CORRIGÉES
+  const titreUnExiste =
+    allEntiteeUn.length > 0 && allEntiteeUn[0]?.titre ? true : false;
+  const titreDeuxExiste =
+    allEntiteeDeux.length > 0 && allEntiteeDeux[0]?.titre ? true : false;
+  const titreTroisExiste =
+    allEntiteeTrois.length > 0 && allEntiteeTrois[0]?.titre ? true : false;
 
   useEffect(() => {
     const fetchInitialData = async () => {
       const srvs = await getAllEntiteeUn();
-      setAllEntiteeUn(Array.isArray(srvs) ? srvs : []);
+      const entiteeUnData = Array.isArray(srvs) ? srvs : [];
+      setAllEntiteeUn(entiteeUnData);
+
+      // ✅ Mettre à jour les titres si disponibles
+      if (entiteeUnData.length > 0 && entiteeUnData[0]?.titre) {
+        setTitreUn(entiteeUnData[0].titre);
+      }
     };
     fetchInitialData();
   }, []);
@@ -44,13 +65,25 @@ export default function DocumentTypeAffectationForm({
         // 2. Charger les listes en cascade pour l'affichage
         if (initial.entitee_un?.id) {
           const divs = await getEntiteeDeuxByEntiteeUn(initial.entitee_un.id);
-          setAllEntiteeDeux(Array.isArray(divs) ? divs : []);
+          const entiteeDeuxData = Array.isArray(divs) ? divs : [];
+          setAllEntiteeDeux(entiteeDeuxData);
+
+          // ✅ Mettre à jour le titre N2
+          if (entiteeDeuxData.length > 0 && entiteeDeuxData[0]?.titre) {
+            setTitreDeux(entiteeDeuxData[0].titre);
+          }
         }
         if (initial.entitee_deux?.id) {
           const secs = await getEntiteeTroisByEntiteeDeux(
             initial.entitee_deux.id,
           );
-          setAllEntiteeTrois(Array.isArray(secs) ? secs : []);
+          const entiteeTroisData = Array.isArray(secs) ? secs : [];
+          setAllEntiteeTrois(entiteeTroisData);
+
+          // ✅ Mettre à jour le titre N3
+          if (entiteeTroisData.length > 0 && entiteeTroisData[0]?.titre) {
+            setTitreTrois(entiteeTroisData[0].titre);
+          }
         }
       } else if (visible) {
         setEntitee_un_id(undefined);
@@ -67,15 +100,33 @@ export default function DocumentTypeAffectationForm({
     setEntitee_un_id(id);
     setEntitee_deux_id(undefined);
     setEntitee_trois_id(undefined);
+
     const res = await getEntiteeDeuxByEntiteeUn(id);
-    setAllEntiteeDeux(Array.isArray(res) ? res : []);
+    const entiteeDeuxData = Array.isArray(res) ? res : [];
+    setAllEntiteeDeux(entiteeDeuxData);
+
+    // ✅ Mettre à jour le titre N2
+    if (entiteeDeuxData.length > 0 && entiteeDeuxData[0]?.titre) {
+      setTitreDeux(entiteeDeuxData[0].titre);
+    } else {
+      setTitreDeux("Entité Niveau 2");
+    }
   };
 
   const handleDeuxChange = async (id: number) => {
     setEntitee_deux_id(id);
     setEntitee_trois_id(undefined);
+
     const res = await getEntiteeTroisByEntiteeDeux(id);
-    setAllEntiteeTrois(res);
+    const entiteeTroisData = Array.isArray(res) ? res : [];
+    setAllEntiteeTrois(entiteeTroisData);
+
+    // ✅ Mettre à jour le titre N3
+    if (entiteeTroisData.length > 0 && entiteeTroisData[0]?.titre) {
+      setTitreTrois(entiteeTroisData[0].titre);
+    } else {
+      setTitreTrois("Entité Niveau 3");
+    }
   };
 
   const onSave = async () => {
@@ -117,9 +168,11 @@ export default function DocumentTypeAffectationForm({
           Sélectionnez le niveau de structure auquel ce document appartient.
         </div>
 
+        {/* Niveau 1 - S'affiche toujours mais avec titre dynamique */}
         <div>
           <label className="text-xs font-bold mb-2 block">
-            Entité Niveau 1
+            <Building2 size={14} className="inline mr-1 text-emerald-600" />
+            {titreUn}
           </label>
           <Dropdown
             value={entitee_un_id}
@@ -127,46 +180,61 @@ export default function DocumentTypeAffectationForm({
             optionLabel="libelle"
             optionValue="id"
             onChange={(e) => handleUnChange(e.value)}
-            placeholder="Choisir Direction"
+            placeholder={`Choisir ${titreUn}`}
             className="w-full"
             filter
           />
         </div>
 
-        <div>
-          <label className="text-xs font-bold mb-2 block">
-            Entité Niveau 2
-          </label>
-          <Dropdown
-            value={entitee_deux_id}
-            options={allEntiteeDeux}
-            optionLabel="libelle"
-            optionValue="id"
-            onChange={(e) => handleDeuxChange(e.value)}
-            placeholder="Choisir Service"
-            className="w-full"
-            disabled={!entitee_un_id}
-            filter
-          />
-        </div>
+        {/* Niveau 2 - S'affiche uniquement si le titre existe */}
+        {titreDeuxExiste && (
+          <div>
+            <label className="text-xs font-bold mb-2 block">
+              <Layers size={14} className="inline mr-1 text-blue-600" />
+              {titreDeux}
+            </label>
+            <Dropdown
+              value={entitee_deux_id}
+              options={allEntiteeDeux}
+              optionLabel="libelle"
+              optionValue="id"
+              onChange={(e) => handleDeuxChange(e.value)}
+              placeholder={`Choisir ${titreDeux}`}
+              className="w-full"
+              disabled={!entitee_un_id}
+              filter
+            />
+          </div>
+        )}
 
-        <div>
-          <label className="text-xs font-bold mb-2 block">
-            Entité Niveau 3 (Optionnel)
-          </label>
-          <Dropdown
-            value={entitee_trois_id}
-            options={allEntiteeTrois}
-            optionLabel="libelle"
-            optionValue="id"
-            onChange={(e) => setEntitee_trois_id(e.value)}
-            placeholder="Choisir Section"
-            className="w-full"
-            disabled={!entitee_deux_id}
-            filter
-            showClear
-          />
-        </div>
+        {/* Niveau 3 - S'affiche uniquement si le titre existe */}
+        {titreTroisExiste && (
+          <div>
+            <label className="text-xs font-bold mb-2 block">
+              <GitMerge size={14} className="inline mr-1 text-purple-600" />
+              {titreTrois} (Optionnel)
+            </label>
+            <Dropdown
+              value={entitee_trois_id}
+              options={allEntiteeTrois}
+              optionLabel="libelle"
+              optionValue="id"
+              onChange={(e) => setEntitee_trois_id(e.value)}
+              placeholder={`Choisir ${titreTrois}`}
+              className="w-full"
+              disabled={!entitee_deux_id}
+              filter
+              showClear
+            />
+          </div>
+        )}
+
+        {/* Message si aucun niveau 2 ou 3 n'existe */}
+        {!titreDeuxExiste && !titreTroisExiste && entitee_un_id && (
+          <div className="p-4 bg-amber-50 rounded-xl text-amber-700 text-sm">
+            Aucun niveau inférieur disponible pour cette entité.
+          </div>
+        )}
       </div>
     </Dialog>
   );

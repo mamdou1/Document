@@ -25,7 +25,7 @@ export default function EntiteeDeuxForm({
   entiteeUn,
 }: Props) {
   const [libelle, setLibelle] = useState("");
-  const [code, setCode] = useState("");
+  //const [code, setCode] = useState("");
   const [entitee_un_id, setEntitee_un_id] = useState<number>(
     initial.entitee_un_id || entiteeUn[0]?.id || 0,
   );
@@ -40,16 +40,16 @@ export default function EntiteeDeuxForm({
       console.log("📝 code:", initial.code);
 
       setLibelle(initial.libelle || "");
-      setCode(initial.code || "");
+      //setCode(initial.code || "");
       setEntitee_un_id(initial.entitee_un_id || entiteeUn[0]?.id || 0);
     }
   }, [visible, entiteeUn]);
 
   const handleSubmit = async () => {
-    console.log("🚀 Soumission avec:", { code, libelle, entitee_un_id });
+    console.log("🚀 Soumission avec:", { libelle, entitee_un_id });
     setLoading(true);
     try {
-      await onSubmit({ code, libelle, entitee_un_id });
+      await onSubmit({ libelle, entitee_un_id });
       console.log("✅ Soumission réussie");
       refresh();
     } catch (error) {
@@ -95,11 +95,10 @@ export default function EntiteeDeuxForm({
           />
         </div>
 
-        <div>
+        {/* <div>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
             <Hash size={16} className="text-emerald-500" />
             Code de la {titreNiveau2}{" "}
-            {/* Dynamique : ex "Code de la Division" */}
           </label>
           <InputText
             value={code}
@@ -107,7 +106,7 @@ export default function EntiteeDeuxForm({
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
             placeholder="Ex: PRC-001"
           />
-        </div>
+        </div> */}
 
         <div>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">

@@ -12,14 +12,33 @@ exports.createEntiteeTrois = async (req, res) => {
       body: req.body,
     });
 
-    // 1. Trouver le titre utilisé par les autres éléments
+    const { libelle, entitee_deux_id } = req.body;
+    function enleverAccents(str) {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    const count = await EntiteeTrois.count();
     const exemple = await EntiteeTrois.findOne({ attributes: ["titre"] });
+    logger.info("🔍 Exemple trouvé:", exemple);
+
     const titreGlobal = exemple?.titre || "Défaut";
+    logger.info("🎯 Titre global:", titreGlobal);
+
+    const prefixe = titreGlobal.trim().slice(0, 3).toUpperCase();
+    const sansAccents = enleverAccents(prefixe);
+
+    const nextNumber = count + 1;
+    const paddedNumber = nextNumber.toString().padStart(3, "0");
+    const code_pieces = `${sansAccents}-${paddedNumber}`;
+
+    // 1. Trouver le titre utilisé par les autres éléments
 
     // 2. Créer l'élément avec le titre récupéré
     const entitee_trois = await EntiteeTrois.create({
-      ...req.body,
+      code: code_pieces,
+      libelle,
       titre: titreGlobal,
+      entitee_deux_id,
     });
 
     logger.info("✅ Entité de niveau 3 créée avec succès", {
@@ -81,11 +100,21 @@ exports.getEntiteeTroisTitre = async (req, res) => {
   const startTime = Date.now();
 
   try {
+    // Récupérer la première entité (ou null si aucune)
     const entitee = await EntiteeTrois.findOne({ attributes: ["titre"] });
 
-    res.json({ titre: entitee.titre });
+    // ✅ Gérer le cas où aucune entité n'existe
+    if (!entitee) {
+      return res.status(200).json({ titre: "" }); // Retourner une chaîne vide
+    }
+
+    res.status(200).json({ titre: entitee.titre || "" }); // Si titre est null, retourner ""
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ Erreur getEntiteeTroisTitre:", err);
+    res.status(500).json({
+      message: "Erreur lors de la récupération du titre",
+      error: err.message,
+    });
   }
 };
 
@@ -173,6 +202,52 @@ exports.updateEntiteeTroisTitre = async (req, res) => {
       duration: Date.now() - startTime,
     });
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deleteTitre = async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    logger.info("🗑️ Suppression de tous les titres niveau 3", {
+      userId: req.user?.id,
+    });
+
+    const [count] = await EntiteeTrois.update(
+      { titre: "" },
+      { where: {}, returning: true },
+    );
+
+    logger.info("✅ Tous les titres niveau 3 supprimés", {
+      count,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "update",
+      resource: "entiteeTrois",
+      resource_id: null,
+      resource_identifier: "Tous les titres niveau 3",
+      description: `Suppression de tous les titres (${count} entités)`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: { count, duration: Date.now() - startTime },
+    });
+
+    res.status(200).json({
+      message: `Tous les titres niveau 3 supprimés (${count} entités)`,
+      count,
+    });
+  } catch (err) {
+    logger.error("❌ Erreur suppression tous les titres:", err);
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la suppression des titres" });
   }
 };
 

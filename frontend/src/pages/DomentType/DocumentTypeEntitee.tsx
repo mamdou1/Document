@@ -23,7 +23,6 @@ import {
   FileText,
 } from "lucide-react";
 
-// ✅ IMPORTER LES NOUVEAUX HOOKS
 import {
   useInitialData,
   useCreateTypeDocument,
@@ -232,10 +231,27 @@ export default function DocumentTypeEntitee() {
     return groups;
   };
 
+  // Dans un fichier types ou en haut du composant
+  type EntiteeOption = {
+    label: string;
+    value: string | null;
+    titre?: string; // ✅ Propriété optionnelle pour le titre
+  };
+
   const filteredOptions = useMemo(() => {
     const isAdmin = isUserAdmin(user);
 
-    if (isAdmin) return optionsEntites;
+    if (isAdmin) {
+      // Admin : garder "Tous" et les éléments avec titre
+      return (optionsEntites as EntiteeOption[]).filter((opt) => {
+        if (opt.value === null) return true;
+
+        // ✅ Vérification sécurisée du titre
+        const aUnTitre =
+          opt.titre && typeof opt.titre === "string" && opt.titre.trim() !== "";
+        return aUnTitre;
+      });
+    }
 
     const accessibleEntityIds = new Set();
 
@@ -261,9 +277,18 @@ export default function DocumentTypeEntitee() {
       }
     });
 
-    return optionsEntites.filter(
-      (opt) => opt.value === null || accessibleEntityIds.has(opt.value),
-    );
+    return (optionsEntites as EntiteeOption[]).filter((opt) => {
+      // Garder l'option "Tous"
+      if (opt.value === null) return true;
+
+      // ✅ Vérification du titre
+      const aUnTitre =
+        opt.titre && typeof opt.titre === "string" && opt.titre.trim() !== "";
+      if (!aUnTitre) return false;
+
+      // Vérifier si accessible
+      return accessibleEntityIds.has(opt.value);
+    });
   }, [optionsEntites, user]);
 
   const groupedTypes = getGroupedData();

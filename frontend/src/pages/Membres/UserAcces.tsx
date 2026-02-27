@@ -189,6 +189,11 @@ export default function UserAcces({
     "text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2";
   const inputWrapper = "flex flex-col gap-1";
 
+  // ✅ Vérifier si les titres existent pour chaque niveau
+  const titreN1Existe = options.n1.length > 0 && options.n1[0]?.titre;
+  const titreN2Existe = options.n2.length > 0 && options.n2[0]?.titre;
+  const titreN3Existe = options.n3.length > 0 && options.n3[0]?.titre;
+
   return (
     <Dialog
       header={
@@ -252,88 +257,105 @@ export default function UserAcces({
             Périmètres d'application
           </h3>
 
-          {/* Niveau 1 - EntiteeUn */}
-          <div className={inputWrapper}>
-            <label className={labelStyle}>
-              <Building2 size={14} className="text-blue-500" />
-              Ministères / Directions Générales (N1)
-              {formData.entites_un_id.length > 0 && (
-                <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                  {formData.entites_un_id.length} sélectionnée(s)
-                </span>
-              )}
-            </label>
-            <MultiSelect
-              value={formData.entites_un_id}
-              options={options.n1}
-              optionLabel="libelle"
-              optionValue="id"
-              onChange={(e) =>
-                setFormData({ ...formData, entites_un_id: e.value })
-              }
-              placeholder="Sélectionner les ministères/directions"
-              display="chip"
-              filter
-              className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
-              maxSelectedLabels={3}
-            />
-          </div>
+          {/* Niveau 1 - EntiteeUn - S'affiche uniquement si le titre existe */}
+          {titreN1Existe && (
+            <div className={inputWrapper}>
+              <label className={labelStyle}>
+                <Building2 size={14} className="text-blue-500" />
+                {options.n1[0]?.titre ||
+                  "Ministères / Directions Générales"}{" "}
+                (N1)
+                {formData.entites_un_id.length > 0 && (
+                  <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                    {formData.entites_un_id.length} sélectionnée(s)
+                  </span>
+                )}
+              </label>
+              <MultiSelect
+                value={formData.entites_un_id}
+                options={options.n1}
+                optionLabel="libelle"
+                optionValue="id"
+                onChange={(e) =>
+                  setFormData({ ...formData, entites_un_id: e.value })
+                }
+                placeholder={`Sélectionner les ${options.n1[0]?.titre || "entités"}`}
+                display="chip"
+                filter
+                className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
+                maxSelectedLabels={3}
+              />
+            </div>
+          )}
 
-          {/* Niveau 2 - EntiteeDeux */}
-          <div className={inputWrapper}>
-            <label className={labelStyle}>
-              <Layers size={14} className="text-purple-500" />
-              Directions / Services (N2)
-              {formData.entites_deux_id.length > 0 && (
-                <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                  {formData.entites_deux_id.length} sélectionnée(s)
-                </span>
-              )}
-            </label>
-            <MultiSelect
-              value={formData.entites_deux_id}
-              options={options.n2}
-              optionLabel="libelle"
-              optionValue="id"
-              onChange={(e) =>
-                setFormData({ ...formData, entites_deux_id: e.value })
-              }
-              placeholder="Sélectionner les directions/services"
-              display="chip"
-              filter
-              className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
-              maxSelectedLabels={3}
-            />
-          </div>
+          {/* Niveau 2 - EntiteeDeux - S'affiche uniquement si le titre existe */}
+          {titreN2Existe && (
+            <div className={inputWrapper}>
+              <label className={labelStyle}>
+                <Layers size={14} className="text-purple-500" />
+                {options.n2[0]?.titre || "Directions / Services"} (N2)
+                {formData.entites_deux_id.length > 0 && (
+                  <span className="ml-2 text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                    {formData.entites_deux_id.length} sélectionnée(s)
+                  </span>
+                )}
+              </label>
+              <MultiSelect
+                value={formData.entites_deux_id}
+                options={options.n2}
+                optionLabel="libelle"
+                optionValue="id"
+                onChange={(e) =>
+                  setFormData({ ...formData, entites_deux_id: e.value })
+                }
+                placeholder={`Sélectionner les ${options.n2[0]?.titre || "entités"}`}
+                display="chip"
+                filter
+                className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
+                maxSelectedLabels={3}
+              />
+            </div>
+          )}
 
-          {/* Niveau 3 - EntiteeTrois */}
-          <div className={inputWrapper}>
-            <label className={labelStyle}>
-              <GitMerge size={14} className="text-emerald-500" />
-              Divisions / Sous-services (N3)
-              {formData.entites_trois_id.length > 0 && (
-                <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                  {formData.entites_trois_id.length} sélectionnée(s)
-                </span>
-              )}
-            </label>
-            <MultiSelect
-              value={formData.entites_trois_id}
-              options={options.n3}
-              optionLabel="libelle"
-              optionValue="id"
-              onChange={(e) =>
-                setFormData({ ...formData, entites_trois_id: e.value })
-              }
-              placeholder="Sélectionner les divisions/services"
-              display="chip"
-              filter
-              className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
-              maxSelectedLabels={3}
-            />
-          </div>
+          {/* Niveau 3 - EntiteeTrois - S'affiche uniquement si le titre existe */}
+          {titreN3Existe && (
+            <div className={inputWrapper}>
+              <label className={labelStyle}>
+                <GitMerge size={14} className="text-emerald-500" />
+                {options.n3[0]?.titre || "Divisions / Sous-services"} (N3)
+                {formData.entites_trois_id.length > 0 && (
+                  <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                    {formData.entites_trois_id.length} sélectionnée(s)
+                  </span>
+                )}
+              </label>
+              <MultiSelect
+                value={formData.entites_trois_id}
+                options={options.n3}
+                optionLabel="libelle"
+                optionValue="id"
+                onChange={(e) =>
+                  setFormData({ ...formData, entites_trois_id: e.value })
+                }
+                placeholder={`Sélectionner les ${options.n3[0]?.titre || "entités"}`}
+                display="chip"
+                filter
+                className="w-full border border-slate-200 rounded-xl hover:border-emerald-400 transition-all"
+                maxSelectedLabels={3}
+              />
+            </div>
+          )}
 
-          {/* Résumé des sélections */}
+          {/* Message si aucun titre n'existe */}
+          {!titreN1Existe && !titreN2Existe && !titreN3Existe && (
+            <div className="p-6 bg-slate-100 rounded-xl text-center">
+              <p className="text-sm text-slate-500 italic">
+                Aucune entité disponible pour le moment
+              </p>
+            </div>
+          )}
+
+          {/* Résumé des sélections - s'affiche uniquement s'il y a des sélections */}
           {(formData.entites_un_id.length > 0 ||
             formData.entites_deux_id.length > 0 ||
             formData.entites_trois_id.length > 0) && (
@@ -342,9 +364,9 @@ export default function UserAcces({
                 <span>📋 Récapitulatif</span>
               </p>
               <p className="text-xs text-emerald-600 mt-1">
-                {formData.entites_un_id.length} N1,{" "}
-                {formData.entites_deux_id.length} N2,{" "}
-                {formData.entites_trois_id.length} N3
+                {titreN1Existe && `${formData.entites_un_id.length} N1, `}
+                {titreN2Existe && `${formData.entites_deux_id.length} N2, `}
+                {titreN3Existe && `${formData.entites_trois_id.length} N3`}
                 <span className="ml-2 text-emerald-500">•</span>
                 <span className="ml-2 font-bold">
                   Total:{" "}

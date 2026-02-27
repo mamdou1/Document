@@ -19,6 +19,12 @@ router.get(
   authorizePermission("entiteeTrois", "read"),
   entiteeTroisController.getAllEntiteeTrois,
 );
+router.delete(
+  "/titre",
+  verifyToken,
+  authorizePermission("entiteeTrois", "delete"),
+  entiteeTroisController.deleteTitre,
+);
 
 // ✅ DÉPLACER ICI
 router.get(

@@ -20,7 +20,7 @@ export const getFonctionById = async (id: number): Promise<Fonction> => {
 
 // Créer une nouvelle fonction (liée à un service, division ou section)
 export const createFonction = async (
-  payload: Partial<Fonction>
+  payload: Partial<Fonction>,
 ): Promise<Fonction> => {
   const response = await api.post("/fonctions/", payload);
   return response.data;
@@ -29,7 +29,7 @@ export const createFonction = async (
 // Mettre à jour une fonction
 export const updateFonctionById = async (
   id: number,
-  payload: Partial<Fonction>
+  payload: Partial<Fonction>,
 ): Promise<Fonction> => {
   const response = await api.put(`/fonctions/${id}`, payload);
   return response.data;
@@ -45,19 +45,25 @@ export const deleteFonctionById = async (id: number): Promise<void> => {
  */
 
 // Récupérer les fonctions d'un Service
-export const getFonctionsByService = async (serviceId: number): Promise<Fonction[]> => {
+export const getFonctionsByService = async (
+  serviceId: number,
+): Promise<Fonction[]> => {
   const response = await api.get(`/fonctions/by-service/${serviceId}`);
   return response.data;
 };
 
 // Récupérer les fonctions d'une Division
-export const getFonctionsByDivision = async (divisionId: number): Promise<Fonction[]> => {
+export const getFonctionsByDivision = async (
+  divisionId: number,
+): Promise<Fonction[]> => {
   const response = await api.get(`/fonctions/by-division/${divisionId}`);
   return response.data;
 };
 
 // Récupérer les fonctions d'une Section
-export const getFonctionsBySection = async (sectionId: number): Promise<Fonction[]> => {
+export const getFonctionsBySection = async (
+  sectionId: number,
+): Promise<Fonction[]> => {
   const response = await api.get(`/fonctions/by-section/${sectionId}`);
   return response.data;
 };

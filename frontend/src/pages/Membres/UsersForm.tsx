@@ -26,6 +26,8 @@ import type {
   User,
 } from "../../interfaces";
 import { getAllEntiteeUn } from "../../api/entiteeUn";
+import { getAllEntiteeDeux } from "../../api/entiteeDeux";
+import { getAllEntiteeTrois } from "../../api/entiteeTrois";
 import { getEntiteeDeuxByEntiteeUn } from "../../api/entiteeDeux";
 import { getEntiteeTroisByEntiteeDeux } from "../../api/entiteeTrois";
 import { getFunctionsByEntiteeUn } from "../../api/entiteeUn";
@@ -82,14 +84,25 @@ export default function UserForm({
   const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
   const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
   const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
+
+  const [titreEntiteeDeux, setTitreEntiteeDeux] = useState<EntiteeDeux[]>([]);
+  const [titreEntiteeTrois, setTitreEntiteeTrois] = useState<EntiteeTrois[]>(
+    [],
+  );
   const [fonctions, setFonctions] = useState<Fonction[]>([]);
   // const toast = useRef<Toast>(null);
 
   // --- Initialisation au montage/ouverture ---
   useEffect(() => {
     const fetchInitialData = async () => {
-      const srvs = await getAllEntiteeUn();
+      const [srvs, ent2, ent3] = await Promise.all([
+        getAllEntiteeUn(),
+        getAllEntiteeDeux(),
+        getAllEntiteeTrois(),
+      ]);
       setAllEntiteeUn(Array.isArray(srvs) ? srvs : []);
+      setTitreEntiteeDeux(Array.isArray(ent2) ? ent2 : []);
+      setTitreEntiteeTrois(Array.isArray(ent3) ? ent3 : []);
     };
     fetchInitialData();
   }, []);
@@ -156,33 +169,16 @@ export default function UserForm({
     setFonctions(funcs);
   };
 
+  // ✅ Vérifier si les titres existent
+  const titreUnExiste = allEntiteeUn.length > 0 && allEntiteeUn[0]?.titre;
+  const titreDeuxExiste =
+    titreEntiteeDeux.length > 0 && titreEntiteeDeux[0]?.titre;
+  const titreTroisExiste =
+    titreEntiteeTrois.length > 0 && titreEntiteeTrois[0]?.titre;
+
   const titreUn = allEntiteeUn[0]?.titre || "Entité 1";
-  const titreDeux = allEntiteeDeux[0]?.titre || "Entité 2";
-  const titreTrois = allEntiteeTrois[0]?.titre || "Entité 3";
-
-  // --- Soumission ---
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   const payload: Partial<User> = {
-  //     nom,
-  //     prenom,
-  //     email,
-  //     telephone,
-  //     num_matricule: numMatricule,
-  //     role,
-  //     droit,
-
-  //     fonction: fonctionId,
-  //     // @ts-ignore (Si vous gérez les IDs d'affectation dans votre interface User)
-
-  //     entitee_un_id: entitee_un_id,
-  //     entitee_deux_id: entitee_deux_id,
-  //     entitee_trois_id: entitee_trois_id,
-  //   };
-
-  //   await onSubmit(payload, photoFile || undefined);
-  //   ////onHide();
-  // };
+  const titreDeux = titreEntiteeDeux[0]?.titre || "Entité 2";
+  const titreTrois = titreEntiteeTrois[0]?.titre || "Entité 3";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,7 +236,7 @@ export default function UserForm({
       className="rounded-3xl"
     >
       <form onSubmit={handleSubmit} className="pt-4 grid grid-cols-2 gap-6">
-        {/* Colonne Gauche: Identité */}
+        {/* Colonne Gauche: Identité (inchangée) */}
         <div className="space-y-4">
           <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest border-b pb-2">
             Identité
@@ -315,17 +311,6 @@ export default function UserForm({
                 className={inputClass}
               />
             </div>
-            {/* <div>
-              <label className={labelClass}>
-                Rôle <span className="text-red-500">*</span>
-              </label>
-              <Dropdown
-                value={role}
-                options={roleOptions}
-                onChange={(e) => setRole(e.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl"
-              />
-            </div> */}
           </div>
 
           <div>
@@ -342,62 +327,72 @@ export default function UserForm({
           </div>
         </div>
 
-        {/* Colonne Droite: Affectation */}
+        {/* Colonne Droite: Affectation - AVEC CONDITIONS D'AFFICHAGE */}
         <div className="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
           <h3 className="text-xs font-black uppercase text-emerald-500 tracking-widest border-b border-emerald-100 pb-2">
             Affectation
           </h3>
 
-          <div>
-            <label className={labelClass}>
-              <Building2 size={14} className="text-emerald-500" /> {titreUn}
-            </label>
-            <Dropdown
-              value={entitee_un_id}
-              options={allEntiteeUn}
-              optionLabel="libelle"
-              optionValue="id"
-              onChange={(e) => handleEntiteeUnChange(Number(e.value))}
-              placeholder={`Sélectionner ${titreUn}`}
-              className="w-full rounded-xl"
-              filter
-            />
-          </div>
+          {/* Niveau 1 - S'affiche uniquement si le titre existe */}
+          {titreUnExiste && (
+            <div>
+              <label className={labelClass}>
+                <Building2 size={14} className="text-emerald-500" /> {titreUn}
+              </label>
+              <Dropdown
+                value={entitee_un_id}
+                options={allEntiteeUn}
+                optionLabel="libelle"
+                optionValue="id"
+                onChange={(e) => handleEntiteeUnChange(Number(e.value))}
+                placeholder={`Sélectionner ${titreUn}`}
+                className="w-full rounded-xl"
+                filter
+              />
+            </div>
+          )}
 
-          <div>
-            <label className={labelClass}>
-              <Layers size={14} className="text-emerald-500" /> {titreDeux}
-            </label>
-            <Dropdown
-              value={entitee_deux_id}
-              options={allEntiteeDeux}
-              optionLabel="libelle"
-              optionValue="id"
-              onChange={(e) => handleEntiteeDeuxChange(Number(e.value))}
-              placeholder={`Sélectionner ${titreDeux}`}
-              className="w-full rounded-xl"
-              disabled={!entitee_un_id}
-              filter
-            />
-          </div>
+          {/* Niveau 2 - S'affiche uniquement si le titre existe */}
+          {titreDeuxExiste && (
+            <div>
+              <label className={labelClass}>
+                <Layers size={14} className="text-emerald-500" /> {titreDeux}
+              </label>
+              <Dropdown
+                value={entitee_deux_id}
+                options={allEntiteeDeux}
+                optionLabel="libelle"
+                optionValue="id"
+                onChange={(e) => handleEntiteeDeuxChange(Number(e.value))}
+                placeholder={`Sélectionner ${titreDeux}`}
+                className="w-full rounded-xl"
+                disabled={titreUnExiste ? !entitee_un_id : false}
+                filter
+              />
+            </div>
+          )}
 
-          <div>
-            <label className={labelClass}>
-              <GitMerge size={14} className="text-orange-500" /> {titreTrois}
-            </label>
-            <Dropdown
-              value={entitee_trois_id}
-              options={allEntiteeTrois}
-              optionLabel="libelle"
-              optionValue="id"
-              onChange={(e) => handleEntiteeTroisChange(Number(e.value))}
-              placeholder={`Sélectionner ${titreTrois}`}
-              className="w-full rounded-xl"
-              disabled={!entitee_deux_id}
-              filter
-            />
-          </div>
+          {/* Niveau 3 - S'affiche uniquement si le titre existe */}
+          {titreTroisExiste && (
+            <div>
+              <label className={labelClass}>
+                <GitMerge size={14} className="text-orange-500" /> {titreTrois}
+              </label>
+              <Dropdown
+                value={entitee_trois_id}
+                options={allEntiteeTrois}
+                optionLabel="libelle"
+                optionValue="id"
+                onChange={(e) => handleEntiteeTroisChange(Number(e.value))}
+                placeholder={`Sélectionner ${titreTrois}`}
+                className="w-full rounded-xl"
+                disabled={titreDeuxExiste ? !entitee_deux_id : false}
+                filter
+              />
+            </div>
+          )}
 
+          {/* Fonction - S'affiche toujours mais s'adapte */}
           <div>
             <label className={labelClass}>
               <Briefcase size={14} className="text-purple-500" /> Fonction /
@@ -411,10 +406,19 @@ export default function UserForm({
               onChange={(e) => setFonctionId(Number(e.value))}
               placeholder="Attribuer une fonction"
               className="w-full rounded-xl border-emerald-500 border-2"
-              disabled={!entitee_un_id}
+              disabled={titreUnExiste ? !entitee_un_id : false}
               filter
             />
           </div>
+
+          {/* Message si aucune entité n'existe */}
+          {!titreUnExiste && !titreDeuxExiste && !titreTroisExiste && (
+            <div className="p-6 bg-slate-100 rounded-xl text-center">
+              <p className="text-sm text-slate-500 italic">
+                Aucune entité disponible pour l'affectation
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer Navigation */}

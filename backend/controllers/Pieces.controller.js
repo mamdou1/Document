@@ -14,7 +14,13 @@ exports.createPieces = async (req, res) => {
   const startTime = Date.now();
 
   try {
-    const { code_pieces, libelle } = req.body;
+    const { libelle } = req.body;
+
+    const count = await Pieces.count();
+
+    const nextNumber = count + 1;
+    const paddedNumber = nextNumber.toString().padStart(3, "0");
+    const code_pieces = `P-${paddedNumber}`;
 
     logger.info("📝 Tentative de création d'une pièce", {
       userId: req.user?.id,

@@ -26,6 +26,12 @@ router.post(
 );
 router.get("/", verifyToken, authorizePermission("agent", "read"), getUsers);
 router.get(
+  "/online",
+  verifyToken,
+  authorizePermission("agent", "read"),
+  getOnlineUsers,
+);
+router.get(
   "/totalMembre",
   verifyToken,
   authorizePermission("exercice", "read"),
@@ -57,13 +63,6 @@ router.delete(
   verifyToken,
   authorizePermission("agent", "delete"),
   deleteMembre,
-);
-
-router.get(
-  "/online",
-  verifyToken,
-  authorizePermission("agent", "read"),
-  getOnlineUsers,
 );
 
 module.exports = router;

@@ -17,10 +17,13 @@ import {
   GitMerge,
   Pencil,
   Trash2,
+  Search,
 } from "lucide-react";
 import EntiteeUnAjoutFonction from "./EntiteeUnAjoutFonction";
 import { confirmDialog } from "primereact/confirmdialog";
 import { deleteFonctionById } from "../../../api/fonction";
+import Pagination from "../../../components/layout/Pagination";
+import { InputText } from "primereact/inputtext";
 
 export default function EntiteeUnDetails({
   visible,
@@ -31,6 +34,9 @@ export default function EntiteeUnDetails({
   const [fonctions, setFonctions] = useState<Fonction[]>([]);
   const [editing, setEditing] = useState<Partial<Fonction> | null>(null);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
+  const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Charger les fonctions au montage
   const fetchData = async () => {
@@ -79,6 +85,18 @@ export default function EntiteeUnDetails({
     });
   };
 
+  // Filtrage et pagination
+  const filtered = fonctions.filter((f) => {
+    const isPopulated = f.libelle !== null;
+    if (!isPopulated) return false;
+    return (f.libelle || "").toLowerCase().includes(query.toLowerCase());
+  });
+
+  const paginated = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   if (!entiteeUn) return null;
 
   return (
@@ -92,7 +110,7 @@ export default function EntiteeUnDetails({
         </div>
       }
       visible={visible}
-      style={{ width: "600px" }}
+      style={{ width: "700px" }}
       onHide={onHide}
       draggable={false}
       footer={
@@ -117,6 +135,20 @@ export default function EntiteeUnDetails({
               {entiteeUn.code}
             </span>
           </h2>
+        </div>
+
+        {/* Search */}
+        <div className="relative group max-w-md">
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
+            size={20}
+          />
+          <InputText
+            className="w-full pl-12 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 outline-none"
+            placeholder="Rechercher ..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
 
         {/* Tableau des Fonctions */}
@@ -157,7 +189,7 @@ export default function EntiteeUnDetails({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {fonctions.map((f, index) => (
+                  {paginated.map((f, index) => (
                     <tr
                       key={f.id}
                       className="group hover:bg-emerald-50/30 transition-colors"
@@ -213,6 +245,15 @@ export default function EntiteeUnDetails({
               </p>
             </div>
           )}
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filtered.length}
+            onPageChange={setCurrentPage}
+          />
         </div>
 
         {/* Footer info */}

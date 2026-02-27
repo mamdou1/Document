@@ -26,6 +26,8 @@ import {
   GitMerge,
   Building2,
   FileStack,
+  Briefcase,
+  Settings2,
 } from "lucide-react";
 
 import logo from "../../assets/digidoc1.png";
@@ -115,9 +117,9 @@ export default function Sidebar({ children }: SidebarProps) {
           getEntiteeTroisTitre(),
         ]);
         return {
-          titre1: t1.titre || "Ministères",
-          titre2: t2.titre || "Directions",
-          titre3: t3.titre || "Services",
+          titre1: t1.titre || "",
+          titre2: t2.titre || "",
+          titre3: t3.titre || "",
         };
       },
       staleTime: 5 * 60 * 1000,
@@ -392,43 +394,41 @@ export default function Sidebar({ children }: SidebarProps) {
 
               {(can("entiteeUn", "access") ||
                 can("entiteeDeux", "access") ||
+                can("fonction", "access") ||
                 can("entiteeTrois", "access")) && (
                 <SidebarTree label="Organigrame" icon={GitFork}>
                   {/* Condition : Affiché seulement si titre1 existe */}
-                  {dynamicTitles.titre1 && (
-                    <SidebarLink
-                      icon={Landmark}
-                      text={dynamicTitles.titre1}
-                      to="/entiteeUn"
-                      active={location.pathname.startsWith("/entiteeUn")}
-                    />
-                  )}
+                  {dynamicTitles.titre1 &&
+                    dynamicTitles.titre1.trim() !== "" && (
+                      <SidebarLink
+                        icon={Landmark}
+                        text={dynamicTitles.titre1}
+                        to="/entiteeUn"
+                        active={location.pathname.startsWith("/entiteeUn")}
+                      />
+                    )}
 
                   {/* Condition : Affiché seulement si titre2 existe */}
-                  {dynamicTitles.titre2 && (
-                    <SidebarLink
-                      icon={Split}
-                      text={dynamicTitles.titre2}
-                      to="/entiteeDeux"
-                      active={location.pathname.startsWith("/entiteeDeux")}
-                    />
-                  )}
+                  {dynamicTitles.titre2 &&
+                    dynamicTitles.titre2.trim() !== "" && (
+                      <SidebarLink
+                        icon={Split}
+                        text={dynamicTitles.titre2}
+                        to="/entiteeDeux"
+                        active={location.pathname.startsWith("/entiteeDeux")}
+                      />
+                    )}
 
                   {/* Condition : Affiché seulement si titre3 existe */}
-                  {dynamicTitles.titre3 && (
-                    <SidebarLink
-                      icon={TableOfContents}
-                      text={dynamicTitles.titre3}
-                      to="/entiteeTrois"
-                      active={location.pathname.startsWith("/entiteeTrois")}
-                    />
-                  )}
-                  <SidebarLink
-                    icon={Pyramid}
-                    text="Configuration"
-                    to="/organigrame"
-                    active={location.pathname.startsWith("/organigrame")}
-                  />
+                  {dynamicTitles.titre3 &&
+                    dynamicTitles.titre3.trim() !== "" && (
+                      <SidebarLink
+                        icon={TableOfContents}
+                        text={dynamicTitles.titre3}
+                        to="/entiteeTrois"
+                        active={location.pathname.startsWith("/entiteeTrois")}
+                      />
+                    )}
                 </SidebarTree>
               )}
 
@@ -472,62 +472,68 @@ export default function Sidebar({ children }: SidebarProps) {
                       {isUserAdmin(user) ? (
                         /* ===== CAS ADMIN ===== */
                         <>
-                          {entiteeUn.length > 0 && (
-                            <SidebarLink
-                              icon={Building2}
-                              text={dynamicTitles.titre1 || "Niveau 1"}
-                              to={`/document?entitee=un`}
-                              active={
-                                location.pathname === "/document" &&
-                                new URLSearchParams(location.search).get(
-                                  "entitee",
-                                ) === "un"
-                              }
-                              suffix={
-                                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-2">
-                                  {entiteeUn.length}
-                                </span>
-                              }
-                            />
-                          )}
+                          {entiteeUn.length > 0 &&
+                            dynamicTitles.titre1 &&
+                            dynamicTitles.titre1.trim() !== "" && (
+                              <SidebarLink
+                                icon={Building2}
+                                text={dynamicTitles.titre1 || "Niveau 1"}
+                                to={`/document?entitee=un`}
+                                active={
+                                  location.pathname === "/document" &&
+                                  new URLSearchParams(location.search).get(
+                                    "entitee",
+                                  ) === "un"
+                                }
+                                suffix={
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-2">
+                                    {entiteeUn.length}
+                                  </span>
+                                }
+                              />
+                            )}
 
-                          {entiteeDeux.length > 0 && (
-                            <SidebarLink
-                              icon={Layers}
-                              text={dynamicTitles.titre2 || "Niveau 2"}
-                              to={`/document?entitee=deux`}
-                              active={
-                                location.pathname === "/document" &&
-                                new URLSearchParams(location.search).get(
-                                  "entitee",
-                                ) === "deux"
-                              }
-                              suffix={
-                                <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full ml-2">
-                                  {entiteeDeux.length}
-                                </span>
-                              }
-                            />
-                          )}
+                          {entiteeDeux.length > 0 &&
+                            dynamicTitles.titre2 &&
+                            dynamicTitles.titre2.trim() !== "" && (
+                              <SidebarLink
+                                icon={Layers}
+                                text={dynamicTitles.titre2 || "Niveau 2"}
+                                to={`/document?entitee=deux`}
+                                active={
+                                  location.pathname === "/document" &&
+                                  new URLSearchParams(location.search).get(
+                                    "entitee",
+                                  ) === "deux"
+                                }
+                                suffix={
+                                  <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full ml-2">
+                                    {entiteeDeux.length}
+                                  </span>
+                                }
+                              />
+                            )}
 
-                          {entiteeTrois.length > 0 && (
-                            <SidebarLink
-                              icon={GitMerge}
-                              text={dynamicTitles.titre3 || "Niveau 3"}
-                              to={`/document?entitee=trois`}
-                              active={
-                                location.pathname === "/document" &&
-                                new URLSearchParams(location.search).get(
-                                  "entitee",
-                                ) === "trois"
-                              }
-                              suffix={
-                                <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full ml-2">
-                                  {entiteeTrois.length}
-                                </span>
-                              }
-                            />
-                          )}
+                          {entiteeTrois.length > 0 &&
+                            dynamicTitles.titre3 &&
+                            dynamicTitles.titre3.trim() !== "" && (
+                              <SidebarLink
+                                icon={GitMerge}
+                                text={dynamicTitles.titre3 || "Niveau 3"}
+                                to={`/document?entitee=trois`}
+                                active={
+                                  location.pathname === "/document" &&
+                                  new URLSearchParams(location.search).get(
+                                    "entitee",
+                                  ) === "trois"
+                                }
+                                suffix={
+                                  <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full ml-2">
+                                    {entiteeTrois.length}
+                                  </span>
+                                }
+                              />
+                            )}
                         </>
                       ) : (
                         /* ===== CAS NON-ADMIN ===== */
@@ -542,62 +548,74 @@ export default function Sidebar({ children }: SidebarProps) {
                             if (hasAdditionalAccess(user)) {
                               return (
                                 <>
-                                  {hasUnAccess && (
-                                    <SidebarLink
-                                      icon={Building2}
-                                      text={dynamicTitles.titre1 || "Niveau 1"}
-                                      to={`/document?entitee=un&niveaux=un`}
-                                      active={
-                                        location.pathname === "/document" &&
-                                        new URLSearchParams(
-                                          location.search,
-                                        ).get("entitee") === "un"
-                                      }
-                                      suffix={
-                                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-2">
-                                          {ids.un.size}
-                                        </span>
-                                      }
-                                    />
-                                  )}
+                                  {hasUnAccess &&
+                                    dynamicTitles.titre1 &&
+                                    dynamicTitles.titre1.trim() !== "" && (
+                                      <SidebarLink
+                                        icon={Building2}
+                                        text={
+                                          dynamicTitles.titre1 || "Niveau 1"
+                                        }
+                                        to={`/document?entitee=un&niveaux=un`}
+                                        active={
+                                          location.pathname === "/document" &&
+                                          new URLSearchParams(
+                                            location.search,
+                                          ).get("entitee") === "un"
+                                        }
+                                        suffix={
+                                          <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-2">
+                                            {ids.un.size}
+                                          </span>
+                                        }
+                                      />
+                                    )}
 
-                                  {hasDeuxAccess && (
-                                    <SidebarLink
-                                      icon={Layers}
-                                      text={dynamicTitles.titre2 || "Niveau 2"}
-                                      to={`/document?entitee=deux&niveaux=deux`}
-                                      active={
-                                        location.pathname === "/document" &&
-                                        new URLSearchParams(
-                                          location.search,
-                                        ).get("entitee") === "deux"
-                                      }
-                                      suffix={
-                                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full ml-2">
-                                          {ids.deux.size}
-                                        </span>
-                                      }
-                                    />
-                                  )}
+                                  {hasDeuxAccess &&
+                                    dynamicTitles.titre2 &&
+                                    dynamicTitles.titre2.trim() !== "" && (
+                                      <SidebarLink
+                                        icon={Layers}
+                                        text={
+                                          dynamicTitles.titre2 || "Niveau 2"
+                                        }
+                                        to={`/document?entitee=deux&niveaux=deux`}
+                                        active={
+                                          location.pathname === "/document" &&
+                                          new URLSearchParams(
+                                            location.search,
+                                          ).get("entitee") === "deux"
+                                        }
+                                        suffix={
+                                          <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full ml-2">
+                                            {ids.deux.size}
+                                          </span>
+                                        }
+                                      />
+                                    )}
 
-                                  {hasTroisAccess && (
-                                    <SidebarLink
-                                      icon={GitMerge}
-                                      text={dynamicTitles.titre3 || "Niveau 3"}
-                                      to={`/document?entitee=trois&niveaux=trois`}
-                                      active={
-                                        location.pathname === "/document" &&
-                                        new URLSearchParams(
-                                          location.search,
-                                        ).get("entitee") === "trois"
-                                      }
-                                      suffix={
-                                        <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full ml-2">
-                                          {ids.trois.size}
-                                        </span>
-                                      }
-                                    />
-                                  )}
+                                  {hasTroisAccess &&
+                                    dynamicTitles.titre3 &&
+                                    dynamicTitles.titre3.trim() !== "" && (
+                                      <SidebarLink
+                                        icon={GitMerge}
+                                        text={
+                                          dynamicTitles.titre3 || "Niveau 3"
+                                        }
+                                        to={`/document?entitee=trois&niveaux=trois`}
+                                        active={
+                                          location.pathname === "/document" &&
+                                          new URLSearchParams(
+                                            location.search,
+                                          ).get("entitee") === "trois"
+                                        }
+                                        suffix={
+                                          <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full ml-2">
+                                            {ids.trois.size}
+                                          </span>
+                                        }
+                                      />
+                                    )}
                                 </>
                               );
                             }
@@ -736,6 +754,28 @@ export default function Sidebar({ children }: SidebarProps) {
                       text="Historique"
                       to="/historique"
                       active={location.pathname.startsWith("/historique")}
+                    />
+                  )}
+                </SidebarTree>
+              )}
+              {(can("entiteeUn", "access") ||
+                can("entiteeDeux", "access") ||
+                can("entiteeTrois", "access") ||
+                can("fonction", "access")) && (
+                <SidebarTree label="Paramétrage" icon={Settings2}>
+                  <SidebarLink
+                    icon={Pyramid}
+                    text="Configuration"
+                    to="/organigrame"
+                    active={location.pathname.startsWith("/organigrame")}
+                  />
+
+                  {can("fonction", "access") && (
+                    <SidebarLink
+                      icon={Briefcase}
+                      text="Fonction"
+                      to="/fonction"
+                      active={location.pathname.startsWith("/fonction")}
                     />
                   )}
                 </SidebarTree>

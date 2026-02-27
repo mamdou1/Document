@@ -22,22 +22,22 @@ export default function EntiteeUnForm({
   initial = {},
   title = "Nouveau",
 }: Props) {
-  const [code, setCode] = useState("");
+  ///const [code, setCode] = useState("");
   const [libelle, setLibelle] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      setCode(initial.code || "");
+      //setCode(initial.code || "");
       setLibelle(initial.libelle || "");
     }
   }, [visible]);
 
   const handleSubmit = async () => {
     setLoading(true);
-    console.log("Formulaire soumis avec:", { code, libelle });
+    console.log("Formulaire soumis avec:", { libelle });
     try {
-      await onSubmit({ code, libelle });
+      await onSubmit({ libelle });
       console.log("Soumission réussie");
       setLibelle("");
       //onHide(); // Décidez si vous voulez fermer automatiquement ou non
@@ -64,7 +64,7 @@ export default function EntiteeUnForm({
     >
       <div className="pt-4 space-y-5">
         <div>
-          <div>
+          {/* <div>
             <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
               <Hash size={16} className="text-blue-500" /> Code
             </label>
@@ -74,7 +74,7 @@ export default function EntiteeUnForm({
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
               placeholder="Ex: DIVC-001"
             />
-          </div>
+          </div> */}
 
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
             <Info size={16} className="text-emerald-500" /> Libellé{" "}

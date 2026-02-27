@@ -48,34 +48,32 @@ exports.getAllFonctions = async (req, res) => {
       query: req.query,
     });
 
-    const fonctions = await Fonction.findAll();
+    // ✅ Ajouter les associations
+    const fonctions = await Fonction.findAll({
+      include: [
+        {
+          model: require("../models").EntiteeUn,
+          as: "entitee_un",
+          attributes: ["id", "libelle", "code", "titre"],
+        },
+        {
+          model: require("../models").EntiteeDeux,
+          as: "entitee_deux",
+          attributes: ["id", "libelle", "code", "titre"],
+        },
+        {
+          model: require("../models").EntiteeTrois,
+          as: "entitee_trois",
+          attributes: ["id", "libelle", "code", "titre"],
+        },
+      ],
+    });
 
     logger.info("✅ Fonctions récupérées", {
       count: fonctions.length,
       userId: req.user?.id,
       duration: Date.now() - startTime,
     });
-
-    // Journalisation dans l'historique pour les GET avec sidebar
-    if (req.headers["x-sidebar-navigation"] === "true") {
-      await HistoriqueService.log({
-        agent_id: req.user?.id || null,
-        action: "read",
-        resource: "fonction",
-        resource_id: null,
-        resource_identifier: "liste des fonctions",
-        description: "Consultation de la liste des fonctions",
-        method: req.method,
-        path: req.originalUrl,
-        status: 200,
-        ip: req.ip,
-        user_agent: req.headers["user-agent"],
-        data: {
-          count: fonctions.length,
-          duration: Date.now() - startTime,
-        },
-      });
-    }
 
     res.json(fonctions);
   } catch (err) {
@@ -88,6 +86,40 @@ exports.getAllFonctions = async (req, res) => {
     res
       .status(500)
       .json({ message: "Erreur récupération fonctions", error: err.message });
+  }
+};
+
+exports.getFonctionById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const fonction = await Fonction.findByPk(id, {
+      include: [
+        {
+          model: require("../models").EntiteeUn,
+          as: "entitee_un",
+          attributes: ["id", "libelle", "code", "titre"],
+        },
+        {
+          model: require("../models").EntiteeDeux,
+          as: "entitee_deux",
+          attributes: ["id", "libelle", "code", "titre"],
+        },
+        {
+          model: require("../models").EntiteeTrois,
+          as: "entitee_trois",
+          attributes: ["id", "libelle", "code", "titre"],
+        },
+      ],
+    });
+
+    if (!fonction) {
+      return res.status(404).json({ message: "Fonction non trouvée" });
+    }
+
+    res.json(fonction);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 

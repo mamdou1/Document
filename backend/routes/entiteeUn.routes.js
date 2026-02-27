@@ -19,6 +19,13 @@ router.get(
   entiteeUnController.getAllEntiteeUn,
 );
 
+router.delete(
+  "/titre",
+  verifyToken,
+  authorizePermission("entiteeUn", "delete"),
+  entiteeUnController.deleteTitre,
+);
+
 // ✅ DÉPLACER ICI (Avant les routes avec :id)
 router.get(
   "/titre",
@@ -58,5 +65,6 @@ router.delete(
   authorizePermission("entiteeUn", "delete"),
   entiteeUnController.deleteEntiteeUn,
 );
+
 
 module.exports = router;

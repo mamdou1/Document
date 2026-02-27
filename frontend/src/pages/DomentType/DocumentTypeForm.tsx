@@ -279,21 +279,21 @@ export default function DocumentTypeForm({
   currentStructureLabel = "",
   isFiltered = false,
 }: any) {
-  const [code, setCode] = useState("");
+  //const [code, setCode] = useState("");
   const [nom, setNom] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Initialisation des champs (le visible n'est plus requis ici car le TabView monte le composant)
   useEffect(() => {
-    setCode(initial?.code || "");
+    //setCode(initial?.code || "");
     setNom(initial?.nom || "");
   }, [initial]);
 
   const handleSubmit = async () => {
-    if (!nom || !code) return;
+    if (!nom) return;
     setLoading(true);
     try {
-      await onSubmit({ code, nom });
+      await onSubmit({ nom });
       // On peut appeler onHide() ici si on veut fermer la modale après succès
       //refresh();
     } catch (error) {
@@ -323,7 +323,7 @@ export default function DocumentTypeForm({
 
       {/* 2. Champs de saisie */}
       <div className="space-y-5">
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <Hash size={14} className="text-emerald-500" /> Code Référence
           </label>
@@ -334,7 +334,7 @@ export default function DocumentTypeForm({
             placeholder="ex: FACT-SC"
             autoFocus
           />
-        </div>
+        </div> */}
 
         <div className="space-y-2">
           <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -364,7 +364,7 @@ export default function DocumentTypeForm({
           icon={!loading && <Save size={18} className="mr-2" />}
           onClick={handleSubmit}
           loading={loading}
-          disabled={!nom || !code}
+          disabled={!nom}
           className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-8 py-3 rounded-xl shadow-lg shadow-emerald-200 transition-all font-bold"
         />
       </div>

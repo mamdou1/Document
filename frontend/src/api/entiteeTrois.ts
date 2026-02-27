@@ -74,3 +74,16 @@ export const updateEntiteeTroisById = async (
 export const deleteEntiteeTroisById = async (id: string): Promise<void> => {
   await api.delete(`${API_URL}/${id}`);
 };
+
+export const deleteEntiteeTroisTitre = async (): Promise<{
+  message: string;
+  count: number;
+}> => {
+  try {
+    const response = await api.delete(`${API_URL}/titre`);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Erreur deleteAllEntiteeTroisTitres:", error);
+    throw error;
+  }
+};

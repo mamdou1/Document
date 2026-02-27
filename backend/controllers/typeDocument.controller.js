@@ -20,7 +20,21 @@ exports.create = async (req, res) => {
       body: req.body,
     });
 
-    const data = await TypeDocument.create(req.body);
+    const { nom, entitee_un_id, entitee_deux_id, entitee_trois_id } = req.body;
+
+    const count = await TypeDocument.count();
+
+    const nextNumber = count + 1;
+    const paddedNumber = nextNumber.toString().padStart(3, "0");
+    const code = `TD-${paddedNumber}`;
+
+    const data = await TypeDocument.create({
+      code,
+      nom,
+      entitee_un_id,
+      entitee_deux_id,
+      entitee_trois_id,
+    });
 
     logger.info("✅ Type de document créé avec succès", {
       typeId: data.id,

@@ -19,6 +19,12 @@ router.get(
   authorizePermission("entiteeDeux", "read"),
   entiteeDeuxController.getAllEntiteeDeux,
 );
+router.delete(
+  "/titre",
+  verifyToken,
+  authorizePermission("entiteeDeux", "delete"),
+  entiteeDeuxController.deleteTitre,
+);
 router.get(
   "/by-entiteeUn/:entiteeUnId",
   verifyToken,

@@ -11,10 +11,13 @@ import {
   Building2,
   Pencil,
   Trash2,
+  Search,
 } from "lucide-react";
 import EntiteeDeuxAjoutFonction from "./EntiteeDeuxAjoutFonction";
 import { deleteFonctionById } from "../../../api/fonction";
 import { confirmDialog } from "primereact/confirmdialog";
+import Pagination from "../../../components/layout/Pagination";
+import { InputText } from "primereact/inputtext";
 
 export default function EntiteeDeuxDetails({
   visible,
@@ -26,6 +29,9 @@ export default function EntiteeDeuxDetails({
   const [fonctions, setFonctions] = useState<Fonction[]>([]);
   const [editing, setEditing] = useState<Partial<Fonction> | null>(null);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
+  const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Récupération du libellé du service parent
   const entiteeUnLibelle = entiteeUn?.find(
@@ -78,6 +84,18 @@ export default function EntiteeDeuxDetails({
     });
   };
 
+  // Filtrage et pagination
+  const filtered = fonctions.filter((f) => {
+    const isPopulated = f.libelle !== null;
+    if (!isPopulated) return false;
+    return (f.libelle || "").toLowerCase().includes(query.toLowerCase());
+  });
+
+  const paginated = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   if (!entiteeDeux) return null;
 
   return (
@@ -91,7 +109,7 @@ export default function EntiteeDeuxDetails({
         </div>
       }
       visible={visible}
-      style={{ width: "600px" }}
+      style={{ width: "700px" }}
       onHide={onHide}
       draggable={false}
       footer={
@@ -132,6 +150,19 @@ export default function EntiteeDeuxDetails({
               {entiteeDeux.code}
             </span>
           </h2>
+        </div>
+        {/* Search */}
+        <div className="relative group max-w-md">
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
+            size={20}
+          />
+          <InputText
+            className="w-full pl-12 pr-4 py-2 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 outline-none"
+            placeholder="Rechercher ..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
 
         {/* Tableau des Fonctions */}
@@ -178,7 +209,7 @@ export default function EntiteeDeuxDetails({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {fonctions.map((f, index) => (
+                  {paginated.map((f, index) => (
                     <tr
                       key={f.id}
                       className="group hover:bg-emerald-50/30 transition-colors"
@@ -246,6 +277,15 @@ export default function EntiteeDeuxDetails({
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <Pagination
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={filtered.length}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <EntiteeDeuxAjoutFonction

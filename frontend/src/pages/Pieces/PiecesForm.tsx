@@ -23,7 +23,6 @@ export default function PiecesForm({
   title,
 }: Props) {
   const [formData, setFormData] = useState({
-    code_pieces: "",
     libelle: "",
   });
 
@@ -33,19 +32,17 @@ export default function PiecesForm({
   useEffect(() => {
     if (visible && initial?.id) {
       setFormData({
-        code_pieces: initial.code_pieces || "",
         libelle: initial.libelle || "",
       });
     } else {
       setFormData({
-        code_pieces: "",
         libelle: "",
       });
     }
   }, [visible, initial]);
 
   const handleSubmit = async () => {
-    if (!formData.libelle || !formData.code_pieces) return;
+    if (!formData.libelle) return;
     setLoading(true);
     try {
       await onSubmit(formData);
@@ -83,7 +80,7 @@ export default function PiecesForm({
         <form onSubmit={handleSubmit} className="pt-4 grid grid-cols-1 gap-6">
           {/* Colonne Gauche: Identité */}
           <div className="grid grid-cols-2 gap-4">
-            <div className={inputWrapper}>
+            {/* <div className={inputWrapper}>
               <label className={labelStyle}>
                 <Hash size={14} className="text-emerald-500" /> Code
               </label>
@@ -98,7 +95,7 @@ export default function PiecesForm({
                 placeholder="Ex: DOC-01"
                 className="p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20"
               />
-            </div>
+            </div> */}
             <div className={inputWrapper}>
               <label className={labelStyle}>
                 <FileText size={14} className="text-emerald-500" /> Nom du type
@@ -129,7 +126,7 @@ export default function PiecesForm({
             label={loading ? "Traitement..." : "Enregistrer la pièce"}
             icon={!loading && <Save size={18} className="mr-2" />}
             onClick={handleSubmit}
-            disabled={loading || !formData.code_pieces || !formData.libelle}
+            disabled={loading || !formData.libelle}
             className="bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl border-none shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95"
           />
         </div>

@@ -12,13 +12,26 @@ exports.createEntiteeUn = async (req, res) => {
       body: req.body,
     });
 
+    const { libelle } = req.body;
+
+    const count = await EntiteeUn.count();
     // 1. Trouver le titre utilisé par les autres éléments
     const exemple = await EntiteeUn.findOne({ attributes: ["titre"] });
+    logger.info("🔍 Exemple trouvé:", exemple);
+
     const titreGlobal = exemple?.titre || "Défaut";
+    logger.info("🎯 Titre global:", titreGlobal);
+
+    const prefixe = titreGlobal.trim().slice(0, 3).toUpperCase();
+
+    const nextNumber = count + 1;
+    const paddedNumber = nextNumber.toString().padStart(3, "0");
+    const code_pieces = `${prefixe}-${paddedNumber}`;
 
     // 2. Créer l'élément avec le titre récupéré
     const entitee_un = await EntiteeUn.create({
-      ...req.body,
+      code: code_pieces,
+      libelle,
       titre: titreGlobal,
     });
 
@@ -63,12 +76,14 @@ exports.getAllEntiteeUn = async (req, res) => {
 };
 
 exports.getEntiteeUnTitre = async (req, res) => {
-  const startTime = Date.now();
-
   try {
     const entitee = await EntiteeUn.findOne({ attributes: ["titre"] });
 
-    res.json({ titre: entitee.titre });
+    if (!entitee) {
+      return res.status(200).json({ titre: "" });
+    }
+
+    res.status(200).json({ titre: entitee.titre || "" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -148,6 +163,52 @@ exports.updateEntiteeUnTitre = async (req, res) => {
       duration: Date.now() - startTime,
     });
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deleteTitre = async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    logger.info("🗑️ Suppression de tous les titres niveau 1", {
+      userId: req.user?.id,
+    });
+
+    const [count] = await EntiteeUn.update(
+      { titre: "" },
+      { where: {}, returning: true },
+    );
+
+    logger.info("✅ Tous les titres niveau 1 supprimés", {
+      count,
+      userId: req.user?.id,
+      duration: Date.now() - startTime,
+    });
+
+    await HistoriqueService.log({
+      agent_id: req.user?.id || null,
+      action: "update",
+      resource: "entiteeUn",
+      resource_id: null,
+      resource_identifier: "Tous les titres niveau 1",
+      description: `Suppression de tous les titres (${count} entités)`,
+      method: req.method,
+      path: req.originalUrl,
+      status: 200,
+      ip: req.ip,
+      user_agent: req.headers["user-agent"],
+      data: { count, duration: Date.now() - startTime },
+    });
+
+    res.status(200).json({
+      message: `Tous les titres niveau 1 supprimés (${count} entités)`,
+      count,
+    });
+  } catch (err) {
+    logger.error("❌ Erreur suppression tous les titres:", err);
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la suppression des titres" });
   }
 };
 

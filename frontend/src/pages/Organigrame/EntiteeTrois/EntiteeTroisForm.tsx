@@ -26,7 +26,7 @@ export default function EntiteeTroisForm({
   initial = {},
   entiteeDeux = [], // Valeur par défaut pour éviter les erreurs .map
 }: Props) {
-  const [code, setCode] = useState("");
+  //const [code, setCode] = useState("");
   const [libelle, setLibelle] = useState("");
   const [entitee_deux_id, setEntitee_deux_id] = useState<number>(
     initial.entitee_deux_id || entiteeDeux[0]?.id || 0,
@@ -35,7 +35,7 @@ export default function EntiteeTroisForm({
 
   useEffect(() => {
     if (visible) {
-      setCode(initial.code || "");
+      //setCode(initial.code || "");
       setLibelle(initial.libelle || "");
       // Gestion intelligente de l'ID initial
       setEntitee_deux_id(initial.entitee_deux_id || 0);
@@ -43,11 +43,10 @@ export default function EntiteeTroisForm({
   }, [visible]);
 
   const handleSubmit = async () => {
-    if (!code || !libelle || !entitee_deux_id) return;
+    if (!libelle || !entitee_deux_id) return;
     setLoading(true);
     try {
       await onSubmit({
-        code,
         libelle,
         entitee_deux_id,
       });
@@ -95,7 +94,7 @@ export default function EntiteeTroisForm({
           />
         </div>
 
-        <div>
+        {/* <div>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
             <Hash size={16} className="text-emerald-500" /> Code de la{" "}
             {titreNiveau2}{" "}
@@ -106,7 +105,7 @@ export default function EntiteeTroisForm({
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
             placeholder="Ex: SEC-001"
           />
-        </div>
+        </div> */}
 
         <div>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">

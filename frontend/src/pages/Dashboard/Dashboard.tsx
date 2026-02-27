@@ -141,8 +141,11 @@ export default function Dashboard() {
     icon: Icon,
     colorClass,
     bgClass,
+    bgColor,
   }: any) => (
-    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300">
+    <div
+      className={` ${bgColor} rounded-3xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-2xl ${bgClass}`}>
           <Icon size={24} className={colorClass} />
@@ -284,7 +287,8 @@ export default function Dashboard() {
           value={totalAgents}
           icon={Users}
           colorClass="text-blue-600"
-          bgClass="bg-blue-100"
+          bgClass="bg-blue-200"
+          bgColor="bg-blue-50"
         />
         <TotalCard
           title="Types de documents"
@@ -292,6 +296,7 @@ export default function Dashboard() {
           icon={FolderTree}
           colorClass="text-purple-600"
           bgClass="bg-purple-100"
+          bgColor="bg-purple-50"
         />
         <TotalCard
           title="Documents archivés"
@@ -299,6 +304,7 @@ export default function Dashboard() {
           icon={FileText}
           colorClass="text-emerald-600"
           bgClass="bg-emerald-100"
+          bgColor="bg-emerald-50"
         />
       </div>
 

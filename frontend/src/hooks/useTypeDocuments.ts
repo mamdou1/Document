@@ -125,14 +125,17 @@ export const useInitialData = () => {
     ...(entitees.entiteeUn || []).map((x: any) => ({
       label: `🏢 ${x.libelle}`,
       value: String(x.id),
+      titre: x.titre, // ✅ AJOUTER cette ligne
     })),
     ...(entitees.entiteeDeux || []).map((x: any) => ({
       label: `📂 ${x.libelle}`,
       value: `E2-${x.id}`,
+      titre: x.titre, // ✅ AJOUTER cette ligne
     })),
     ...(entitees.entiteeTrois || []).map((x: any) => ({
       label: `📄 ${x.libelle}`,
       value: `E3-${x.id}`,
+      titre: x.titre, // ✅ AJOUTER cette ligne
     })),
   ];
 

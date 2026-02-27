@@ -16,6 +16,7 @@ import EntiteeTroisAjoutFonction from "./EntiteeTroisAjoutFonction";
 import { confirmDialog } from "primereact/confirmdialog";
 import { deleteFonctionById } from "../../../api/fonction";
 import { Toast } from "primereact/toast";
+import Pagination from "../../../components/layout/Pagination";
 
 export default function EntiteeTroisDetails({
   visible,
@@ -26,6 +27,9 @@ export default function EntiteeTroisDetails({
   const [editing, setEditing] = useState<Partial<Fonction> | null>(null);
   const [selected, setSelected] = useState<EntiteeTrois | null>(null);
   const [ajoutFonctionVisible, setAjoutFonctionVisible] = useState(false);
+    const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const toast = useRef<Toast>(null);
 
   const fetchFonctions = async () => {
@@ -73,6 +77,18 @@ export default function EntiteeTroisDetails({
       },
     });
   };
+
+  // Filtrage et pagination
+  const filtered = fonctions.filter((f) => {
+    const isPopulated = f.libelle !== null;
+    if (!isPopulated) return false;
+    return (f.libelle || "").toLowerCase().includes(query.toLowerCase());
+  });
+
+  const paginated = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   if (!entiteeTrois) return null;
 
@@ -178,7 +194,7 @@ export default function EntiteeTroisDetails({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {fonctions.map((f, index) => (
+                    {paginated.map((f, index) => (
                       <tr
                         key={f.id}
                         className="group hover:bg-emerald-50/30 transition-colors"
@@ -246,6 +262,15 @@ export default function EntiteeTroisDetails({
               </div>
             )}
           </div>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filtered.length}
+            onPageChange={setCurrentPage}
+          />
         </div>
 
         <EntiteeTroisAjoutFonction
