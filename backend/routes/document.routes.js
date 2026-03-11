@@ -58,7 +58,7 @@ router.post(
   verifyToken,
   authorizePermission("document", "create"),
   upload.array("files", 10),
-  ctrl.uploadPieceFile, // Vous devez créer cette fonction dans le contrôleur
+  ctrl.uploadPieceFile,
 );
 
 // ✅ DISPONIBILITÉ PIÈCE

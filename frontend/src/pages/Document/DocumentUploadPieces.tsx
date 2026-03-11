@@ -1067,7 +1067,7 @@ export default function DocumentUploadPieces({
                           onClick={() =>
                             setViewer({
                               visible: true,
-                              url: `http://localhost:5000/${f.fichier}`,
+                              url: `http://localhost:5001/${f.fichier}`,
                               isPreview: false,
                             })
                           }
@@ -1238,7 +1238,7 @@ export default function DocumentUploadPieces({
                                                                         setViewer(
                                                                           {
                                                                             visible: true,
-                                                                            url: `http://localhost:5000/${record.files[0].fichier}`,
+                                                                            url: `http://localhost:5001/${record.files[0].fichier}`,
                                                                             isPreview: false,
                                                                           },
                                                                         );
@@ -1476,7 +1476,7 @@ export default function DocumentUploadPieces({
                                                         e.stopPropagation();
                                                         setViewer({
                                                           visible: true,
-                                                          url: `http://localhost:5000/${f.fichier}`,
+                                                          url: `http://localhost:5001/${f.fichier}`,
                                                           isPreview: false,
                                                         });
                                                       }}

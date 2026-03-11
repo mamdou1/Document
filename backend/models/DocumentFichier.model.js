@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const DocumentFichier = sequelize.define(
-    "pieces_fichiers",
+    "document_fichiers",
     {
       id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
       document_id: { type: DataTypes.INTEGER, allowNull: false },
@@ -36,6 +36,11 @@ module.exports = (sequelize, DataTypes) => {
     DocumentFichier.belongsTo(models.PieceValue, {
       foreignKey: "piece_value_id",
       as: "pieceValue",
+    });
+
+    DocumentFichier.belongsTo(models.DocumentValue, {
+      foreignKey: "document_value_id",
+      as: "documentValue",
     });
   };
 

@@ -62,7 +62,7 @@ export default function DocumentPiece({ visible, onHide, document }: Props) {
                   <Button
                     icon={<Eye size={16} />}
                     onClick={() =>
-                      setViewerUrl(`http://localhost:5000/${f.path}`)
+                      setViewerUrl(`http://localhost:5001/${f.path}`)
                     }
                     className="p-button-text p-button-rounded"
                   />

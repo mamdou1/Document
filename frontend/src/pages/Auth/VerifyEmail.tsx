@@ -74,7 +74,7 @@ export default function VerifyEmail() {
         severity: "error",
         summary: "Erreur",
         detail: err.message,
-        life: 5000,
+        life: 5001,
       });
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function VerifyEmail() {
         severity: "error",
         summary: "Erreur",
         detail: err.message,
-        life: 5000,
+        life: 5001,
       });
     } finally {
       setResendLoading(false);

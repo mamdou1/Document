@@ -9,6 +9,7 @@ const {
   DocumentFichier,
   DocumentPieces,
   Pieces,
+  PiecesFichier,
   sequelize,
   PieceValue,
   PieceMetaField,
@@ -141,7 +142,7 @@ exports.getAll = async (req, res) => {
           as: "values",
           include: [
             { model: MetaField, as: "metaField" },
-            { model: DocumentFile, as: "file" },
+            { model: DocumentFile, as: "files" },
           ],
         },
       ],
@@ -428,6 +429,16 @@ exports.uploadDocumentFiles = async (req, res) => {
       return res.status(400).json({ message: "Aucun fichier uploadé" });
     }
 
+    const documentValues = await DocumentValue.findAll({
+      where: { document_id: documentId },
+      attributes: ["id"],
+      transaction: t,
+    });
+
+    const documentValueIds = documentValues.map((dv) => dv.id);
+
+    console.log("Document value IDs trouvées:", documentValueIds);
+
     const uploadedFiles = [];
 
     for (const file of files) {
@@ -437,11 +448,15 @@ exports.uploadDocumentFiles = async (req, res) => {
 
       const fileName = file.filename || path.basename(file.path);
 
+      const document_value_id =
+        documentValueIds.length > 0 ? documentValueIds[0] : null;
+
       const docFichier = await DocumentFichier.create(
         {
           document_id: documentId,
           piece_id: pieceId,
           piece_value_id: piece_value_id || null,
+          document_value_id: document_value_id,
           fichier: publicPath,
           original_name: file.originalname,
           new_file_name: fileName,
@@ -541,7 +556,7 @@ exports.uploadPieceFile = async (req, res) => {
 
       const fileName = path.basename(file.path);
 
-      const docFichier = await DocumentFichier.create(
+      const docFichier = await PiecesFichier.create(
         {
           document_id: documentId,
           piece_id: pieceId,

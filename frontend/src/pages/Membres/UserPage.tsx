@@ -399,7 +399,7 @@ export default function UserPage() {
                     )}
                     {u.photo_profil ? (
                       <img
-                        src={`http://localhost:5000/uploads/profiles/${u.photo_profil}`}
+                        src={`http://localhost:5001/uploads/profiles/${u.photo_profil}`}
                         alt=""
                         className="w-12 h-12 rounded-xl object-cover ring-2 ring-white shadow-sm"
                       />

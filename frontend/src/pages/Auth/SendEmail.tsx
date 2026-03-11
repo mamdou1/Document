@@ -65,7 +65,7 @@ export default function SendEmail() {
         severity: "error",
         summary: "Erreur",
         detail: err.message,
-        life: 5000,
+        life: 5001,
       });
     } finally {
       setLoading(false);

@@ -83,31 +83,45 @@ export default function DocumentForm({
     }
 
     try {
-      // ✅ Construire le payload avec le bon format
-      const valuesArray = [];
+      // ✅ Construire le payload comme un objet, pas un tableau
+      const valuesObject: Record<string, string> = {};
 
-      if (editingDoc?.values) {
-        // En mode édition, on utilise les IDs existants
-        for (const existingValue of editingDoc.values) {
-          if (values[existingValue.meta_field_id] !== undefined) {
-            valuesArray.push({
-              id: existingValue.id,
-              value: values[existingValue.meta_field_id],
-            });
-          }
+      // Parcourir tous les metaFields pour créer l'objet
+      for (const field of metaFields) {
+        const fieldValue = values[field.id];
+
+        // Ne pas inclure les fichiers dans le payload JSON
+        if (fieldValue && !(fieldValue instanceof File)) {
+          valuesObject[field.id] = fieldValue.toString();
         }
       }
 
-      // ✅ Le payload a maintenant la bonne structure
-      const payload: DocumentPayload = {
+      // ✅ Si en mode édition et que vous avez besoin des IDs existants
+      // pour la mise à jour, vous pouvez les ajouter séparément
+      const existingValueIds: Record<string, number> = {};
+      if (editingDoc?.values) {
+        editingDoc.values.forEach((v: any) => {
+          existingValueIds[v.meta_field_id] = v.id;
+        });
+      }
+
+      // ✅ Le payload avec la bonne structure
+      const payload: any = {
         type_document_id: documentType_id,
-        values: valuesArray,
+        values: valuesObject, // ← Maintenant c'est un objet { "3": "diop", "4": "Ali" }
       };
+
+      // ✅ Ajouter les IDs des valeurs existantes si nécessaire
+      if (Object.keys(existingValueIds).length > 0) {
+        payload.value_ids = existingValueIds;
+      }
 
       // ✅ Ajouter l'id si on est en mode édition
       if (editingDoc?.id) {
-        payload.id = editingDoc.id; // ← Plus d'erreur TypeScript
+        payload.id = editingDoc.id;
       }
+
+      console.log("📦 Payload envoyé:", payload);
 
       const result = await onSubmit(payload);
       console.log("✅ Document sauvegardé:", result);

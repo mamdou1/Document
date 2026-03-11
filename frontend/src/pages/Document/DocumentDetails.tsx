@@ -246,7 +246,7 @@ export default function DocumentDetails({
                               <button
                                 onClick={() =>
                                   window.open(
-                                    `http://localhost:5000/${piece.fichiers[0].fichier}`,
+                                    `http://localhost:5001/${piece.fichiers[0].fichier}`,
                                   )
                                 }
                                 className="p-2 text-emerald-600 hover:bg-emerald-100 rounded-lg"
@@ -270,7 +270,7 @@ export default function DocumentDetails({
                                   <button
                                     onClick={() =>
                                       window.open(
-                                        `http://localhost:5000/${file.fichier}`,
+                                        `http://localhost:5001/${file.fichier}`,
                                       )
                                     }
                                     className="text-emerald-600 hover:text-emerald-800 ml-2"

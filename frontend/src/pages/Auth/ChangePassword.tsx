@@ -180,7 +180,7 @@ export default function ChangePassword() {
         severity: "error",
         summary: "Erreur",
         detail: errorMessage,
-        life: 5000,
+        life: 5001,
       });
     } finally {
       setLoading(false);

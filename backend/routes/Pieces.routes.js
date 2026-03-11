@@ -16,21 +16,13 @@ router.post(
   "/",
   verifyToken,
   authorizePermission("pieces", "create"),
-  //authorizeRoles("ADMIN", "MEMBRE_AUTHORIZE"),
   createPieces,
 );
-router.get(
-  "/",
-  verifyToken,
-  //authorizePermission("pieces", "read"),
-  //authorizeRoles("ADMIN", "MEMBRE_AUTHORIZE"),
-  getPieces,
-);
+router.get("/", verifyToken, authorizePermission("pieces", "read"), getPieces);
 router.put(
   "/:id",
   verifyToken,
   authorizePermission("pieces", "update"),
-  //authorizeRoles("ADMIN", "MEMBRE", "MEMBRE_AUTHORIZE"),
   updatePieces,
 );
 

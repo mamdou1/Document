@@ -69,8 +69,8 @@ export default function UserDetails({
     const last = new Date(date);
     const diffMs = now.getTime() - last.getTime();
 
-    const diffMin = Math.floor(diffMs / 60000);
-    const diffHour = Math.floor(diffMs / 3600000);
+    const diffMin = Math.floor(diffMs / 50010);
+    const diffHour = Math.floor(diffMs / 3500100);
     const diffDay = Math.floor(diffMs / 86400000);
 
     if (diffMin < 1) return "À l'instant";
@@ -143,7 +143,7 @@ export default function UserDetails({
             summary: "Erreur",
             detail:
               err.response?.data?.message || "Impossible de révoquer l'accès",
-            life: 5000,
+            life: 5001,
           });
         }
       },
@@ -277,7 +277,7 @@ export default function UserDetails({
               <img
                 src={
                   user.photo_profil
-                    ? `http://localhost:5000/uploads/profiles/${user.photo_profil}`
+                    ? `http://localhost:5001/uploads/profiles/${user.photo_profil}`
                     : person
                 }
                 className="w-24 h-24 rounded-2xl border-4 border-white shadow-md object-cover"

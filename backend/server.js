@@ -78,6 +78,8 @@ app.use("/api/agent-access", require("./routes/agentAccess.routes"));
 app.use("/api", require("./routes/pieceMetaField.routes"));
 app.use("/api", require("./routes/pieceValue.routes"));
 
+app.use("/api/sync", require("./routes/sync.routes"));
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route non trouvée" });

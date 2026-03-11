@@ -96,7 +96,7 @@ db.AgentEntiteeAccess = require("./AgentEntiteeAccess.model")(
 db.PiecesFile = require("./PicesFile.model")(sequelize, DataTypes);
 db.PieceValue = require("./PieceValue.model")(sequelize, DataTypes);
 db.PieceMetaField = require("./PieceMetaField.model")(sequelize, DataTypes);
-
+db.PiecesFichier = require("./PiecesFichier.model")(sequelize, DataTypes);
 // 🔹 Appel des associations
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {

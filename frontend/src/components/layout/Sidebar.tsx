@@ -799,7 +799,7 @@ export default function Sidebar({ children }: SidebarProps) {
             <div className="relative">
               {user?.photo_profil ? (
                 <img
-                  src={`http://localhost:5000/uploads/profiles/${user.photo_profil}`}
+                  src={`http://localhost:5001/uploads/profiles/${user.photo_profil}`}
                   alt="Profil"
                   className="w-12 h-12 rounded-xl object-cover ring-2 ring-emerald-500/50 shadow-sm"
                 />

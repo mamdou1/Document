@@ -1,5 +1,5 @@
 // controllers/pieceValue.controller.js
-const { PieceValue, PieceMetaField, DocumentFichier } = require("../models");
+const { PieceValue, PieceMetaField, PiecesFichier } = require("../models");
 const logger = require("../config/logger.config");
 const HistoriqueService = require("../services/historique.service");
 
@@ -23,7 +23,7 @@ exports.getPieceValuesByDocument = async (req, res) => {
           attributes: ["id", "label", "name", "field_type", "required"],
         },
         {
-          model: DocumentFichier,
+          model: PiecesFichier,
           as: "file",
           attributes: ["id", "fichier", "original_name"],
         },
@@ -74,7 +74,7 @@ exports.getPieceValuesByPiece = async (req, res) => {
           attributes: ["id", "label", "name", "field_type", "required"],
         },
         {
-          model: DocumentFichier,
+          model: PiecesFichier,
           as: "file",
           attributes: ["id", "fichier", "original_name"],
         },

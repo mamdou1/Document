@@ -5,6 +5,7 @@ const {
   EntiteeUn,
   EntiteeDeux,
   EntiteeTrois,
+  PieceMetaField,
   sequelize,
 } = require("../models");
 const logger = require("../config/logger.config");
@@ -88,7 +89,22 @@ exports.getPieces = async (req, res) => {
       query: req.query,
     });
 
-    const pieces = await Pieces.findAll();
+    const pieces = await Pieces.findAll({
+      include: [
+        {
+          model: PieceMetaField,
+          as: "metaFields",
+          attributes: [
+            "id",
+            "name",
+            "label",
+            "field_type",
+            "required",
+            "position",
+          ],
+        },
+      ],
+    });
 
     logger.info("✅ Pièces récupérées", {
       count: pieces.length,

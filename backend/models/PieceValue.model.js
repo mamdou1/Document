@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       as: "piece_metaField", // L'alias utilisé dans le contrôleur est "metaField"
     });
 
-    PieceValue.hasOne(models.DocumentFichier, {
+    PieceValue.hasOne(models.PiecesFichier, {
       foreignKey: "piece_value_id",
       as: "file",
     });
