@@ -326,6 +326,7 @@ exports.getDocumentsByMonth = async (req, res) => {
       userId: req.user?.id,
     });
 
+    // SOLUTION 1: Ajouter la colonne dans le GROUP BY
     const result = await sequelize.query(
       `
       SELECT 
@@ -334,9 +335,9 @@ exports.getDocumentsByMonth = async (req, res) => {
         COUNT(*) as nombre
       FROM documents
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-      GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+      GROUP BY DATE_FORMAT(created_at, '%Y-%m'), DATE_FORMAT(created_at, '%b %Y')
       ORDER BY mois ASC
-    `,
+      `,
       { type: sequelize.QueryTypes.SELECT },
     );
 
@@ -354,7 +355,9 @@ exports.getDocumentsByMonth = async (req, res) => {
       userId: req.user?.id,
       duration: Date.now() - startTime,
     });
-    res.status(500).json({ error: "Erreur serveur" });
+    
+    // Retourner un tableau vide pour ne pas casser le frontend
+    res.status(200).json([]);
   }
 };
 

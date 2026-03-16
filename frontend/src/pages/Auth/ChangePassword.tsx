@@ -477,7 +477,7 @@ export default function ChangePassword() {
                   Conseils de sécurité
                 </p>
                 <ul className="space-y-2 text-xs text-slate-600">
-                  <li className="flex items-center gap-2">
+                  {/*<li className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${
                         newPassword.length >= 8
@@ -496,7 +496,7 @@ export default function ChangePassword() {
                       }`}
                     />
                     Une majuscule
-                  </li>
+                  </li>*/}
                   <li className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${
@@ -517,7 +517,7 @@ export default function ChangePassword() {
                     />
                     Un chiffre
                   </li>
-                  <li className="flex items-center gap-2">
+                  {/*<li className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${
                         /[!@#$%^&*(),.?":{}|<>]/.test(newPassword)
@@ -526,7 +526,7 @@ export default function ChangePassword() {
                       }`}
                     />
                     Un caractère spécial
-                  </li>
+                  </li>*/}
                 </ul>
               </div>
             )}

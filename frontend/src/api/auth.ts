@@ -152,17 +152,17 @@ export const updateForgotPassword = async (
  */
 export const isStrongPassword = (password: string): boolean => {
   const minLength = 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
+  //const hasUpperCase = /[A-Z]/.test(password);
+  //const hasLowerCase = /[a-z]/.test(password);
   const hasNumbers = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  //const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
   return (
     password.length >= minLength &&
-    hasUpperCase &&
-    hasLowerCase &&
-    hasNumbers &&
-    hasSpecialChar
+    //hasUpperCase &&
+    //hasLowerCase &&
+    hasNumbers 
+    //&& hasSpecialChar
   );
 };
 
@@ -183,10 +183,10 @@ export const getPasswordStrength = (
   if (password.length >= 12) score++;
 
   // Types de caractères
-  if (/[A-Z]/.test(password)) score++;
+  //if (/[A-Z]/.test(password)) score++;
   if (/[a-z]/.test(password)) score++;
   if (/\d/.test(password)) score++;
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
+  //if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
 
   // Normaliser le score (0-4)
   score = Math.min(4, Math.floor(score / 2));

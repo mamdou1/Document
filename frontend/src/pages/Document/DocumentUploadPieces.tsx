@@ -535,7 +535,7 @@ export default function DocumentUploadPieces({
     const editing = editingRecord[pieceId];
     let success = true;
 
-    const rowId = editing?.rowId || Date.now();
+    const rowId = editing?.rowId ||  Math.floor(Math.random() * 1000000); // Nombre aléatoire entre 0 et 1 million
 
     for (const field of fields) {
       const key = `${pieceId}_${field.id}`;
@@ -1337,7 +1337,7 @@ export default function DocumentUploadPieces({
                                                   onClick={() =>
                                                     handleNewRecord(p.id)
                                                   }
-                                                  className="bg-emerald-600 text-white border-none text-sm py-2 px-4"
+                                                  className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-2 py-2 rounded-xl shadow-lg shadow-emerald-200 transition-all font-bold"
                                                 />
                                               </div>
                                             )}
@@ -1405,7 +1405,7 @@ export default function DocumentUploadPieces({
                                                     onClick={() =>
                                                       handleSaveRecord(p.id)
                                                     }
-                                                    className="bg-emerald-600 text-white border-none text-sm py-2 px-4"
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-2 py-2 rounded-xl shadow-lg shadow-emerald-200 transition-all font-bold"
                                                   />
                                                 </div>
                                               </div>

@@ -35,7 +35,11 @@ exports.create = async (req, res) => {
     logger.info("📄 Tentative de création d'un document", {
       userId: req.user?.id,
       type_document_id,
+      values
     });
+    console.log("🔍 values reçues:", values);
+  console.log("🔍 type de values:", typeof values);
+  console.log("🔍 clés:", Object.keys(values));
 
     // 1. Créer le document
     const doc = await Document.create({ type_document_id }, { transaction: t });

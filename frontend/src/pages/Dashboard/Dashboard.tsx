@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   getTotalAgents,
   getTotalTypesDocument,
@@ -61,49 +61,78 @@ export default function Dashboard() {
   const [selectedExercice, setSelectedExercice] = useState<Exercice | null>(
     null,
   );
+    const [options, setOptions] = useState({
+  n1: [] as EntiteeUn[],
+  n2: [] as EntiteeDeux[],
+  n3: [] as EntiteeTrois[],
+});
 
-  const loadStats = async () => {
-    setLoading(true);
-    try {
-      // Totaux
-      const [agents, types, docs, ent1, ent2, ent3] = await Promise.all([
-        getTotalAgents(),
-        getTotalTypesDocument(),
-        getTotalDocuments(),
-        getAllEntiteeUn(),
-        getAllEntiteeDeux(),
-        getAllEntiteeTrois(),
-      ]);
+// Utiliser useRef pour le flag isMounted
+const isMounted = useRef(true);
+
+const loadStats = useCallback(async () => {
+  setLoading(true);
+  
+  try {
+    // Totaux
+    const [agents, types, docs, ent1, ent2, ent3] = await Promise.all([
+      getTotalAgents(),
+      getTotalTypesDocument(),
+      getTotalDocuments(),
+      getAllEntiteeUn(),
+      getAllEntiteeDeux(),
+      getAllEntiteeTrois(),
+    ]);
+    
+    // Vérifier si le composant est toujours monté
+    if (isMounted.current) {
       setTotalAgents(agents.total);
       setTotalTypesDocument(types.total);
       setTotalDocuments(docs.total);
       setAllEntiteeUn(Array.isArray(ent1) ? ent1 : []);
       setAllEntiteeDeux(Array.isArray(ent2) ? ent2 : []);
       setAllEntiteeTrois(Array.isArray(ent3) ? ent3 : []);
+    }
 
-      // Agents par structure
-      const [agentsUn, agentsDeux, agentsTrois, agentsStruct] =
-        await Promise.all([
-          getAgentsByEntiteeUn(),
-          getAgentsByEntiteeDeux(),
-          getAgentsByEntiteeTrois(),
-          getAgentsByStructure(),
-        ]);
+    // Agents par structure
+    const [agentsUn, agentsDeux, agentsTrois, agentsStruct] =
+      await Promise.all([
+        getAgentsByEntiteeUn(),
+        getAgentsByEntiteeDeux(),
+        getAgentsByEntiteeTrois(),
+        getAgentsByStructure(),
+      ]);
+    
+    if (isMounted.current) {
       setAgentsByEntiteeUn(agentsUn);
       setAgentsByEntiteeDeux(agentsDeux);
       setAgentsByEntiteeTrois(agentsTrois);
       setAgentsByStructure(agentsStruct);
+    }
 
-      // Documents
-      const [docsType, docsMonth, docsStruct] = await Promise.all([
-        getDocumentsByType(),
-        getDocumentsByMonth(),
-        getDocumentsByStructure(),
-      ]);
+    // Documents
+    const [docsType, docsMonth, docsStruct] = await Promise.all([
+      getDocumentsByType(),
+      getDocumentsByMonth(),
+      getDocumentsByStructure(),
+    ]);
+    
+    if (isMounted.current) {
       setDocumentsByType(docsType);
       setDocumentsByMonth(docsMonth);
       setDocumentsByStructure(docsStruct);
-    } catch (error: any) {
+    }
+
+    if (isMounted.current) {
+      setOptions({
+        n1: Array.isArray(ent1) ? ent1 : [],
+        n2: Array.isArray(ent2) ? ent2 : [],
+        n3: Array.isArray(ent3) ? ent3 : [],
+      });
+    }
+    
+  } catch (error: any) {
+    if (isMounted.current) {
       toast?.current?.show({
         severity: "error",
         summary: "Erreur",
@@ -111,28 +140,52 @@ export default function Dashboard() {
           error?.response?.data?.message ||
           "Erreur lors du chargement des statistiques",
       });
-    } finally {
+    }
+  } finally {
+    if (isMounted.current) {
       setLoading(false);
     }
-  };
+  }
+}, []); // Dépendances vides car utilise des setters stables
 
-  const affichage = async () => {
-    try {
-      const data = await getExercices();
+const affichage = useCallback(async () => {
+  try {
+    const data = await getExercices();
+    if (isMounted.current) {
       setExercices(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    }
+  } catch (err: any) {
+    if (isMounted.current) {
       toast?.current?.show({
         severity: "error",
         summary: "Erreur",
         detail: err?.response?.data?.message || "Veuillez saisir un exercice.",
       });
     }
-  };
+  }
+}, []);
 
-  useEffect(() => {
-    loadStats();
-    affichage();
-  }, []);
+// useEffect pour initialiser le flag isMounted
+useEffect(() => {
+  isMounted.current = true;
+  
+  // Fonction de nettoyage
+  return () => {
+    isMounted.current = false;
+  };
+}, []);
+
+// useEffect pour charger les données
+useEffect(() => {
+  const fetchData = async () => {
+    await Promise.all([
+      loadStats(),
+      affichage()
+    ]);
+  };
+  
+  fetchData();
+}, [loadStats, affichage]); // Dépendances des callbacks
 
   // Composant Card pour les totaux
   const TotalCard = ({
@@ -235,6 +288,11 @@ export default function Dashboard() {
     </div>
   );
 
+    // ✅ Vérifier si les titres existent pour chaque niveau
+  const titreN1Existe = options.n1.length > 0 && options.n1[0]?.titre;
+  const titreN2Existe = options.n2.length > 0 && options.n2[0]?.titre;
+  const titreN3Existe = options.n3.length > 0 && options.n3[0]?.titre;
+
   return (
     <Layout>
       <Toast ref={toast} />
@@ -314,7 +372,8 @@ export default function Dashboard() {
         Répartition des agents
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <ListCard
+        {titreN1Existe && (
+          <ListCard
           title={`Agents par ${allEntiteeUn[0]?.titre || "Niveau 1"}`}
           data={agentsByEntiteeUn}
           icon={Building2}
@@ -322,7 +381,9 @@ export default function Dashboard() {
           bgClass="bg-blue-100"
           valueLabel="Agents"
         />
-        <ListCard
+        )}
+        {titreN2Existe && (
+          <ListCard
           title={`Agents par ${allEntiteeDeux[0]?.titre || "Niveau 2"}`}
           data={agentsByEntiteeDeux}
           icon={Layers}
@@ -330,7 +391,9 @@ export default function Dashboard() {
           bgClass="bg-purple-100"
           valueLabel="Agents"
         />
-        <ListCard
+        )}
+        {titreN3Existe && (
+          <ListCard
           title={`Agents par ${allEntiteeTrois[0]?.titre || "Niveau 3"}`}
           data={agentsByEntiteeTrois}
           icon={GitMerge}
@@ -338,6 +401,7 @@ export default function Dashboard() {
           bgClass="bg-emerald-100"
           valueLabel="Agents"
         />
+        )} 
         <ListCard
           title="Agents par structure"
           data={agentsByStructure}

@@ -1,7 +1,13 @@
+// models/Permission.model.js
 module.exports = (sequelize, DataTypes) => {
   const Permission = sequelize.define(
     "Permission",
     {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
       resource: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -12,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
+      tableName: "permissions", // Nom de la table en minuscules
+      underscored: true, // Cette option convertit automatiquement camelCase en snake_case
+      timestamps: true, // Active les timestamps
+      createdAt: "created_at", // Spécifie le nom de la colonne created_at
+      updatedAt: "updated_at", // Spécifie le nom de la colonne updated_at
       indexes: [
         {
           unique: true,

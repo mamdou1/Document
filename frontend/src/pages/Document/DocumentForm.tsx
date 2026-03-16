@@ -10,7 +10,7 @@ import { uploadDocumentFile } from "../../api/ulpoald";
 // ✅ Définir le type correctement
 interface DocumentPayload {
   type_document_id: number | null;
-  values: Array<{ id: number; value: string }>;
+  values: Record<string, string>;
   id?: number;
 }
 
@@ -83,7 +83,7 @@ export default function DocumentForm({
     }
 
     try {
-      // ✅ Construire le payload comme un objet, pas un tableau
+      // ✅ Construire le payload avec le bon format (objet, pas tableau)
       const valuesObject: Record<string, string> = {};
 
       // Parcourir tous les metaFields pour créer l'objet
@@ -96,25 +96,11 @@ export default function DocumentForm({
         }
       }
 
-      // ✅ Si en mode édition et que vous avez besoin des IDs existants
-      // pour la mise à jour, vous pouvez les ajouter séparément
-      const existingValueIds: Record<string, number> = {};
-      if (editingDoc?.values) {
-        editingDoc.values.forEach((v: any) => {
-          existingValueIds[v.meta_field_id] = v.id;
-        });
-      }
-
-      // ✅ Le payload avec la bonne structure
-      const payload: any = {
+      // ✅ Le payload a maintenant la structure attendue par le backend
+      const payload: DocumentPayload = {
         type_document_id: documentType_id,
         values: valuesObject, // ← Maintenant c'est un objet { "3": "diop", "4": "Ali" }
       };
-
-      // ✅ Ajouter les IDs des valeurs existantes si nécessaire
-      if (Object.keys(existingValueIds).length > 0) {
-        payload.value_ids = existingValueIds;
-      }
 
       // ✅ Ajouter l'id si on est en mode édition
       if (editingDoc?.id) {
@@ -127,11 +113,19 @@ export default function DocumentForm({
       console.log("✅ Document sauvegardé:", result);
 
       // Uploader les fichiers séparément
+      const fileUploads = [];
       for (const [fieldId, value] of Object.entries(values)) {
         if (value instanceof File) {
-          const docId = editingDoc?.id || result.id;
-          await uploadDocumentFile(String(docId), fieldId, value);
+          const docId = editingDoc?.id || result?.id;
+          if (docId) {
+            fileUploads.push(uploadDocumentFile(String(docId), fieldId, value));
+          }
         }
+      }
+
+      // Attendre que tous les fichiers soient uploadés
+      if (fileUploads.length > 0) {
+        await Promise.all(fileUploads);
       }
 
       toast.current?.show({
