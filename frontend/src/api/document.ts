@@ -30,3 +30,23 @@ export const updateDocument = async (
 export const deleteDocument = async (id: string): Promise<void> => {
   await api.delete(`/documents/${id}`);
 };
+
+export const updateDocumentPieceDisponibilite = async (
+  documentId: string,
+  pieceId: string,
+  disponible: boolean,
+) => {
+  const { data } = await api.patch(
+    `/documents/${documentId}/pieces/${pieceId}/disponible`,
+    { disponible },
+  );
+  return data;
+};
+
+export const getDocumentPieces = async (documentId: string) => {
+  const res = await api.get(`/documents/${documentId}/pieces`);
+  return res.data.pieces;
+};
+
+export const getDocumentFiles = (documentId: number, pieceId: number) =>
+  api.get(`/documents/${documentId}/piece/${pieceId}/files`);

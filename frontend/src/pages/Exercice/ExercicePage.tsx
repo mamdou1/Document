@@ -276,6 +276,7 @@ export default function ExercicePage() {
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={load}
         initial={editing || undefined}
         title={editing ? "Modifier l'exercice" : "Ajouter un nouvel exercice"}
       />

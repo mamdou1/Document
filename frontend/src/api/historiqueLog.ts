@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { HistoriqueLog } from "../interfaces/index";
 
-const API_URL = "http://localhost:5000/api/historique";
+const API_URL = "http://localhost:5001/api/historique";
 
 // Récupérer la liste des logs avec pagination et filtres
 export async function getHistoriqueLogs(params?: {

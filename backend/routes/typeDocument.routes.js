@@ -14,7 +14,7 @@ router.post(
 router.get(
   "/",
   verifyToken,
-  authorizePermission("documentType", "read"),
+  //authorizePermission("documentType", "read"),
   ctrl.getAll,
 );
 router.get(
@@ -34,6 +34,27 @@ router.delete(
   verifyToken,
   authorizePermission("documentType", "delete"),
   ctrl.remove,
+);
+router.post(
+  "/:id/pieces",
+  verifyToken,
+  authorizePermission("documentType", "create"),
+  //authorizeRoles("ADMIN", "MEMBRE", "MEMBRE_AUTHORIZE"),
+  ctrl.addPiecesToTypeDocument,
+);
+
+router.get(
+  "/:id/pieces",
+  verifyToken,
+  authorizePermission("documentType", "read"),
+  ctrl.getPiecesOfTypeDocument,
+);
+
+router.delete(
+  "/:id/pieces",
+  verifyToken,
+  authorizePermission("documentType", "delete"),
+  ctrl.removePieceFromTypeDocument,
 );
 
 module.exports = router;

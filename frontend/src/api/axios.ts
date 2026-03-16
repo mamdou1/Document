@@ -10,7 +10,7 @@
 // import axios from "axios";
 
 // const api = axios.create({
-//   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+//   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5001/api",
 //   timeout: 10000,
 // });
 
@@ -28,28 +28,33 @@
 
 // export default api;
 
-import axios from "axios";
+// axios.ts
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from "axios";
 
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+const api: AxiosInstance = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5001/api",
   timeout: 10000,
 });
 
-// Request interceptor : ajoute le token + audit flag
-api.interceptors.request.use((config) => {
+// Interceptor
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem("accessToken");
-  const audit = sessionStorage.getItem("audit");
 
   if (token) {
-    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // ✅ Inject audit header only if set by UI
-  if (audit) {
-    config.headers = config.headers || {};
+  // ✅ Vérifier si c'est une navigation depuis la sidebar
+  const isSidebarNavigation =
+    sessionStorage.getItem("sidebar_navigation") === "true";
+
+  if (isSidebarNavigation) {
+    config.headers["x-sidebar-navigation"] = "true";
+    // Ne pas effacer le flag immédiatement, le laisser pour toute la navigation
+  }
+
+  if (config.audit === true) {
     config.headers["x-audit"] = "true";
-    sessionStorage.removeItem("audit");
   }
 
   return config;

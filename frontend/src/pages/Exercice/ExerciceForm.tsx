@@ -10,6 +10,7 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<Exercice>) => Promise<void>;
+  refresh: () => void;
   initial?: Partial<Exercice>;
   title?: string;
 };
@@ -18,6 +19,7 @@ export default function ExerciceForm({
   visible,
   onHide,
   onSubmit,
+  refresh,
   initial = {},
   title = "Créer un exercice",
 }: Props) {
@@ -35,6 +37,7 @@ export default function ExerciceForm({
     try {
       await onSubmit({ annee });
       //onHide();
+      refresh();
     } finally {
       setLoading(false);
     }

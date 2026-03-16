@@ -1,14 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Layout from "../../components/layout/Layoutt";
 import PiecesForm from "./PiecesForm";
 import PiecesDetails from "./PiecesDetails";
-import type { Pieces, Division } from "../../interfaces";
-import {
-  getPieces,
-  createPieces,
-  updatedPieces,
-  deletePieceById,
-} from "../../api/pieces";
+import type { Pieces } from "../../interfaces";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
@@ -20,67 +14,59 @@ import {
   Eye,
   Pencil,
   FileStack,
-  Layers,
   Trash2,
+  Settings,
+  XCircle,
 } from "lucide-react";
-import { getAllDivision } from "../../api/division";
 import { confirmDialog } from "primereact/confirmdialog";
-import { Dropdown } from "primereact/dropdown";
+import PiecesMetaForm from "./PiecesMetaForm";
+
+// ✅ IMPORTER LES NOUVEAUX HOOKS
+import {
+  usePieces,
+  useCreatePiece,
+  useUpdatePiece,
+  useDeletePiece,
+} from "../../hooks/usePieces";
 
 export default function PiecesPage() {
-  const [allPieces, setAllPieces] = useState<Pieces[]>([]);
+  const toast = useRef<Toast>(null);
+
+  // ✅ ÉTAT 1: Remplacer useState par usePieces
+  const { data: allPieces = [], isLoading, error, refetch } = usePieces();
+
+  console.log("🔍 isLoading:", isLoading);
+  console.log("🔍 error:", error);
+  console.log("🔍 allPieces:", allPieces);
+  console.log("🔍 allPieces length:", allPieces.length);
+
+  // ✅ ÉTAT 2: Remplacer les mutations
+  const createMutation = useCreatePiece();
+  const updateMutation = useUpdatePiece();
+  const deleteMutation = useDeletePiece();
+
+  // États UI (inchangés)
   const [selected, setSelected] = useState<Pieces | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [editing, setEditing] = useState<Partial<Pieces> | null>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const toast = useRef<Toast>(null);
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const [allDivisions, setAllDivisions] = useState<Division[]>([]);
-  // --- NOUVEAUX ÉTATS POUR LE FILTRE ---
-  const [selectedDivision, setSelectedDivision] = useState<any>(null);
-  const [divisions, setDivisions] = useState<any[]>([]);
+  const [metaVisible, setMetaVisible] = useState(false);
 
-  const affichage = async () => {
-    setLoading(true);
-    try {
-      const [p, div] = await Promise.all([getPieces(), getAllDivision()]);
-      setAllPieces(Array.isArray(p) ? p : []);
-      setAllDivisions(Array.isArray(div) ? div : []);
+  // ✅ PLUS BESOIN DE affichage() NI DE useEffect !
 
-      // Remplir le dropdown (optionnel : ajouter l'option "Toutes")
-      if (Array.isArray(div)) {
-        setDivisions(div);
-      }
-      // console.log("Les pièces:", p);
-      // console.log("diviSIon: ", div);
-    } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur",
-        detail: "Impossible de charger",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    affichage();
-  }, []);
-
+  // ✅ ÉTAPE 3: Remplacer onCreate
   const onCreate = async (payload: Partial<Pieces>) => {
     try {
-      const saved = await createPieces(payload);
-      setAllPieces((s) => [saved, ...s]);
+      await createMutation.mutateAsync(payload);
       toast.current?.show({
         severity: "success",
         summary: "Succès",
-        detail: "Pièce de pièce créée",
+        detail: "Pièce créée avec succès",
       });
-      //setFormVisible(false);
+      setFormVisible(false);
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
@@ -90,11 +76,14 @@ export default function PiecesPage() {
     }
   };
 
+  // ✅ ÉTAPE 4: Remplacer onEdit
   const onEdit = async (payload: Partial<Pieces>) => {
     if (!editing || !editing.id) return;
     try {
-      const update = await updatedPieces(payload, editing.id);
-      setAllPieces((s) => s.map((g) => (g.id === update.id ? update : g)));
+      await updateMutation.mutateAsync({
+        id: String(editing.id),
+        data: payload,
+      });
       toast.current?.show({
         severity: "success",
         summary: "Succès",
@@ -110,20 +99,27 @@ export default function PiecesPage() {
       });
     }
   };
+
+  // ✅ ÉTAPE 5: Remplacer handleDelete
   const handleDelete = async (id: string) => {
     confirmDialog({
-      message: "Voulez-vous supprimer cet pieces définitivement ?",
+      message:
+        "Voulez-vous supprimer cette pièce définitivement ? Cette action est irréversible.",
       header: "Confirmation",
-      icon: "pi pi-exclamation-triangle",
-      acceptClassName: "p-button-danger",
+      icon: "pi pi-info-circle",
+      acceptLabel: "Supprimer",
+      rejectLabel: "Annuler",
+      acceptClassName: "p-button-danger p-button-raised p-button-rounded p-2",
+      rejectClassName:
+        "p-button-secondary p-button-outlined p-button-rounded mr-4 p-2",
+      style: { width: "450px" },
       accept: async () => {
         try {
-          await deletePieceById(id);
-          setAllPieces((s) => s.filter((x) => Number(x.id) !== Number(id)));
+          await deleteMutation.mutateAsync(id);
           toast.current?.show({
             severity: "success",
             summary: "Supprimé",
-            detail: "Pieces supprimé",
+            detail: "Pièce supprimée",
           });
         } catch (err: any) {
           toast.current?.show({
@@ -136,35 +132,53 @@ export default function PiecesPage() {
     });
   };
 
-  // --- LOGIQUE DE FILTRAGE UNIFIÉE ---
+  // Filtrage et pagination (inchangés)
   const filteredData = allPieces.filter((p) => {
-    // 1. Filtre par recherche textuelle
-    const matchesSearch = `${p.code_pieces} ${p.libelle} ${p.division?.libelle}`
+    return `${p.code_pieces} ${p.libelle}`
       .toLowerCase()
       .includes(query.toLowerCase());
-
-    // 2. Filtre par division
-    const matchesDivision = selectedDivision
-      ? p.division?.id === selectedDivision
-      : true;
-
-    return matchesSearch && matchesDivision;
   });
 
-  // Utilise filteredData pour la pagination
   const paginated = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
+  // ✅ ÉTAPE 6: Gérer les états de chargement/erreur
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="text-center text-red-600 p-8">
+          <XCircle size={48} className="mx-auto mb-4" />
+          <p>Erreur de chargement: {error.message}</p>
+          <Button
+            label="Réessayer"
+            onClick={() => refetch()}
+            className="mt-4"
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Toast ref={toast} />
 
-      {/* Header */}
+      {/* Header (inchangé) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-lg shadow-indigo-100">
+          <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
             <FileStack size={28} />
           </div>
           <div>
@@ -179,7 +193,7 @@ export default function PiecesPage() {
         <Button
           label="Nouvelle pièce"
           icon={<Plus size={20} className="mr-2" />}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all shadow-indigo-200"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white border-none px-6 py-3 rounded-xl shadow-lg transition-all shadow-emerald-200"
           onClick={() => {
             setEditing(null);
             setFormVisible(true);
@@ -187,55 +201,32 @@ export default function PiecesPage() {
         />
       </div>
 
-      {/* Recherche et Filtre */}
+      {/* Recherche et Filtre (inchangé) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative group max-w-md w-full">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
             size={20}
           />
           <InputText
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
             placeholder="Rechercher..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               setCurrentPage(1);
-            }} // Reset page on search
+            }}
           />
-        </div>
-
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <Dropdown
-            value={selectedDivision}
-            options={allDivisions} // Utilise directement allDivisions
-            onChange={(e) => {
-              setSelectedDivision(e.value);
-              setCurrentPage(1);
-            }} // Reset page on filter
-            optionLabel="libelle"
-            optionValue="id"
-            placeholder="Toutes les divisions"
-            className="w-full md:w-64 border border-slate-200 bg-slate-50 rounded-xl shadow-sm"
-            showClear={!!selectedDivision}
-          />
-          <div className="hidden lg:block text-sm text-slate-400 font-medium whitespace-nowrap">
-            <span className="text-indigo-600 font-bold">
-              {filteredData.length}
-            </span>{" "}
-            résultats
-          </div>
         </div>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau (inchangé) */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-widest">
               <th className="px-6 py-4">Code Référence</th>
               <th className="px-6 py-4">Désignation du type de pièce</th>
-              <th className="px-6 py-4">Division Parente</th>
               <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -247,10 +238,10 @@ export default function PiecesPage() {
                   setSelected(n);
                   setDetailsVisible(true);
                 }}
-                className="cursor-pointer hover:bg-indigo-50/30 transition-all group"
+                className="cursor-pointer hover:bg-emerald-50/30 transition-all group"
               >
                 <td className="px-6 py-4">
-                  <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg font-mono font-bold text-xs border border-indigo-100">
+                  <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg font-mono font-bold text-xs border border-emerald-100">
                     {n.code_pieces}
                   </span>
                 </td>
@@ -258,15 +249,10 @@ export default function PiecesPage() {
                   <div className="flex items-center gap-2">
                     <FileText
                       size={16}
-                      className="text-slate-300 group-hover:text-indigo-400 transition-colors"
+                      className="text-slate-300 group-hover:text-emerald-400 transition-colors"
                     />
                     {n.libelle}
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="flex items-center gap-2 text-slate-500 italic font-bold text-sm">
-                    <Layers size={14} /> {n.division?.libelle || "N/A"}
-                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
@@ -275,10 +261,10 @@ export default function PiecesPage() {
                         setSelected(n);
                         setDetailsVisible(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                       title="Voir détails"
                     >
-                      <Eye size={18} />
+                      <Eye size={20} />
                     </button>
                     <button
                       onClick={(e) => {
@@ -286,19 +272,29 @@ export default function PiecesPage() {
                         setFormVisible(true);
                         e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                       title="Modifier"
                     >
-                      <Pencil size={18} />
+                      <Pencil size={20} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        setSelected(n);
+                        setMetaVisible(true);
+                        e.stopPropagation();
+                      }}
+                      className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                    >
+                      <Settings size={20} />
                     </button>
                     <button
                       onClick={(e) => {
                         handleDelete(String(n.id)!);
                         e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      className="p-3 text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-md rounded-xl transition-all"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={20} />
                     </button>
                   </div>
                 </td>
@@ -306,20 +302,6 @@ export default function PiecesPage() {
             ))}
           </tbody>
         </table>
-
-        {loading && (
-          <div className="p-12 text-center animate-pulse text-indigo-400 font-medium">
-            Chargement des données en cours...
-          </div>
-        )}
-        {!loading && filteredData.length === 0 && (
-          <div className="p-16 text-center border-t border-slate-50">
-            <FileStack size={48} className="mx-auto text-slate-200 mb-4" />
-            <p className="text-slate-400 italic">
-              Aucune pièce ne correspond à votre recherche
-            </p>
-          </div>
-        )}
       </div>
 
       <div className="mt-6">
@@ -331,21 +313,29 @@ export default function PiecesPage() {
         />
       </div>
 
+      {/* Modals (inchangés) */}
       <PiecesForm
         visible={formVisible}
         onHide={() => setFormVisible(false)}
         onSubmit={editing ? onEdit : onCreate}
+        refresh={() => {}} // ✅ PLUS BESOIN de refresh !
         initial={editing || {}}
         title={
           editing ? "Modifier le type de pièce" : "Ajouter un nouveau type"
         }
-        division={allDivisions}
       />
 
       <PiecesDetails
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}
         pieces={selected}
+      />
+
+      <PiecesMetaForm
+        visible={metaVisible}
+        onHide={() => setMetaVisible(false)}
+        piece={selected}
+        refresh={() => refetch()} // ✅ Utiliser refetch
       />
     </Layout>
   );

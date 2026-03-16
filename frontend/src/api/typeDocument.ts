@@ -1,17 +1,9 @@
 import api from "./axios";
-import type { TypeDocument, CreateTypeDocumentPayload } from "../interfaces";
-
-export const getTypeDocuments = async (): Promise<TypeDocument[]> => {
-  const response = await api.get("/types-documents");
-  return response.data.types || response.data;
-};
-
-export const getTypeDocumentById = async (
-  id: string,
-): Promise<TypeDocument> => {
-  const response = await api.get(`/types-documents/${id}`);
-  return response.data.type || response.data;
-};
+import type {
+  TypeDocument,
+  CreateTypeDocumentPayload,
+  AddPiecesToTypeDocumentPayload,
+} from "../interfaces";
 
 export const createTypeDocument = async (
   payload: CreateTypeDocumentPayload,
@@ -21,14 +13,60 @@ export const createTypeDocument = async (
   return response.data.type || response.data;
 };
 
+export const getTypeDocuments = async (): Promise<{
+  typeDocument: TypeDocument[];
+}> => {
+  const response = await api.get("/types-documents");
+  // On s'assure de renvoyer la structure attendue par le state React
+  return response.data;
+};
+
+export const getTypeDocumentById = async (
+  id: string,
+): Promise<TypeDocument> => {
+  const response = await api.get(`/types-documents/${id}`);
+  // Gestion du nesting : vérifie si c'est dans .type ou à la racine
+  return response.data.type || response.data;
+};
+
 export const updateTypeDocument = async (
   id: string,
-  payload: Partial<TypeDocument>,
-): Promise<TypeDocument> => {
+  payload: Partial<TypeDocument>, // Utilise Partial pour permettre de n'envoyer que certains champs
+): Promise<any> => {
+  console.log("📤 createTypeDocument:", payload);
   const response = await api.put(`/types-documents/${id}`, payload);
-  return response.data.type || response.data;
+  return response.data;
 };
 
 export const deleteTypeDocument = async (id: string): Promise<void> => {
   await api.delete(`/types-documents/${id}`);
+};
+
+export const addPiecesToTypeDocument = async (
+  document_typeId: string,
+  payload: AddPiecesToTypeDocumentPayload,
+): Promise<{ message: string }> => {
+  const response = await api.post(
+    `/types-documents/${document_typeId}/pieces`,
+    payload,
+  );
+  return response.data;
+};
+
+export const removePiecesFromTypeDocument = async (
+  document_typeId: string,
+  pieceId: string,
+): Promise<{ message: string }> => {
+  const response = await api.delete(
+    `/types-documents/${document_typeId}/pieces`,
+    { data: { pieceId } },
+  );
+  return response.data;
+};
+
+export const getPiecesOfTypeDocument = async (
+  document_typeId: string,
+): Promise<any[]> => {
+  const response = await api.get(`/types-documents/${document_typeId}/pieces`);
+  return response.data;
 };

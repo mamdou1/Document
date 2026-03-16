@@ -14,6 +14,10 @@ import {
   UserCheck,
   Layers,
 } from "lucide-react";
+import { getAllEntiteeUn } from "../../api/entiteeUn";
+import { getAllEntiteeDeux } from "../../api/entiteeDeux";
+import { getAllEntiteeTrois } from "../../api/entiteeTrois";
+import { EntiteeDeux, EntiteeUn, EntiteeTrois } from "../../interfaces";
 
 export default function HistoriquePage() {
   const [logs, setLogs] = useState<HistoriqueLog[]>([]);
@@ -29,6 +33,45 @@ export default function HistoriquePage() {
   const [dateTo, setDateTo] = useState<string>("");
   const [actionFilter, setActionFilter] = useState<string>("");
   const [resourceFilter, setResourceFilter] = useState<string>("");
+
+  const [allEntiteeTrois, setAllEntiteeTrois] = useState<EntiteeTrois[]>([]);
+  const [allEntiteeDeux, setAllEntiteeDeux] = useState<EntiteeDeux[]>([]);
+  const [allEntiteeUn, setAllEntiteeUn] = useState<EntiteeUn[]>([]);
+
+  const loadStats = async () => {
+    setLoading(true);
+    try {
+      // Totaux
+      const [ent1, ent2, ent3] = await Promise.all([
+        getAllEntiteeUn(),
+        getAllEntiteeDeux(),
+        getAllEntiteeTrois(),
+      ]);
+      setAllEntiteeUn(Array.isArray(ent1) ? ent1 : []);
+      setAllEntiteeDeux(Array.isArray(ent2) ? ent2 : []);
+      setAllEntiteeTrois(Array.isArray(ent3) ? ent3 : []);
+
+      // Agents par structure
+    } catch (error: any) {
+      toast?.current?.show({
+        severity: "error",
+        summary: "Erreur",
+        detail:
+          error?.response?.data?.message ||
+          "Erreur lors du chargement des statistiques",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  let titre1 = allEntiteeUn[0]?.titre || "Niveau 1";
+  let titre2 = allEntiteeDeux[0]?.titre || "Niveau 2";
+  let titre3 = allEntiteeTrois[0]?.titre || "Niveau 3";
 
   const [pagination, setPagination] = useState({
     total: 0,
@@ -111,6 +154,7 @@ export default function HistoriquePage() {
       update: "Modification",
       delete: "Suppression",
       read: "Consultation",
+      access: "Accès",
       login: "Connexion",
       logout: "Déconnexion",
       upload: "Téléversement",
@@ -121,28 +165,22 @@ export default function HistoriquePage() {
 
   function formatResource(resource: string) {
     const map: Record<string, string> = {
-      user: "agent",
-      liquidations: " liquidation",
-      droits: "profil",
-      exercices: "exercice",
-      programmes: "programme",
-      chapitres: " chapitre",
-      natures: " nature",
-      fonctions: " fonction",
-      fournisseur: "fournisseur",
-      serviceBeneficiaire: "service bénéficiaire",
-      pieces: " pièce",
-      piece: " pièce",
-      type: "type de dossier",
-      services: "service",
-      divisions: " division",
-      sections: " section",
-      statistiques: " statistique",
-      auth: "authentification",
-      historique: "historique",
-      droitPermission: " permission",
-      connexion: "connexion",
-      deconnexion: "deconnexion",
+      user: "Agent",
+      droits: "Profil",
+      exercices: "Exercice",
+      fonctions: "Fonction",
+      pieces: "Pièce",
+      document: "Document",
+      documentType: "Type de document",
+      entiteeUn: `${titre1}`,
+      entiteeDeux: `${titre2}`,
+      entiteeTrois: `${titre3}`,
+      salle: "Salle",
+      rayon: "Rayon",
+      trave: "Travée",
+      box: "Box",
+      site: "Site",
+      auth: "Authentification",
     };
 
     return map[resource] || resource;
@@ -163,6 +201,8 @@ export default function HistoriquePage() {
         return "bg-blue-50 text-blue-700";
       case "delete":
         return "bg-red-50 text-red-700";
+      case "access":
+        return "bg-yellow-50 text-yellow-700";
       case "login":
         return "bg-purple-50 text-purple-700";
       default:
@@ -177,12 +217,12 @@ export default function HistoriquePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="bg-blue-800 p-3 rounded-2xl text-white shadow-lg shadow-blue-100">
+          <div className="bg-emerald-800 p-3 rounded-2xl text-white shadow-lg shadow-emerald-100">
             <History size={28} />
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-              Journal <span className="text-blue-600">d'audit</span>
+              Journal <span className="text-emerald-600">d'audit</span>
             </h1>
             <p className="text-slate-500 font-medium font-sans">
               Suivi en temps réel des actions effectuées sur la plateforme
@@ -195,11 +235,11 @@ export default function HistoriquePage() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6">
         <div className="relative group max-w-md">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
             size={20}
           />
           <InputText
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none"
             placeholder="Rechercher par agent, action ou ressource..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -243,6 +283,7 @@ export default function HistoriquePage() {
                 <option value="update">Update</option>
                 <option value="delete">Delete</option>
                 <option value="read">Read</option>
+                <option value="access">Access</option>
                 <option value="login">Login</option>
                 <option value="logout">Logout</option>
               </select>
@@ -292,7 +333,7 @@ export default function HistoriquePage() {
                     setSelectedLog(log);
                     setDetailsVisible(true);
                   }}
-                  className="cursor-pointer hover:bg-blue-50/30 transition-all group"
+                  className="cursor-pointer hover:bg-emerald-50/30 transition-all group"
                 >
                   <td className="px-6 py-4 text-slate-500 font-bold">
                     {rowNumber}
@@ -350,7 +391,7 @@ export default function HistoriquePage() {
                         setDetailsVisible(true);
                         e.stopPropagation();
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                     >
                       <Eye size={18} />
                     </button>

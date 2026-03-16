@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      division_id: { type: DataTypes.INTEGER, allowNull: false },
     },
     {
       tableName: "pieces",
@@ -19,27 +18,26 @@ module.exports = (sequelize, DataTypes) => {
     },
   );
   Pieces.associate = (models) => {
-    Pieces.belongsToMany(models.Type, {
-      through: models.TypePieces,
+    Pieces.belongsToMany(models.TypeDocument, {
+      through: models.TypeDocumentPieces,
       foreignKey: "piece_id",
-      otherKey: "type_id",
-      as: "types",
+      otherKey: "document_type_id",
+      as: "typesDocument",
     });
 
-    Pieces.belongsToMany(models.Liquidation, {
-      through: models.LiquidationPieces,
+    Pieces.belongsToMany(models.Document, {
+      through: models.DocumentPieces,
       foreignKey: "piece_id",
-      otherKey: "liquidation_id",
-      as: "liquidations",
+      otherKey: "document_id",
+      as: "document",
     });
-
-    Pieces.hasMany(models.PiecesFichier, {
+    Pieces.hasMany(models.DocumentFichier, {
       foreignKey: "piece_id",
-      as: "fichiers",
+      as: "documentFichiers",
     });
-    Pieces.belongsTo(models.Division, {
-      foreignKey: "division_id",
-      as: "division",
+    Pieces.hasMany(models.PieceMetaField, {
+      foreignKey: "piece_id",
+      as: "metaFields",
     });
   };
 

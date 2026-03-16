@@ -59,3 +59,15 @@ res.status(200).json({Ex: nature}) <- un objet contenant un tableau {[]}> )
 5- verifier chaque endpoint avant de l'esposer au frontend c'est important, chaque endpoint sans exception, pour eviter le probleme de la recuperation des element des dropdown de liquidationForm.tsx au niveau du Promise.All() et de liquidationPage.tsx
 
 6- Cest le liquidationPage.tsx qui charge, et stock les element dans les dropdown des Form via les props de ces different Form.
+
+# ====================================================
+
+logique dans le sidebar (sidetree de document)
+
+7- je veux ajouter deux condition, au niveau du sidebar de document je veux trois choses :
+je veux verifier le user connecter :
+
+7.1- si isAdmin tu affiche le sidebar comme ça sans modification
+7.2- si n'est pas isAdmin on vérifie s'il a de accès en plus de l'entitee de sa fonction :
+7.2.1- si c'est le cas on affiche le titre comme on le fais déjà mais cette foici avec une petite subtilité si l'entitee de sa fonction et les accès son tous direction par exemple on affiche uniquemnt direction, si l'entitee de sa fonction est direction et que l'entitee de l'accès est departement seulement direction et département deviennent visible ainsi de suite, ainsi de suite
+7.2.2- s''il n'a aucun accès en plus de l'entitee de sa fonction, on affiche directement les type de l'entitee de sa fonction directement dans le sidetree de document, (met documentPage.tsx à jour pour affiche directement les document du type selectionner dans les sidetree de document dans un tableau et n'oublie pas la partie selection automatique dans le dropdown de documentForm.tsx )

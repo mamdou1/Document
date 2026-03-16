@@ -19,9 +19,24 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      username: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
+
+      is_on_line: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+
+      last_activity: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
 
       // genre: DataTypes.ENUM("HOMME", "FEMME"),
-      role: DataTypes.ENUM("ADMIN", "MEMBRE_AUTHORIZE", "MEMBRE"),
+      // role: DataTypes.ENUM("ADMIN", "MEMBRE_AUTHORIZE", "MEMBRE"),
       code_verification: DataTypes.STRING,
       reset_code_expiry: DataTypes.DATE,
       is_verified_for_reset: {
@@ -38,10 +53,10 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "Agent",
+      tableName: "agent",
       timestamps: true,
       underscored: true,
-    }
+    },
   );
 
   Agent.associate = (models) => {
@@ -58,6 +73,11 @@ module.exports = (sequelize, DataTypes) => {
     Agent.belongsTo(models.Droit, {
       as: "droit",
       foreignKey: "droit_id",
+    });
+
+    Agent.hasMany(models.AgentEntiteeAccess, {
+      foreignKey: "agent_id",
+      as: "agent_access",
     });
 
     // Agent.belongsToMany(models.Permission, {

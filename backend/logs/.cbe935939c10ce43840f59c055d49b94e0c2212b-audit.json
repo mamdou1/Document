@@ -1,0 +1,70 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "logs\\.cbe935939c10ce43840f59c055d49b94e0c2212b-audit.json",
+    "files": [
+        {
+            "date": 1771847818414,
+            "name": "logs\\historique-2026-02-23.log",
+            "hash": "b61fbf4fb295659fc4b26586636b8a84e8d41ce9d14daed30037620450d9c25e"
+        },
+        {
+            "date": 1771922807356,
+            "name": "logs\\historique-2026-02-24.log",
+            "hash": "9f862cae4f71c337a23980b69a085d632e4405fa283c1753a93f90b402ec0e88"
+        },
+        {
+            "date": 1772144560606,
+            "name": "logs\\historique-2026-02-26.log",
+            "hash": "8abbeba967ea0552599302ea83aa73b265a3eeb664c8d01e17bf9089e3e5351d"
+        },
+        {
+            "date": 1772169637464,
+            "name": "logs\\historique-2026-02-27.log",
+            "hash": "1ecb27ac21470f3dba863a7cd26d928a0b109fe0f8bd1e53d017a233c3b9c814"
+        },
+        {
+            "date": 1772401421803,
+            "name": "logs\\historique-2026-03-01.log",
+            "hash": "36f9bbd17734f2076cf5bf14683d0b3cead00f5acc9d8b69a38179887b8edd78"
+        },
+        {
+            "date": 1772445077831,
+            "name": "logs\\historique-2026-03-02.log",
+            "hash": "8b406529ad35eb322285cf7d662819ee0f5eef99a2b336062d373953b2b0095a"
+        },
+        {
+            "date": 1772532123162,
+            "name": "logs\\historique-2026-03-03.log",
+            "hash": "1bf71e558e9752a9a0ffcdd75c9dda1a0967d73f701ee97c73d69ec39efe32ec"
+        },
+        {
+            "date": 1772629591754,
+            "name": "logs\\historique-2026-03-04.log",
+            "hash": "507a2cae17e2db2dcb4e91ebb177133b9f9d72f20eff80bc04f3893dbfec4a08"
+        },
+        {
+            "date": 1772673137916,
+            "name": "logs\\historique-2026-03-05.log",
+            "hash": "46c7152f2f1818c7517b8abf3184b2f5e235dd6e1f94211361631febce326778"
+        },
+        {
+            "date": 1772914300712,
+            "name": "logs\\historique-2026-03-07.log",
+            "hash": "d4947dd29d06b2df272301799ebaa73406c20039072d60248460a4121574b852"
+        },
+        {
+            "date": 1773057189678,
+            "name": "logs\\historique-2026-03-09.log",
+            "hash": "152999f0a991e43e01216fb435f5f3b5883c6bdff36454aec1abacb028230d5f"
+        },
+        {
+            "date": 1773621252323,
+            "name": "logs\\historique-2026-03-16.log",
+            "hash": "dc2192b4eabd16145d3d4a6f63ee2202bde3b030c58824d96844675690a4314e"
+        }
+    ],
+    "hashType": "sha256"
+}

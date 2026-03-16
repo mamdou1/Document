@@ -10,14 +10,17 @@ type Props = {
   visible: boolean;
   onHide: () => void;
   onSubmit: (data: Partial<Droit>) => Promise<void>;
+  //refresh: () => void;
   initial?: Partial<Droit>;
   title?: string;
 };
+//,nnnnn
 
 export default function DroitForm({
   visible,
   onHide,
   onSubmit,
+  //refresh,
   initial = {},
   title = "Créer un droit",
 }: Props) {
@@ -33,6 +36,7 @@ export default function DroitForm({
     try {
       await onSubmit({ libelle });
       //onHide();
+      //refresh();
     } finally {
       setLoading(false);
     }
@@ -40,7 +44,7 @@ export default function DroitForm({
 
   return (
     <Dialog
-      header={<div className="text-blue-900 font-bold">{title}</div>}
+      header={<div className="text-emerald-900 font-bold">{title}</div>}
       visible={visible}
       style={{ width: "400px" }}
       onHide={onHide}
@@ -57,17 +61,17 @@ export default function DroitForm({
               value={String(libelle)}
               //keyfilter="int"
               onChange={(e) => setLibelle(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-lg font-semibold text-blue-900"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none text-lg font-semibold text-emerald-900"
               placeholder="Technicien, auditeur,..."
             />
             {/* <InputText
                                 value={libelle}
                                 onChange={(e) => setLibelle(e.target.value)}
                                 placeholder="Description ou objet de la dépense"
-                                className="p-3 rounded-xl  border-blue-300  border-2 mx-2 focus:border-blue-200 focus:ring-0 focus:border-4 shadow-sm"
+                                className="p-3 rounded-xl  border-emerald-300  border-2 mx-2 focus:border-emerald-200 focus:ring-0 focus:border-4 shadow-sm"
                               /> */}
             <BookOpenCheck
-              className="absolute right-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+              className="absolute right-4 top-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
               size={20}
             />
           </div>
@@ -88,7 +92,7 @@ export default function DroitForm({
             icon={!loading && <Save size={18} className="mr-2" />}
             disabled={loading || !libelle}
             onClick={handleSubmit}
-            className="bg-blue-600 text-white font-bold py-2 px-6 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-200 transition-all"
+            className="bg-emerald-600 text-white font-bold py-2 px-6 rounded-xl hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all"
           />
         </div>
       </div>

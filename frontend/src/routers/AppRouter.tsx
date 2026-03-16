@@ -4,24 +4,29 @@ import AuthSwitcher from "../pages/Auth/AuthSwitcher";
 import Pieces from "../pages/Pieces/PiecesPage";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Membre from "../pages/Membres/UserPage";
-import Type from "../pages/Type/TypePage";
 import ExercicePage from "../pages/Exercice/ExercicePage";
-import ProgrammePage from "../pages/Programme/ProgrammePage";
-import ChapitrePage from "../pages/Chapitre/ChapitrePage";
-import NaturePage from "../pages/Nature/NaturePage";
-import LiquidationPage from "../pages/Liquidation/LiquidationPage";
-import FournisseurPage from "../pages/Fournisseur/FournisseurPage";
-import ServiceBeneficiarePage from "../pages/Service Beneficiare/ServiceBeneficiarePage";
 import RecherchePage from "../pages/Recherche/Recherche";
 import DroitPage from "../pages/Droit/DroitPage";
-import ServicePage from "../pages/Service/ServicePage";
-import SectionPage from "../pages/Section/SectionPage";
-import DivisionPage from "../pages/Division/DivisionPage";
 import { useAuth } from "../context/AuthContext";
 import HistoriquePage from "../pages/HistoriqueLog/HistoriquePage";
-import SourceDeFinancementPage from "../pages/Source De Financement/SourceDeFinancementPage";
-import DocumentTypePage from "../pages/DomentType/DocumentTypePage";
+//import DocumentTypePage from "../pages/DomentType/DocumentTypePage";
 import DocumentPage from "../pages/Document/DocumentPage";
+import ConfigurationStructure from "../pages/Organigrame/ConfigurationStructure";
+import EntiteeUnPage from "../pages/Organigrame/EntiteeUn/EntiteeUnPage";
+import EntiteeDeuxPage from "../pages/Organigrame/EntiteeDeux/EntiteeDeuxPage";
+import EntiteeTroisPage from "../pages/Organigrame/EntiteeTrois/EntiteeTroisPage";
+import BoxPage from "../pages/Box/BoxPage";
+import RayonPage from "../pages/Rayon/RayonPage";
+import SallePage from "../pages/Salle/SallePage";
+import TravePage from "../pages/Trave/TravePage";
+import SitePage from "../pages/Site/SitePage";
+import DocumentTypeEntitee from "../pages/DomentType/DocumentTypeEntitee";
+import WelcomeLandingPage from "../pages/Dashboard/DashbordBis";
+import ChangePassword from "../pages/Auth/ChangePassword";
+import SendEmail from "../pages/Auth/SendEmail";
+import VerifyEmail from "../pages/Auth/VerifyEmail";
+import UpdatePassword from "../pages/Auth/UpdatePassword";
+import FonctionPage from "../pages/Fonction/FonctionPage";
 
 // 🔥FIX ICI🔥
 const PrivateRoute: React.FC<{ children: ReactElement }> = ({ children }) => {
@@ -36,15 +41,33 @@ const PrivateRoute: React.FC<{ children: ReactElement }> = ({ children }) => {
 };
 
 export default function AppRouter() {
+  const { can, loading } = useAuth();
+  if (loading) return <div>Chargement...</div>;
   return (
     <Routes>
       <Route path="/connexion" element={<AuthSwitcher />} />
+      <Route path="/send-code" element={<SendEmail />} />
+      <Route path="/verify-code" element={<VerifyEmail />} />
+      <Route path="/update-password" element={<UpdatePassword />} />
 
       <Route
         path="/"
         element={
           <PrivateRoute>
-            <Dashboard />
+            {/* 💡 On vérifie ici aussi la permission ! */}
+            {can("statistique", "read") ? (
+              <Dashboard />
+            ) : (
+              <Navigate to="/welcome" replace />
+            )}
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/welcome"
+        element={
+          <PrivateRoute>
+            <WelcomeLandingPage />
           </PrivateRoute>
         }
       />
@@ -66,66 +89,10 @@ export default function AppRouter() {
         }
       />
       <Route
-        path="/programmes"
-        element={
-          <PrivateRoute>
-            <ProgrammePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/chapitres"
-        element={
-          <PrivateRoute>
-            <ChapitrePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/natures"
-        element={
-          <PrivateRoute>
-            <NaturePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/liquidations"
-        element={
-          <PrivateRoute>
-            <LiquidationPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/type"
-        element={
-          <PrivateRoute>
-            <Type />
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/pieces"
         element={
           <PrivateRoute>
             <Pieces />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/fournisseur"
-        element={
-          <PrivateRoute>
-            <FournisseurPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/serviceBeneficiaire"
-        element={
-          <PrivateRoute>
-            <ServiceBeneficiarePage />
           </PrivateRoute>
         }
       />
@@ -146,42 +113,10 @@ export default function AppRouter() {
         }
       />
       <Route
-        path="/service"
-        element={
-          <PrivateRoute>
-            <ServicePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/section"
-        element={
-          <PrivateRoute>
-            <SectionPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/division"
-        element={
-          <PrivateRoute>
-            <DivisionPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
         path="/historique"
         element={
           <PrivateRoute>
             <HistoriquePage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/sourceDeFinancement"
-        element={
-          <PrivateRoute>
-            <SourceDeFinancementPage />
           </PrivateRoute>
         }
       />
@@ -193,11 +128,107 @@ export default function AppRouter() {
           </PrivateRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/dossierType"
         element={
           <PrivateRoute>
             <DocumentTypePage />
+          </PrivateRoute>
+        }
+      /> */}
+      <Route
+        path="/dossierType"
+        element={
+          <PrivateRoute>
+            <DocumentTypeEntitee />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/organigrame"
+        element={
+          <PrivateRoute>
+            <ConfigurationStructure />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/entiteeUn"
+        element={
+          <PrivateRoute>
+            <EntiteeUnPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/entiteeDeux"
+        element={
+          <PrivateRoute>
+            <EntiteeDeuxPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/entiteeTrois"
+        element={
+          <PrivateRoute>
+            <EntiteeTroisPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/box"
+        element={
+          <PrivateRoute>
+            <BoxPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/rayon"
+        element={
+          <PrivateRoute>
+            <RayonPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/salle"
+        element={
+          <PrivateRoute>
+            <SallePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/trave"
+        element={
+          <PrivateRoute>
+            <TravePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/site"
+        element={
+          <PrivateRoute>
+            <SitePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/change-password"
+        element={
+          <PrivateRoute>
+            <ChangePassword />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/fonction"
+        element={
+          <PrivateRoute>
+            <FonctionPage />
           </PrivateRoute>
         }
       />

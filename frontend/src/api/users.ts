@@ -6,6 +6,11 @@ export const getUsers = async (): Promise<User[]> => {
   return response.data;
 };
 
+export const getOnLigneUsers = async (): Promise<User[]> => {
+  const response = await api.get("/user/online");
+  return response.data;
+};
+
 export const getTotalUsers = async (): Promise<{ totalMembres: number }> => {
   const response = await api.get("/user/totalMembre");
   return response.data;
@@ -18,7 +23,7 @@ export const getGetUserById = async (id: string): Promise<User> => {
 
 export const createUser = async (
   payload: Partial<User>,
-  photoFile?: File
+  photoFile?: File,
 ): Promise<User> => {
   try {
     const formData = new FormData();
@@ -52,7 +57,7 @@ export const createUser = async (
 export const updateUser = async (
   payload: Partial<User>,
   id: string,
-  photoFile?: File
+  photoFile?: File,
 ): Promise<User> => {
   try {
     console.log("📤 Données envoyées pour mise à jour:", { payload, id });

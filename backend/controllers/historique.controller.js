@@ -1,9 +1,18 @@
+// controllers/historique.controller.js
 const { HistoriqueLog, Agent, Droit, Fonction } = require("../models");
 const { Op } = require("sequelize");
+const logger = require("../config/logger.config");
 
 class HistoriqueController {
   static async list(req, res) {
+    const startTime = Date.now();
+
     try {
+      logger.debug("🔍 Récupération de l'historique", {
+        userId: req.user?.id,
+        query: req.query,
+      });
+
       const {
         page = 1,
         limit = 20,
@@ -46,12 +55,12 @@ class HistoriqueController {
               {
                 model: Droit,
                 as: "droit",
-                attributes: ["id", "libelle"], // ✅ récupérer id + libelle du droit
+                attributes: ["id", "libelle"],
               },
               {
                 model: Fonction,
                 as: "fonction_details",
-                attributes: ["id", "libelle"], // ✅ récupérer id + libelle de la fonction
+                attributes: ["id", "libelle"],
               },
             ],
           },
@@ -59,6 +68,13 @@ class HistoriqueController {
         order: [["created_at", "DESC"]],
         limit: Number(limit),
         offset,
+      });
+
+      logger.info("✅ Historique récupéré", {
+        count: rows.length,
+        total: count,
+        userId: req.user?.id,
+        duration: Date.now() - startTime,
       });
 
       return res.json({
@@ -71,14 +87,27 @@ class HistoriqueController {
         },
       });
     } catch (err) {
-      console.error("❌ Historique list error:", err);
+      logger.error("❌ Historique list error:", {
+        error: err.message,
+        stack: err.stack,
+        userId: req.user?.id,
+        duration: Date.now() - startTime,
+      });
       res.status(500).json({ message: "Erreur chargement historique" });
     }
   }
 
   static async detail(req, res) {
+    const startTime = Date.now();
+    const { id } = req.params;
+
     try {
-      const log = await HistoriqueLog.findByPk(req.params.id, {
+      logger.debug("🔍 Récupération d'un détail d'historique", {
+        logId: id,
+        userId: req.user?.id,
+      });
+
+      const log = await HistoriqueLog.findByPk(id, {
         include: [
           {
             model: Agent,
@@ -96,12 +125,28 @@ class HistoriqueController {
       });
 
       if (!log) {
+        logger.warn("⚠️ Log introuvable", {
+          logId: id,
+          userId: req.user?.id,
+        });
         return res.status(404).json({ message: "Log introuvable" });
       }
 
+      logger.info("✅ Détail de l'historique récupéré", {
+        logId: id,
+        userId: req.user?.id,
+        duration: Date.now() - startTime,
+      });
+
       res.json(log);
     } catch (err) {
-      console.error("❌ Historique detail error:", err);
+      logger.error("❌ Historique detail error:", {
+        logId: id,
+        error: err.message,
+        stack: err.stack,
+        userId: req.user?.id,
+        duration: Date.now() - startTime,
+      });
       res.status(500).json({ message: "Erreur chargement log" });
     }
   }

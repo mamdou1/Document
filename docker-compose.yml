@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: padme_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  backend:
+    build: ./backend
+    container_name: padme_backend
+    restart: always
+    environment:
+      - NODE_ENV=docker
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env.docker
+    volumes:
+      - ./backend/uploads:/app/uploads
+    command: npm start
+
+  frontend:
+    build: ./frontend
+    container_name: padme_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+
+volumes:
+  mysql_data:

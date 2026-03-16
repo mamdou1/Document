@@ -4,11 +4,19 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { TabView, TabPanel } from "primereact/tabview";
 
-import { getDroitPermission } from "../../api/permission";
+import { getPermissionsByDroitId } from "../../api/permission";
 import { getAgentsByDroit } from "../../api/droit";
 import type { Permission, Droit, User } from "../../interfaces";
 
-// Import des nouveaux sous-composants
+// ✅ Importer les fonctions pour les titres
+import {
+  loadEntityTitles,
+  getPermissionLabels,
+  DEFAULT_TITLES,
+  PermissionLabels,
+} from "../../utils/permissionLabels";
+
+// Import des sous-composants
 import DroitPermissionListe from "./DroitPermissionListe";
 import DroitAgentListe from "./DroitAgentListe";
 
@@ -23,17 +31,36 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
   const [agents, setAgents] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // ✅ État pour les labels dynamiques
+  const [permissionLabels, setPermissionLabels] = useState<PermissionLabels>(
+    getPermissionLabels(DEFAULT_TITLES),
+  );
+
+  // ✅ Charger les titres des entités
+  useEffect(() => {
+    const loadTitles = async () => {
+      try {
+        const titles = await loadEntityTitles();
+        setPermissionLabels(getPermissionLabels(titles));
+      } catch (error) {
+        console.error("Erreur chargement titres:", error);
+      }
+    };
+    loadTitles();
+  }, []);
+
   useEffect(() => {
     if (!visible || !droit?.id) return;
 
     const loadData = async () => {
       setLoading(true);
       try {
-        const [permRes, agentRes] = await Promise.all([
-          getDroitPermission(Number(droit.id)),
+        const [permissionsData, agentRes] = await Promise.all([
+          getPermissionsByDroitId(Number(droit.id)),
           getAgentsByDroit(Number(droit.id)),
         ]);
-        setPermissions(permRes.data);
+
+        setPermissions(permissionsData);
         setAgents(Array.isArray(agentRes) ? agentRes : []);
       } catch (err) {
         console.error("Erreur chargement détails droit", err);
@@ -58,7 +85,7 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
   return (
     <Dialog
       header={
-        <div className="flex items-center gap-2 text-blue-900">
+        <div className="flex items-center gap-2 text-emerald-900">
           <ShieldCheck size={20} />
           <span>Détails de l'autorisation</span>
         </div>
@@ -78,16 +105,15 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
     >
       <div className="space-y-6 pt-2">
         {/* Header Libellé */}
-        <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-center justify-between">
-          <span className="text-blue-700 font-semibold italic text-sm uppercase">
+        <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
+          <span className="text-emerald-700 font-semibold italic text-sm uppercase">
             Libellé
           </span>
-          <span className="text-2xl font-black text-blue-900">
+          <span className="text-2xl font-black text-emerald-900">
             {droit.libelle}
           </span>
         </div>
 
-        {/* Navigation par Onglets */}
         {/* Navigation par Onglets Stylisée */}
         <TabView
           pt={{
@@ -104,16 +130,18 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
                   flex items-center cursor-pointer select-none px-5 py-3 border-b-2 font-bold text-sm transition-all duration-300 rounded-t-xl
                   ${
                     context.active
-                      ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                      ? "border-emerald-600 text-emerald-600 bg-emerald-50/50"
                       : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   }
                 `,
               }),
             }}
           >
+            {/* ✅ Passage de permissionLabels */}
             <DroitPermissionListe
               permissions={permissions}
               createdAt={droit.createdAt}
+              permissionLabels={permissionLabels}
             />
           </TabPanel>
 
@@ -126,7 +154,7 @@ export default function DroitDetails({ visible, onHide, droit }: Props) {
                   flex items-center cursor-pointer select-none px-5 py-3 border-b-2 font-bold text-sm transition-all duration-300 rounded-t-xl
                   ${
                     context.active
-                      ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                      ? "border-emerald-600 text-emerald-600 bg-emerald-50/50"
                       : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                   }
                 `,
