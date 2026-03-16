@@ -23,6 +23,8 @@ services:
       interval: 10s
       retries: 5
       timeout: 5s
+    networks:
+    - liquidation_network
 
   backend:
     build: ./backend
@@ -31,7 +33,7 @@ services:
     environment:
       - NODE_ENV=docker
     ports:
-      - "5000:5000"
+      - "6000:5000"
     depends_on:
       mysql:
         condition: service_healthy
@@ -40,19 +42,27 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
     command: npm start
+    networks:
+      - liquidation_network
 
   frontend:
     build: ./frontend
     container_name: padme_frontend
     restart: always
     ports:
-      - "3000:3000"
+      - "4000:3000"
     depends_on:
       - backend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     command: npm start
+    networks:
+      - liquidation_network
 
 volumes:
   mysql_data:
+
+networks:
+  liquidation_network:
+    driver: bridge

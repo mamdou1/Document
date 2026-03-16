@@ -729,3 +729,7 @@
 2026-03-16 14:09:46 [INFO] ✅ Valeurs de pièces récupérées {"documentId":"5","count":3,"userId":5,"duration":8}
 2026-03-16 14:09:48 [INFO] ✅ Fichiers lot unique récupérés {"documentId":"5","count":0,"userId":5,"duration":5}
 2026-03-16 14:10:04 [INFO] HISTORIQUE {"agent_id":5,"action":"logout","resource":"auth/deconnexion","resource_id":5,"method":"POST","path":"/api/auth/deconnexion","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+2026-03-16 16:03:09 [INFO] ✅ Logger initialisé avec succès 
+2026-03-16 16:05:32 [INFO] ✅ Logger initialisé avec succès 
+2026-03-16 16:09:24 [INFO] ✅ Logger initialisé avec succès 
+2026-03-16 16:11:44 [INFO] ✅ Logger initialisé avec succès 
