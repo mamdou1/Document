@@ -28,7 +28,7 @@ import Layout from "../../components/layout/Layoutt";
 import api from "../../api/axios";
 
 export default function ChangePassword() {
-  const { user } = useAuth(); // ✅ Sans setUser
+  const { user, setUser } = useAuth(); // ✅ Sans setUser
   const navigate = useNavigate();
 
   // États pour le username
@@ -62,10 +62,15 @@ export default function ChangePassword() {
   // Fonction pour rafraîchir les données utilisateur
   const refreshUserData = async () => {
     try {
-      const me = await api.get("/user/me");
-      localStorage.setItem("user", JSON.stringify(me.data));
-      // Mettre à jour l'état local si nécessaire
-      window.location.reload(); // Option radicale mais efficace
+      const response = await api.get("/user/me");
+      const userData = response.data;
+      
+      // ✅ Mettre à jour le contexte ET le localStorage
+      setUser(userData); // Mettre à jour le contexte
+      localStorage.setItem("user", JSON.stringify(userData));
+            
+      console.log("✅ Utilisateur mis à jour:", userData);
+      
     } catch (error) {
       console.error("❌ Erreur rafraîchissement utilisateur:", error);
     }
