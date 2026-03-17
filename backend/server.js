@@ -18,17 +18,20 @@ const app = express();
 // ✅ CORS EN PREMIER
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
       "x-audit",
-      "x-sidebar-navigation", // ← AJOUTÉ
+      "x-sidebar-navigation",
     ],
-  }),
+  })
 );
+
 
 // ✅ Body parser
 app.use(express.json());
