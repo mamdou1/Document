@@ -1,0 +1,131 @@
+2026-03-17 10:22:53 [INFO] ✅ Types de documents récupérés {"count":1,"userId":4,"duration":24}
+2026-03-17 10:23:01 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":18}
+2026-03-17 10:23:01 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":16}
+2026-03-17 10:23:01 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":14}
+2026-03-17 10:23:01 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":17}
+2026-03-17 10:23:01 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":17}
+2026-03-17 10:23:01 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":18}
+2026-03-17 10:23:01 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":27}
+2026-03-17 10:23:01 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":17}
+2026-03-17 10:23:01 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":12}
+2026-03-17 10:23:01 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":9}
+2026-03-17 10:23:02 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":10}
+2026-03-17 10:23:02 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":26}
+2026-03-17 10:23:02 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":13}
+2026-03-17 10:23:02 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":12}
+2026-03-17 10:23:02 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":10}
+2026-03-17 10:23:02 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":8}
+2026-03-17 10:23:02 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":3}
+2026-03-17 10:23:02 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":10}
+2026-03-17 10:23:02 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":7}
+2026-03-17 10:23:02 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":5}
+2026-03-17 11:22:36 [INFO] ✅ Types de documents récupérés {"count":1,"userId":4,"duration":40}
+2026-03-17 11:22:37 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":23}
+2026-03-17 11:22:37 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":19}
+2026-03-17 11:22:37 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":17}
+2026-03-17 11:22:37 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":7}
+2026-03-17 11:22:37 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":30}
+2026-03-17 11:22:37 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":4}
+2026-03-17 11:22:38 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":13}
+2026-03-17 11:22:38 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":10}
+2026-03-17 11:22:38 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":6}
+2026-03-17 11:22:38 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":4}
+2026-03-17 11:22:38 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":16}
+2026-03-17 11:22:38 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":13}
+2026-03-17 11:22:38 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":11}
+2026-03-17 11:22:38 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":6}
+2026-03-17 11:22:38 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":10}
+2026-03-17 11:22:38 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":6}
+2026-03-17 11:22:38 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":4}
+2026-03-17 11:22:38 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":9}
+2026-03-17 11:22:38 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":6}
+2026-03-17 11:22:38 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":3}
+2026-03-17 11:23:06 [INFO] ✅ Logger initialisé avec succès 
+2026-03-17 11:23:18 [INFO] ✅ Types de documents récupérés {"count":1,"userId":4,"duration":71}
+2026-03-17 11:23:19 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":25}
+2026-03-17 11:23:19 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":13}
+2026-03-17 11:23:19 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":24}
+2026-03-17 11:23:19 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":6}
+2026-03-17 11:23:19 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":36}
+2026-03-17 11:23:19 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":32}
+2026-03-17 11:23:19 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":4}
+2026-03-17 11:23:19 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":27}
+2026-03-17 11:23:19 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":20}
+2026-03-17 11:23:19 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":21}
+2026-03-17 11:23:19 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":82}
+2026-03-17 11:23:19 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":117}
+2026-03-17 11:23:19 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":150}
+2026-03-17 11:23:19 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":22}
+2026-03-17 11:23:19 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":26}
+2026-03-17 11:23:19 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":17}
+2026-03-17 11:23:20 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":14}
+2026-03-17 11:23:20 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":16}
+2026-03-17 11:23:20 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":9}
+2026-03-17 11:23:20 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":4}
+2026-03-17 11:23:37 [INFO] 📝 Tentative de mise à jour d'un utilisateur (admin) {"targetUserId":"4","adminId":4,"body":{"username":"mamadou1"}}
+2026-03-17 11:23:37 [INFO] ✅ Utilisateur mis à jour avec succès (admin) {"targetUserId":"4","adminId":4,"duration":58}
+2026-03-17 11:23:37 [INFO] HISTORIQUE {"agent_id":4,"action":"update","resource":"agent","resource_id":4,"resource_identifier":"Diouma (4)","description":"Modification de agent : Diouma (4) - username: admin1234 → mamadou1","method":"PUT","path":"/api/user/update-by-admin/4","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36","old_data":{"id":4,"nom":"Diouma","prenom":"Mamadou","num_matricule":"ADMIN001","email":"mamadoudiouma@gmail.com","password":"$2b$10$zo.MJ0y0KNHuc1fotcDaSO3ZJkjZEvMxtK5duiWWw9X4cBl4.qdCi","telephone":"0000000000","droit_id":4,"username":"admin1234","is_on_line":true,"last_activity":"2026-03-17T11:23:37.000Z","code_verification":null,"reset_code_expiry":null,"is_verified_for_reset":true,"photo_profil":"user-1773625695085-596440493.jpg","fonction_id":1,"createdAt":"2026-03-16T01:36:29.000Z","updatedAt":"2026-03-17T11:23:37.000Z","enregistrer_par":null},"new_data":{"id":4,"nom":"Diouma","prenom":"Mamadou","num_matricule":"ADMIN001","email":"mamadoudiouma@gmail.com","password":"$2b$10$zo.MJ0y0KNHuc1fotcDaSO3ZJkjZEvMxtK5duiWWw9X4cBl4.qdCi","telephone":"0000000000","droit_id":4,"username":"mamadou1","is_on_line":true,"last_activity":"2026-03-17T11:23:37.000Z","code_verification":null,"reset_code_expiry":null,"is_verified_for_reset":true,"photo_profil":"user-1773625695085-596440493.jpg","fonction_id":1,"createdAt":"2026-03-16T01:36:29.000Z","updatedAt":"2026-03-17T11:23:37.000Z","enregistrer_par":null}}
+2026-03-17 11:23:37 [INFO] ✅ Profil utilisateur récupéré {"userId":4,"nom":"Mamadou Diouma","duration":54}
+2026-03-17 11:23:39 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":10}
+2026-03-17 11:23:39 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":31}
+2026-03-17 11:23:39 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":25}
+2026-03-17 11:23:39 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":22}
+2026-03-17 11:23:39 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":29}
+2026-03-17 11:23:39 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":19}
+2026-03-17 11:23:39 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":21}
+2026-03-17 11:23:39 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":12}
+2026-03-17 11:23:39 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":53}
+2026-03-17 11:23:39 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":10}
+2026-03-17 11:23:39 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":32}
+2026-03-17 11:23:39 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":24}
+2026-03-17 11:23:39 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":36}
+2026-03-17 11:23:39 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":28}
+2026-03-17 11:23:39 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":22}
+2026-03-17 11:23:39 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":14}
+2026-03-17 11:23:39 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":2}
+2026-03-17 11:23:39 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":24}
+2026-03-17 11:23:39 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":14}
+2026-03-17 11:23:39 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":12}
+2026-03-17 11:23:45 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":25}
+2026-03-17 11:23:45 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":15}
+2026-03-17 11:23:45 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":9}
+2026-03-17 11:23:45 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":34}
+2026-03-17 11:23:45 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":26}
+2026-03-17 11:23:45 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":30}
+2026-03-17 11:23:45 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":12}
+2026-03-17 11:23:45 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":23}
+2026-03-17 11:23:45 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":17}
+2026-03-17 11:23:45 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":13}
+2026-03-17 11:23:45 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":31}
+2026-03-17 11:23:45 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":20}
+2026-03-17 11:23:45 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":30}
+2026-03-17 11:23:45 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":23}
+2026-03-17 11:23:45 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":9}
+2026-03-17 11:23:45 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":13}
+2026-03-17 11:23:45 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":9}
+2026-03-17 11:23:45 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":27}
+2026-03-17 11:23:45 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":13}
+2026-03-17 11:23:45 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":4}
+2026-03-17 11:23:48 [INFO] HISTORIQUE {"agent_id":4,"action":"logout","resource":"auth/deconnexion","resource_id":4,"method":"POST","path":"/api/auth/deconnexion","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+2026-03-17 11:24:07 [INFO] HISTORIQUE {"agent_id":4,"action":"login","resource":"auth/connexion","method":"POST","path":"/api/auth/connexion","status":200,"ip":"::1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"}
+2026-03-17 11:24:07 [INFO] ✅ Profil utilisateur récupéré {"userId":4,"nom":"Mamadou Diouma","duration":46}
+2026-03-17 11:24:09 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":10}
+2026-03-17 11:24:09 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":21}
+2026-03-17 11:24:09 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":11}
+2026-03-17 11:24:09 [INFO] ✅ Total des types de documents récupéré {"total":1,"userId":4,"duration":9}
+2026-03-17 11:24:09 [INFO] ✅ Total des agents récupéré {"total":2,"userId":4,"duration":18}
+2026-03-17 11:24:09 [INFO] ✅ Total des documents récupéré {"total":1,"userId":4,"duration":42}
+2026-03-17 11:24:09 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":26}
+2026-03-17 11:24:09 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":13}
+2026-03-17 11:24:09 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":28}
+2026-03-17 11:24:09 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":16}
+2026-03-17 11:24:09 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":30}
+2026-03-17 11:24:09 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":23}
+2026-03-17 11:24:09 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":19}
+2026-03-17 11:24:09 [INFO] ✅ Agents par entité niveau 1 récupérés {"count":1,"userId":4,"duration":27}
+2026-03-17 11:24:09 [INFO] ✅ Agents par entité niveau 2 récupérés {"count":0,"userId":4,"duration":17}
+2026-03-17 11:24:09 [INFO] ✅ Agents par entité niveau 3 récupérés {"count":0,"userId":4,"duration":11}
+2026-03-17 11:24:09 [INFO] ✅ Agents par structure récupérés {"count":1,"userId":4,"duration":2}
+2026-03-17 11:24:09 [INFO] ✅ Documents par type récupérés {"count":1,"userId":4,"duration":18}
+2026-03-17 11:24:09 [INFO] ✅ Documents par mois récupérés {"count":1,"userId":4,"duration":10}
+2026-03-17 11:24:09 [INFO] ✅ Documents par structure récupérés {"count":1,"userId":4,"duration":5}

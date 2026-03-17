@@ -11,6 +11,7 @@ export interface AuthContextValue {
   login: (phone: string, password: string) => Promise<void>;
   logout: () => void;
   inscription: (data: InscriptionPayload) => Promise<void>;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -93,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, permissions, can, login, logout, inscription }}
+      value={{ user, loading, permissions, can, login, logout, inscription, setUser }}
     >
       {children}
     </AuthContext.Provider>
